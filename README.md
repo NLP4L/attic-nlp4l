@@ -1,6 +1,6 @@
 # NLP4L
 
-NLP4L is a natural language processing tool for Lucene written in Scala. For general documentation, see [http://nlp4l.github.io/]
+NLP4L is a natural language processing tool for Lucene written in Scala. For general documentation, see http://nlp4l.github.io/
 
 ## Building NLP4L
 
@@ -28,4 +28,4 @@ $ sbt test
 
 ## License
 
-Apache Licence Version 2.0. See [NOTICE]
+Apache Licence Version 2.0. See [NOTICE.md](NOTICE.md)
