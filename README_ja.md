@@ -4,7 +4,7 @@ NLP4L は Scala で書かれた [Apache Lucene](https://lucene.apache.org/core/)
 
 詳しいドキュメントは以下をご覧ください。
 
-- チュートリアル [日本語](http://nlp4l.github.io/tutorial_ja.html)／English (under construction)
+- チュートリアル [日本語](http://nlp4l.github.io/tutorial_ja.html)／[English](http://nlp4l.github.io/tutorial.html) (to be available later)
 - [API Docs](http://nlp4l.github.io/api/index.html)
 
 # 対象ユーザ

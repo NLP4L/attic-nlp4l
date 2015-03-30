@@ -4,7 +4,7 @@ NLP4L is a natural language processing tool for [Apache Lucene](https://lucene.a
 
 Refer to the following documents for more details.
 
-- Tutorial [Japanese](http://nlp4l.github.io/tutorial_ja.html)/[English] (to be available later)
+- Tutorial [Japanese](http://nlp4l.github.io/tutorial_ja.html)/[English](http://nlp4l.github.io/tutorial.html) (to be available later)
 - [API Docs](http://nlp4l.github.io/api/index.html)
 
 # Target Users 
