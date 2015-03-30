@@ -1,0 +1,3 @@
+To convert a markdown file to html, do the following:
+
+$ pandoc -s tutorial_ja.md -t html5 -c github.css -o tutorial_ja.html

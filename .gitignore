@@ -1,0 +1,7 @@
+.classpath
+.idea
+.project
+corpora
+target
+docs/*.html
+
