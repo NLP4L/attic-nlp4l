@@ -1,14 +1,27 @@
-# NLP4L
+# What's NLP4L ?
 
-NLP4L is a natural language processing tool for Lucene written in Scala. For general documentation, see http://nlp4l.github.io/
+NLP4L is a natural language processing tool for [Apache Lucene](https://lucene.apache.org/core/) written in Scala. As NLP4L processes document data registered in the Lucene index, you can directly access a word database normalized by powerful Lucene Analyzer and use handy search functions. Being written in Scala, NLP4L excels at trying ad hoc interactive processing as well. 
 
-## Building NLP4L
+Refer to the following documents for more details.
+
+- Tutorial [Japanese](http://nlp4l.github.io/tutorial_ja.html)/[English] (to be available later)
+- [API Docs](http://nlp4l.github.io/api/index.html)
+
+# Target Users 
+
+- [Apache Lucene](https://lucene.apache.org/core/), including Lucene/Solr/Elasticsearch, users.
+- Users who want to try out various document vectors to input data to existing machine learning tools including [Apache Spark](https://spark.apache.org/) and [Apache Mahout](http://mahout.apache.org/).
+- Other NLP tool users and Scala programers.
+
+# Basic Usage
+
+## Building NLP4L 
 
 ```shell
 $ sbt pack
 ```
 
-## Running Interactive Shell
+## Starting Interactive Shell 
 
 ```shell
 $ target/pack/bin/nlp4l
@@ -25,7 +38,3 @@ nlp4l>
 ```shell
 $ sbt test
 ```
-
-## License
-
-Apache Licence Version 2.0. See [NOTICE.md](NOTICE.md)
