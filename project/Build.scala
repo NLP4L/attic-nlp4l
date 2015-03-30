@@ -8,7 +8,7 @@ object NLP4LBuild extends Build {
       base = file("."),
       settings = Defaults.defaultSettings ++ packSettings ++
         Seq(
-          version := "0.1",
+          version := "0.0.1",
           scalaVersion := "2.11.6",
           libraryDependencies ++= Seq(
             "org.apache.lucene" % "lucene-core" % "5.0.0",
@@ -26,7 +26,6 @@ object NLP4LBuild extends Build {
             //"org.slf4j" % "slf4j-jdk14" % "1.7.6",
             "com.ibm.icu" % "icu4j" % "54.1",
             "org.apache.httpcomponents" % "httpclient" % "4.4",
-            //"org.apache.commons" % "commons-compress" % "1.9",
             "com.github.scala-incubator.io" % "scala-io-core_2.11" % "0.4.3",
             "com.github.scala-incubator.io" % "scala-io-file_2.11" % "0.4.3",
             "org.scalatest" % "scalatest_2.11" % "2.2.1" % "test",
