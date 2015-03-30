@@ -38,3 +38,7 @@ nlp4l>
 ```shell
 $ sbt test
 ```
+
+# Known Limitations
+
+With unoptimized index, you may not be able to get an accurate word count.
