@@ -1,4 +1,9 @@
+.classpath
+.idea
+.project
+corpora
+target
+docs/*.html
 .DS_Store
 /#*#
 *~
-docs/*.html
