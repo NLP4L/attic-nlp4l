@@ -34,8 +34,17 @@ object SchemaLoader {
    * @param resource the resource or file path to schema configuration
    * @return a new [[Schema]] instance
    */
-  def load(resource : String): Schema = {
+  def load(resource: String): Schema = {
     val conf = ConfigFactory.load(resource)
+    read(conf)
+  }
+
+  def loadFile(path: String): Schema = {
+    val conf = ConfigFactory.parseFile(new java.io.File(path))
+    read(conf)
+  }
+
+  def read(conf: Config): Schema = {
     val schema = if (conf.hasPath("schema")) conf.getConfig("schema") else throw new InvalidSchemaException("No root object \"schema\".")
     // custom analyzer definitions
     val analyzers =
