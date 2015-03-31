@@ -1,7 +1,4 @@
-.classpath
-.idea
-.project
-corpora
-target
+.DS_Store
+/#*#
+*~
 docs/*.html
-
