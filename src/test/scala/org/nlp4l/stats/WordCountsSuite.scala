@@ -18,8 +18,6 @@ package org.nlp4l.stats
 
 import org.apache.lucene.analysis.core.KeywordAnalyzer
 import org.apache.lucene.analysis.standard.StandardAnalyzer
-import org.apache.lucene.index.Term
-import org.apache.lucene.search._
 import org.nlp4l.core._
 import org.nlp4l.core.analysis.Analyzer
 import org.scalatest.{BeforeAndAfterAll, BeforeAndAfter, FunSuite}
@@ -136,8 +134,8 @@ class WordCountsSuite extends FunSuite with BeforeAndAfterAll {
 
   test("counts all word frequencies for specified words (with term vectors)") {
     val reader = IReader(indexDir, schema)
-    val terms = Set("london", "gold", "build")
-    val counts = WordCounts.count(reader, "content1", terms, Set.empty[Int])
+    val words = Set("london", "gold", "build")
+    val counts = WordCounts.count(reader, "content1", words, Set.empty[Int])
     assertResult(3)(counts.size)
     assertResult(2)(counts.getOrElse("london", 0))
     assertResult(2)(counts.getOrElse("gold", 0))
@@ -161,4 +159,28 @@ class WordCountsSuite extends FunSuite with BeforeAndAfterAll {
     assertResult(2)(counts)
   }
 
+  test("counts document frequencies for all words") {
+    val reader = IReader(indexDir, schema)
+    val dfs = WordCounts.countDF(reader, "content2", Set.empty[String])
+    assert(dfs.size > 0)
+    assertResult(4)(dfs.getOrElse("build", 0))
+    assertResult(1)(dfs.getOrElse("silver", 0))
+    assertResult(5)(dfs.getOrElse("up", 0))
+  }
+
+  test("counts document frequencies for top N words") {
+    val reader = IReader(indexDir, schema)
+    val dfs = WordCounts.countDF(reader, "content2", Set.empty[String], 10)
+    assert(dfs.size == 10)
+  }
+
+  test("counts document frequencies for specified words") {
+    val reader = IReader(indexDir, schema)
+    val words = Set("gold", "fair", "build")
+    val dfs = WordCounts.countDF(reader, "content2", words)
+    assert(dfs.size == 3)
+    assertResult(1)(dfs.getOrElse("gold", 0))
+    assertResult(5)(dfs.getOrElse("fair", 0))
+    assertResult(4)(dfs.getOrElse("build", 0))
+  }
 }

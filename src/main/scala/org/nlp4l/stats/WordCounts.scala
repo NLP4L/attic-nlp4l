@@ -28,7 +28,7 @@ import scala.collection.mutable
 object WordCounts {
 
   /**
-   * Count the frequency of words in the index with the [[org.nlp4l.core.Schema]] in the given IReader.
+   * Count frequencies of words in the index with the [[org.nlp4l.core.Schema]] in the given IReader.
    * @param reader the IReader instance
    * @param field the field name for counting words
    * @param words the set of words to be counted. All words will be returned if empty set is given.
@@ -43,7 +43,7 @@ object WordCounts {
     }
 
   /**
-   * Count the frequency of words in the index with given [[org.nlp4l.core.analysis.Analyzer]].
+   * Count frequencies of words in the index with given [[org.nlp4l.core.analysis.Analyzer]].
    * @param reader the RawReader instance
    * @param field the field name for counting words
    * @param words the set of words to be counted. All words will be returned if empty set is given.
@@ -94,11 +94,29 @@ object WordCounts {
       // enumerate all terms for this field to sum up term frequencies
       case Some(f) => f.terms.
         filter(t => if (words.isEmpty) true else words.contains(t.text)).
-        foldLeft(mutable.Map.empty[String, Long])((m, t) => m += (t.text -> (m.getOrElse(t.text, 0L) + t.totalTermFreq))).toMap
+        map(t => (t.text, t.totalTermFreq)).toMap
       case _ => Map.empty[String, Long]
     }
   }
 
+  /**
+   * Count document frequencies of words in the whole index.
+   * @param reader the IReder instance
+   * @param field the field name for counting words
+   * @param words the set of words to be counted. All words will be returned if empty set is given.
+   * @param maxWords the max number of words to be returned. Top frequent words are returned if positive integer is given, otherwise all words will be returned. Default is -1 (all words will be returned.)
+   * @return
+   */
+  def countDF(reader: RawReader, field: String, words: Set[String], maxWords: Int = -1): Map[String, Long] = {
+    if (maxWords > 0) reader.topTermsByDocFreq(field, maxWords).map(e => (e._1, e._3)).toMap
+    else reader.field(field) match {
+      // enumerate all terms for this field to sum up term document frequencies
+      case Some(f) => f.terms.
+        filter(t => if (words.isEmpty) true else words.contains(t.text)).
+        map(t => (t.text, t.docFreq.toLong)).toMap
+      case _ => Map.empty[String, Long]
+    }
+  }
 
   def countPrefix(reader: RawReader, field: String, prefix: String): Long = {
     RawWordCounts.countPrefix(reader.ir, field, prefix)
