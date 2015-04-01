@@ -31,7 +31,7 @@ object SchemaLoader {
 
   /**
    * Load a schema configuration from given resource.
-   * @param resource the resource or file path to schema configuration
+   * @param resource the resource path to schema configuration
    * @return a new [[Schema]] instance
    */
   def load(resource: String): Schema = {
@@ -39,6 +39,11 @@ object SchemaLoader {
     read(conf)
   }
 
+  /**
+   * Load a schema configuration from given resource.
+   * @param path the path to schema configuration
+   * @return a new [[Schema]] instance
+   */
   def loadFile(path: String): Schema = {
     val conf = ConfigFactory.parseFile(new java.io.File(path))
     read(conf)
