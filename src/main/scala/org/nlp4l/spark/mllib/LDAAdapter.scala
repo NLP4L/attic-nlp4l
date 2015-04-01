@@ -28,11 +28,14 @@ class LDAAdapter {
   def dumpVectors(features: Vector[String], vectors: List[Vector[Long]], out: String = "data.txt"): Unit = {
     val file: File = new File(out)
     val writer: BufferedWriter = new BufferedWriter(new FileWriter(file))
-    vectors.foreach(vec => {
-      writer.write(vec.mkString(" "))
-      writer.newLine()
-    })
-    writer.close
+    try {
+      vectors.foreach(vec => {
+        writer.write(vec.mkString(" "))
+        writer.newLine()
+      })
+    } finally {
+      writer.close
+    }
   }
 }
 
