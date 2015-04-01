@@ -1115,6 +1115,76 @@ Top 10 frequent terms for field title
 
 # Sparkと連携する{#useWithSpark}
 
+この節では、事前に Spark 1.3.0 以上がインストールされていることが必要です。(1.3.0 以前の Spark をお使いの場合は、適宜読み替えてください。)
+
+## MLLibと連携する
+
+NLP4L でコーパスの特徴量を抽出し、 Spark MLlib への入力として与えることができます。
+
+### クラスタリング
+
+Spark MLlib にはいくつかのクラスタリングアルゴリズム(k-means, Gaussian mixture 等)が実装されていますが、ここでは LDA (Latent Dirichlet allocation) を利用する例を紹介します。なお、Spark MLlib に実装されているクラスタリングアルゴリズムの詳細は [公式リファレンス (v1.3.0)](http://spark.apache.org/docs/1.3.0/mllib-clustering.html) を参照してください。
+
+注: LDA は Spark 1.3.0 から導入されました。
+
+サンプルプログラム examples/spark_mllib_lda.scala を実行すると、ブラウンコーパスの各ドキュメントを、TFベースの文書ベクトルに変換してファイルに出力します。
+
+```shell
+nlp4l> :load examples/spark_mllib_lda.scala
+```
+
+実行すると、カレントディレクトリに以下のファイルが出力されます。どのフィールドや単語を特徴量とするかにより、3パターンの特徴ベクトルを出力しています。
+
+words\*.txt には1行1単語が出力されます。すなわち、行数が特徴空間の次元数となります。data\*.txt は1行が1ベクトルを表し、MLlibへの入力ファイルになります。ベクトル中の要素の順番は、words\*.txtと一致しています。
+
+1. body フィールド中の全単語を使って特徴量を抽出するパターン。単語数は 44677 です。
+
+  * words.txt
+  * data.txt
+
+2. body_pos_nn フィールド(名詞のみを抜き出したフィールド)中の全単語を使って特徴量を抽出するパターン。単語数は削減されて 13236 になります。
+
+  * words_noun.txt
+  * data_noun.txt
+
+3. body_pos_nn フィールドから、比較的少ない文書に出現する単語(IDF値の高い単語)に絞って特徴量を抽出するパターン。単語数はさらに削減されて 4958 となります。
+
+  * words_high_idf.txt
+  * data_noun_high_idf.txt
+
+特徴量を抽出したら、Spark でLDAを実行します。spark-shell を起動し、以下のように入力してください。
+
+```shell
+$ spark-shell
+
+scala> import org.apache.spark.mllib.clustering.LDA
+scala> import org.apache.spark.mllib.linalg.Vectors
+// data*.txt を入力として与える
+scala> val data = sc.textFile("/path/to/data_noun_high_idf.txt")
+scala> val parsedData = data.map(s => Vectors.dense(s.trim.split(' ').map(_.toDouble)))
+scala> val corpus = parsedData.zipWithIndex.map(_.swap).cache()
+// K=5 を指定してモデルを作成する
+scala> val ldaModel = new LDA().setK(5).run(corpus)
+
+// 推定されたトピックを取得する. トピックは各単語の出現確率分布として表現される.
+scala> val topics = ldaModel.topicsMatrix
+6.582992067532604     0.12712473287343715   2.0749605231892994    ... (5 total)
+1.7458039064383513    0.00886714658883468   4.228671695274331     ...
+0.993056435220057     4.64132780991838      0.18921245384121668   ...
+...
+
+// 各ドキュメントがどのトピックに属するかの確率分布を取得する.
+scala> val topics = ldaModel.topicDistributions
+scala> topics.take(5).foreach(println)
+(384,[0.13084037186524378,0.02145904901484863,0.30073967633170434,0.18175275728283377,0.36520814550536945])
+(204,[0.5601036760461913,0.04276689792374281,0.17626863743620377,0.06992184061352519,0.15093894798033694])
+(140,[0.01548241660044312,0.8975654153324738,0.013671563672420709,0.061526631681883964,0.011753972712778454])
+(466,[0.052798328682649866,0.04602366817727088,0.7138181945792464,0.03541828992076265,0.1519415186400702])
+(160,[0.20118704750574637,0.12811775189441738,0.23204896620959134,0.1428791353110324,0.29576709907921245])
+```
+
+詳しい Spark MLlib の使い方は Spark の API ドキュメントを参照してください。
+
 TBD
 
 # Luceneを使う{#useLucene}
