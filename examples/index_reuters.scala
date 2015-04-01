@@ -151,29 +151,8 @@ def document(article: Node): Document = {
 val p = Path(new File(index))
 p.deleteRecursively()
 
-// define a schema for the index
-val analyzerEn = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer())
-val fieldTypes = Map(
-  "date" -> FieldType(null, true, true),    // TODO: use date type?
-  "newid" -> FieldType(null, true, true),   // TODO: use int type?
-  "oldid" -> FieldType(null, true, true),   // TODO: use int type?
-  "cgisplit" -> FieldType(null, true, true),
-  "lewissplit" -> FieldType(null, true, true),
-  "topics" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "places" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "people" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "orgs" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "exchanges" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "companies" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "unknown" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "title" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "dateline" -> FieldType(analyzerEn, true, true, true, true), // set termVectors and termPositions to true
-  "body" -> FieldType(analyzerEn, true, true, true, true)   // set termVectors and termPositions to true
-)
-val analyzerDefault = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer())
-val schema = Schema(analyzerDefault, fieldTypes)
-
 // write documents into an index
+val schema = SchemaLoader.load("examples/schema/reuters.conf")
 val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "reuters").children()

@@ -44,19 +44,8 @@ def document(file: Path): Document = {
 val p = Path(new File(index))
 p.deleteRecursively()
 
-// define a schema for the index
-val analyzerJa = Analyzer(new org.apache.lucene.analysis.ja.JapaneseAnalyzer())
-val fieldTypes = Map(
-  "url" -> FieldType(null, true, true),
-  "date" -> FieldType(null, true, true),
-  "cat" -> FieldType(null, true, true),
-  "title" -> FieldType(analyzerJa, true, true, true, true),  // set termVectors and termPositions to true
-  "body" -> FieldType(analyzerJa, true, true, true, true, true)    // set termVectors and termPositions and termOffsets to true
-)
-val analyzerDefault = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer())
-val schema = Schema(analyzerDefault, fieldTypes)
-
 // write documents into an index
+val schema = SchemaLoader.load("examples/schema/ldcc.conf")
 val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "ldcc", "text").children()
