@@ -25,7 +25,7 @@ def document(file: Path, catsmap: Map[String, String]): Document = {
   val bodyPos = file.lines().filterNot(_.length()==0).toList
   val body = bodyPos.map(removePos(_))
   Document(Set(
-    Field("file", fl), Field("cat", cat), Field("body_pos", bodyPos), Field("body", body))
+    Field("file", fl), Field("cat", cat), Field("body_pos", bodyPos), Field("body_pos_nn", bodyPos), Field("body", body))
   )
 }
 
