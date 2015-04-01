@@ -25,7 +25,7 @@ import org.nlp4l.stats.TFIDF
  * Experimental.
  */
 class LDAAdapter {
-  def dumpVectors(features: Vector[String], vectors: List[Vector[Long]], out: String = "data.txt"): Unit = {
+  def dumpVectors(vectors: List[Vector[Long]], out: String = "data.txt"): Unit = {
     val file: File = new File(out)
     val writer: BufferedWriter = new BufferedWriter(new FileWriter(file))
     try {
@@ -34,7 +34,7 @@ class LDAAdapter {
         writer.newLine()
       })
     } finally {
-      writer.close
+      writer.close()
     }
   }
 }
@@ -45,16 +45,26 @@ object LDAAdapter {
     val schemaFile = args(1)
     val field = args(2)
     val out = if (args.size > 3) args(3) else "data.txt"
+    val words_out = if (args.size > 4) args(4) else "words.txt"
 
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
     println("Field: " + field)
-    println("Output to: " + out)
+    println("Output vectors to: " + out)
+    println("Output words to: " + words_out)
 
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
     val docs = reader.universalset()
     val (features, vectors) = TFIDF.tfVectors(reader, field, docs.toList)
-    new LDAAdapter().dumpVectors(features, vectors, out)
+    new LDAAdapter().dumpVectors(vectors, out)
+
+    // output words
+    val writer = new BufferedWriter(new FileWriter(words_out))
+    try {
+      features.foreach(f => {writer.write(f); writer.newLine()})
+    } finally {
+      writer.close()
+    }
   }
 }
