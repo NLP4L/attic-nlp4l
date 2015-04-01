@@ -20,19 +20,8 @@ import org.nlp4l.stats._
 
 val index = "/tmp/index-brown"
 
-def schema(): Schema = {
-  val analyzerBr = Analyzer(new org.apache.lucene.analysis.brown.BrownCorpusAnalyzer())
-  val analyzerEn = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
-  val fieldTypes = Map(
-    "file" -> FieldType(null, true, true),
-    "cat" -> FieldType(null, true, true),
-    "body_pos" -> FieldType(analyzerBr, true, true, true, true),   // set termVectors and termPositions to true
-    "body" -> FieldType(analyzerEn, true, true, true, true)        // set termVectors and termPositions to true
-  )
-  Schema(analyzerEn, fieldTypes)
-}
-
-val reader = IReader(index, schema())
+val schema = SchemaLoader.load("examples/schema/brown.conf")
+val reader = IReader(index, schema)
 
 val docSetGOV = reader.subset(TermFilter("cat", "government"))
 val docSetNEW = reader.subset(TermFilter("cat", "news"))
