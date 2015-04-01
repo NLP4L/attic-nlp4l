@@ -68,26 +68,8 @@ def document(fl: Path, ja: Boolean): Document = {
 val p = Path(new File(index))
 p.deleteRecursively()
 
-// define a schema for the index
-//val analyzerEn = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer())
-val analyzerEn = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
-val builder = AnalyzerBuilder()
-builder.withTokenizer("whitespace")
-builder.addTokenFilter("lowerCase")
-val analyzerWs = builder.build
-val analyzerJa = Analyzer(new org.apache.lucene.analysis.ja.JapaneseAnalyzer())
-val fieldTypes = Map(
-  "file" -> FieldType(null, true, true),
-  "type" -> FieldType(null, true, true),
-  "cat" -> FieldType(null, true, true),
-  "body_en" -> FieldType(analyzerEn, true, true, true, true),   // set termVectors and termPositions to true
-  "body_ws" -> FieldType(analyzerWs, true, true, true, true),   // set termVectors and termPositions to true
-  "body_ja" -> FieldType(analyzerJa, true, true, true, true)    // set termVectors and termPositions to true
-)
-val analyzerDefault = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer())
-val schema = Schema(analyzerDefault, fieldTypes)
-
 // write documents into an index
+val schema = SchemaLoader.load("examples/schema/ceeaus.conf")
 val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "CEEAUS", "PLAIN").children()
