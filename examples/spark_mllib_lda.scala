@@ -1,7 +1,7 @@
 import java.io.{FileWriter, BufferedWriter}
 
 import org.nlp4l.core.{IReader, SchemaLoader}
-import org.nlp4l.spark.mllib.LDAAdapter
+import org.nlp4l.spark.mllib.VectorsAdapter
 import org.nlp4l.stats.{WordCounts, TFIDF}
 
 /*
@@ -38,13 +38,13 @@ val docs = reader.universalset()
 // generate TF vectors
 val (features, vectors) = TFIDF.tfVectors(reader, "body", docs.toList)
 // output TF vectors
-new LDAAdapter().dumpVectors(vectors, "data.txt")
+new VectorsAdapter().dumpVectors(vectors, "data.txt")
 // output words
 dumpWords(features, "words.txt")
 
 // ex2)
 val (features2, vectors2) = TFIDF.tfVectors(reader, "body_pos_nn", docs.toList)
-new LDAAdapter().dumpVectors(vectors2, "data_noun.txt")
+new VectorsAdapter().dumpVectors(vectors2, "data_noun.txt")
 dumpWords(features2, "words_noun.txt")
 
 // ex3)
@@ -53,5 +53,5 @@ val counts_df = WordCounts.countDF(reader, "body_pos_nn", Set.empty)
 val highIDFwords = counts_df.filter(e => e._2 > 2 && e._2 < reader.numDocs / 2.0).map(_._1)
 // generate TF vectors with selected words
 val (features3, vectors3) = TFIDF.tfVectors(reader, "body_pos_nn", docs.toList, highIDFwords.toSet)
-new LDAAdapter().dumpVectors(vectors3, "data_noun_high_idf.txt")
+new VectorsAdapter().dumpVectors(vectors3, "data_noun_high_idf.txt")
 dumpWords(features3, "words_high_idf.txt")

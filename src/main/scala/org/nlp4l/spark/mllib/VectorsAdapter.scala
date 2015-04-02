@@ -24,8 +24,8 @@ import org.nlp4l.stats.TFIDF
 /**
  * Experimental.
  */
-class LDAAdapter {
-  def dumpVectors(vectors: List[Vector[Long]], out: String = "data.txt"): Unit = {
+class VectorsAdapter {
+  def dumpVectors(vectors: List[Vector[Any]], out: String = "data.txt"): Unit = {
     val file: File = new File(out)
     val writer: BufferedWriter = new BufferedWriter(new FileWriter(file))
     try {
@@ -39,7 +39,7 @@ class LDAAdapter {
   }
 }
 
-object LDAAdapter {
+object VectorsAdapter {
   def main(args: Array[String]): Unit = {
     val idxDir = args(0)
     val schemaFile = args(1)
@@ -56,8 +56,8 @@ object LDAAdapter {
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
     val docs = reader.universalset()
-    val (features, vectors) = TFIDF.tfVectors(reader, field, docs.toList)
-    new LDAAdapter().dumpVectors(vectors, out)
+    val (features, vectors) = TFIDF.tfIdfVectors(reader, field, docs.toList)
+    new VectorsAdapter().dumpVectors(vectors, out)
 
     // output words
     val writer = new BufferedWriter(new FileWriter(words_out))
