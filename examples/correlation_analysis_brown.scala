@@ -20,7 +20,7 @@ import org.nlp4l.stats._
 
 val index = "/tmp/index-brown"
 
-val schema = SchemaLoader.load("examples/schema/brown.conf")
+val schema = SchemaLoader.loadFile("examples/schema/brown.conf")
 val reader = IReader(index, schema)
 
 val docSetGOV = reader.subset(TermFilter("cat", "government"))

@@ -20,7 +20,7 @@ import org.nlp4l.stats._
 
 val index = "/tmp/index-ceeaus-all"
 
-val schema = SchemaLoader.load("examples/schema/ceeaus.conf")
+val schema = SchemaLoader.loadFile("examples/schema/ceeaus.conf")
 val reader = IReader(index, schema)
 
 val docSetJUS = reader.subset(TermFilter("file", "ceejus_all.txt"))

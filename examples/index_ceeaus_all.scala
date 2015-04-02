@@ -69,7 +69,7 @@ val p = Path(new File(index))
 p.deleteRecursively()
 
 // write documents into an index
-val schema = SchemaLoader.load("examples/schema/ceeaus.conf")
+val schema = SchemaLoader.loadFile("examples/schema/ceeaus.conf")
 val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "CEEAUS", "PLAIN").children()
