@@ -150,6 +150,12 @@ ISBN978-4-87424-498-2
 corpora/CEEAUS 以下に「言語研究のための統計入門」付属CD-ROMのデータの"INDIVIDUAL WRITERS"以下のフォルダー（"INDIVIDUAL WRITERS"は含まない）を、また、"PLAIN"以下のフォルダー（"PLAIN"を含む）をコピーしてください。コピー後、次のようになっていることを確認してください。
 
 ```shell
+# ディレクトリの作成
+$ mkdir -p corpora/CEEAUS
+
+# ここで CD-ROM をコピー
+
+# コピー内容の確認
 $ find corpora/CEEAUS -type d
 corpora/CEEAUS
 corpora/CEEAUS/CEECUS
@@ -535,24 +541,7 @@ nlp4l> :load examples/chisquare_test_ceeaus.scala
 val index = "/tmp/index-ceeaus-all"
 
 // (2)
-def schema(): Schema = {
-  val analyzerEn = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
-  val builder = AnalyzerBuilder()
-  builder.withTokenizer("whitespace")
-  builder.addTokenFilter("lowerCase")
-  val analyzerWs = builder.build
-  val analyzerJa = Analyzer(new org.apache.lucene.analysis.ja.JapaneseAnalyzer())
-  val fieldTypes = Map(
-    "file" -> FieldType(null, true, true),
-    "type" -> FieldType(null, true, true),
-    "cat" -> FieldType(null, true, true),
-    "body_en" -> FieldType(analyzerEn, true, true, true, true),   // set termVectors and termPositions to true
-    "body_ws" -> FieldType(analyzerWs, true, true, true, true),   // set termVectors and termPositions to true
-    "body_ja" -> FieldType(analyzerJa, true, true, true, true)    // set termVectors and termPositions to true
-  )
-  val analyzerDefault = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer())
-  Schema(analyzerDefault, fieldTypes)
-}
+val schema = SchemaLoader.load("examples/schema/ceeaus.conf")
 
 // (3)
 val reader = IReader(index, schema())
@@ -707,30 +696,74 @@ val wcNAS = WordCounts.count(reader, "body_ws", words.toSet, docSetNAS)
 
 ここで注目していただきたいのが対象フィールドにbody_wsを指定している点です。前述の仮説検定ではbody_enフィールドを対象にしていました。
 
-スキーマ設定を見ると、body_enはLuceneのStandardAnalyzerを使って作成したanalyzerEnを(7)、body_wsはLuceneのWhitespaceTokenizerにLowerCaseFilterを組み合わせて作成したanalyzerWsを(8)使って単語分割されています。
+スキーマ設定ファイル examples/schema/ceeaus.confを見ると、body_enはLuceneのStandardAnalyzerを使って作成した(7)を、body_wsはLuceneのWhitespaceTokenizerにLowerCaseFilterを組み合わせて作成した(8)を使って単語分割されています。
 
-```scala
-def schema(): Schema = {
-  // (7)
-  val analyzerEn = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
-
-  // (8)
-  val builder = AnalyzerBuilder()
-  builder.withTokenizer("whitespace")
-  builder.addTokenFilter("lowerCase")
-  val analyzerWs = builder.build
-
-  val analyzerJa = Analyzer(new org.apache.lucene.analysis.ja.JapaneseAnalyzer())
-  val fieldTypes = Map(
-    "file" -> FieldType(null, true, true),
-    "type" -> FieldType(null, true, true),
-    "cat" -> FieldType(null, true, true),
-    "body_en" -> FieldType(analyzerEn, true, true, true, true),   // (7)
-    "body_ws" -> FieldType(analyzerWs, true, true, true, true),   // (8)
-    "body_ja" -> FieldType(analyzerJa, true, true, true, true)
-  )
-  val analyzerDefault = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer())
-  Schema(analyzerDefault, fieldTypes)
+```json
+schema {
+  defAnalyzer {
+    class : org.apache.lucene.analysis.standard.StandardAnalyzer
+  }
+  fields　= [
+    {
+      name : file
+      indexed : true
+      stored : true
+    }
+    {
+      name : type
+      indexed : true
+      stored : true
+    }
+    {
+      name : cat
+      indexed : true
+      stored : true
+    }
+    {
+      name : body_en  // (7)
+      analyzer : {
+        tokenizer {
+          factory : standard
+        }
+        filters = [
+          {
+            factory : lowercase
+          }
+        ]
+      }
+      indexed : true
+      stored : true
+      termVector : true
+      positions : true
+    }
+    {
+      name : body_ws  // (8)
+      analyzer : {
+        tokenizer {
+          factory : whitespace
+        }
+        filters = [
+          {
+            factory : lowercase
+          }
+        ]
+      }
+      indexed : true
+      stored : true
+      termVector : true
+      positions : true
+    }
+    {
+      name : body_ja
+      analyzer : {
+        class : org.apache.lucene.analysis.ja.JapaneseAnalyzer
+      }
+      indexed : true
+      stored : true
+      termVector : true
+      positions : true
+    }
+  ]
 }
 ```
 

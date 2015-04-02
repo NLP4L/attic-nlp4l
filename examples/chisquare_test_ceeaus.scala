@@ -20,26 +20,8 @@ import org.nlp4l.stats._
 
 val index = "/tmp/index-ceeaus-all"
 
-def schema(): Schema = {
-  val analyzerEn = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
-  val builder = AnalyzerBuilder()
-  builder.withTokenizer("whitespace")
-  builder.addTokenFilter("lowerCase")
-  val analyzerWs = builder.build
-  val analyzerJa = Analyzer(new org.apache.lucene.analysis.ja.JapaneseAnalyzer())
-  val fieldTypes = Map(
-    "file" -> FieldType(null, true, true),
-    "type" -> FieldType(null, true, true),
-    "cat" -> FieldType(null, true, true),
-    "body_en" -> FieldType(analyzerEn, true, true, true, true),   // set termVectors and termPositions to true
-    "body_ws" -> FieldType(analyzerWs, true, true, true, true),   // set termVectors and termPositions to true
-    "body_ja" -> FieldType(analyzerJa, true, true, true, true)    // set termVectors and termPositions to true
-  )
-  val analyzerDefault = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer())
-  Schema(analyzerDefault, fieldTypes)
-}
-
-val reader = IReader(index, schema())
+val schema = SchemaLoader.load("examples/schema/ceeaus.conf")
+val reader = IReader(index, schema)
 
 val docSetJUS = reader.subset(TermFilter("file", "ceejus_all.txt"))
 val docSetNAS = reader.subset(TermFilter("file", "ceenas_all.txt"))
