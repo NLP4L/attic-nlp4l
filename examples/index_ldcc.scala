@@ -45,7 +45,7 @@ val p = Path(new File(index))
 p.deleteRecursively()
 
 // write documents into an index
-val schema = SchemaLoader.load("examples/schema/ldcc.conf")
+val schema = SchemaLoader.loadFile("examples/schema/ldcc.conf")
 val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "ldcc", "text").children()

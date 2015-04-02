@@ -30,8 +30,8 @@ import scala.collection.immutable.HashMap
 object SchemaLoader {
 
   /**
-   * Load a schema configuration from given resource.
-   * @param resource the resource path to schema configuration
+   * Load a schema configuration from the resource with given name. [[InvalidSchemaException]] will be thrown if the resource is not found in the current class path .
+   * @param resource the resource name to schema configuration
    * @return a new [[Schema]] instance
    */
   def load(resource: String): Schema = {
@@ -40,7 +40,7 @@ object SchemaLoader {
   }
 
   /**
-   * Load a schema configuration from given resource.
+   * Load a schema configuration from given file path. [[InvalidSchemaException]] will be thrown if the file is not found.
    * @param path the path to schema configuration
    * @return a new [[Schema]] instance
    */

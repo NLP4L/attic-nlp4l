@@ -62,7 +62,7 @@ val fieldTypes = Map(
 val schema = Schema(analyzerEn, fieldTypes)
 */
 // load schema from file
-val schema = SchemaLoader.load("examples/schema/brown.conf")
+val schema = SchemaLoader.loadFile("examples/schema/brown.conf")
 
 // write documents into an index
 val writer = IWriter(index, schema)
