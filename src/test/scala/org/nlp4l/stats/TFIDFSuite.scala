@@ -30,7 +30,7 @@ class TFIDFSuite extends FunSuite with BeforeAndAfterAll {
   val indexDir = "/tmp/testindex_tfidfsuite"
   val contentAnalyzer = Analyzer(new StandardAnalyzer)
   val fieldTypes = Map("title" -> FieldType(null, true, true), "content" -> FieldType(contentAnalyzer, true, true, termVectors = true))
-      val schema = Schema(Analyzer(new KeywordAnalyzer), fieldTypes)
+  val schema = Schema(Analyzer(new KeywordAnalyzer), fieldTypes)
   val docs = List(
     Document(Set(
       Field("title", "London Bridge"),
@@ -66,7 +66,7 @@ class TFIDFSuite extends FunSuite with BeforeAndAfterAll {
     Try(path.deleteRecursively(continueOnFailure = false))
   }
 
-  test("generate a term vector from a document") {
+  test("generate a TF term vector from a document") {
     val reader = IReader(indexDir, schema)
     val (words, vector) = TFIDF.tfVector(reader, "content", 0)
     assert(words.size == vector.size)
@@ -74,7 +74,7 @@ class TFIDFSuite extends FunSuite with BeforeAndAfterAll {
     assertResult(Vector(2,4,1,4,1,2,1))(vector)
   }
 
-  test("generate a term vactor from a document with specified features") {
+  test("generate a TF term vector from a document with specified features") {
     val reader = IReader(indexDir, schema)
     val features = Set("bridge", "london", "lady", "gold")
     val (words, vector) = TFIDF.tfVector(reader, "content", 0, features)
@@ -82,7 +82,7 @@ class TFIDFSuite extends FunSuite with BeforeAndAfterAll {
     assertResult(Vector(2,0,1,2))(vector)
   }
 
-  test("generate term vectors from documents") {
+  test("generate TF term vectors from documents") {
     val reader = IReader(indexDir, schema)
     val (words, vectors) = TFIDF.tfVectors(reader, "content", List(0,1,2))
     assert(vectors.forall(_.length == words.length))
@@ -92,7 +92,7 @@ class TFIDFSuite extends FunSuite with BeforeAndAfterAll {
     assertResult(Vector(0,0,0,1,0,2,4,0,4,1,0,1,4,2,0,0))(vectors(2))
   }
 
-  test("generate term vectors from documents with specified features") {
+  test("generate TF term vectors from documents with specified features") {
     val reader = IReader(indexDir, schema)
     val features = Set("down", "go", "bridge", "silver", "make", "falling", "lady")
     val (words, vectors) = TFIDF.tfVectors(reader, "content", List(0,1,2), features)
@@ -100,6 +100,138 @@ class TFIDFSuite extends FunSuite with BeforeAndAfterAll {
     assertResult(Vector(2,4,4,0,1,0,0))(vectors(0))
     assertResult(Vector(0,0,0,0,1,0,0))(vectors(1))
     assertResult(Vector(0,0,0,0,1,0,2))(vectors(2))
+  }
+
+  test("generate a TF/IDF term vector from a document") {
+    val reader = IReader(indexDir, schema)
+    val N = reader.numDocs
+    val dfMap = WordCounts.countDF(reader, "content", Set.empty)
+    val (words, vector) = TFIDF.tfIdfVector(reader, "content", 0)
+    assert(words.size == vector.size)
+    assertResult(Vector("bridge", "down", "fair", "falling", "lady", "london", "my"))(words)
+    assertResult(
+      Vector(
+        2 * math.log(N/dfMap("bridge").toDouble),
+        4 * math.log(N/dfMap("down").toDouble),
+        1 * math.log(N/dfMap("fair").toDouble),
+        4 * math.log(N/dfMap("falling").toDouble),
+        1 * math.log(N/dfMap("lady").toDouble),
+        2 * math.log(N/dfMap("london").toDouble),
+        1 * math.log(N/dfMap("my"))))(vector)
+  }
+
+  test("generate a TF/IDF term vector from a document with specified features") {
+    val reader = IReader(indexDir, schema)
+    val N = reader.numDocs
+    val dfMap = WordCounts.countDF(reader, "content", Set.empty)
+    val features = Set("bridge", "london", "lady", "gold")
+    val (words, vector) = TFIDF.tfIdfVector(reader, "content", 0, features)
+    assertResult(Vector("bridge", "gold","lady", "london"))(words)
+    assertResult(
+      Vector(
+        2 * math.log(N/dfMap("bridge").toDouble),
+        0.0,
+        1 * math.log(N/dfMap("lady").toDouble),
+        2 * math.log(N/dfMap("london").toDouble)))(vector)
+  }
+
+  test("generate TF/IDF term vectors from documents") {
+    val reader = IReader(indexDir, schema)
+    val N = reader.numDocs
+    val dfMap = WordCounts.countDF(reader, "content", Set.empty)
+    val (words, vectors) = TFIDF.tfIdfVectors(reader, "content", List(0,1,2))
+    assert(vectors.forall(_.length == words.length))
+    assertResult(Vector("bridge", "build", "down", "fair", "falling", "gold", "have", "how", "i", "lady", "london", "my", "none", "silver", "up", "we"))(words)
+    assertResult(
+      Vector(
+        2  * math.log(N/dfMap("bridge").toDouble),
+        0.0,
+        4 * math.log(N/dfMap("down").toDouble),
+        1 * math.log(N/dfMap("fair").toDouble),
+        4 * math.log(N/dfMap("falling").toDouble),
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1 * math.log(N/dfMap("lady").toDouble),
+        2 * math.log(N/dfMap("london").toDouble),
+        1 * math.log(N/dfMap("my").toDouble),
+        0.0,
+        0.0,
+        0.0,
+        0.0))(vectors(0))
+    assertResult(
+      Vector(
+        0.0,
+        4 * math.log(N/dfMap("build").toDouble),
+        0.0,
+        1 * math.log(N/dfMap("fair").toDouble),
+        0.0,
+        0.0,
+        0.0,
+        2 * math.log(N/dfMap("how").toDouble),
+        0.0,
+        1 * math.log(N/dfMap("lady").toDouble),
+        0.0,
+        1 * math.log(N/dfMap("my").toDouble),
+        0.0,
+        0.0,
+        4 * math.log(N/dfMap("up").toDouble),
+        2 * math.log(N/dfMap("we").toDouble)))(vectors(1))
+    assertResult(
+      Vector(
+        0.0,
+        0.0,
+        0.0,
+        1 * math.log(N/dfMap("fair")),
+        0.0,
+        2 * math.log(N/dfMap("gold")),
+        4 * math.log(N/dfMap("have")),
+        0.0,
+        4 * math.log(N/dfMap("i")),
+        1 * math.log(N/dfMap("lady")),
+        0.0,
+        1 * math.log(N/dfMap("my")),
+        4 * math.log(N/dfMap("none")),
+        2 * math.log(N/dfMap("silver")),
+        0.0,
+        0.0))(vectors(2))
+  }
+
+  test("generate TF/IDF term vectors from documents with specified features") {
+    val reader = IReader(indexDir, schema)
+    val N = reader.numDocs
+    val dfMap = WordCounts.countDF(reader, "content", Set.empty)
+    val features = Set("down", "go", "bridge", "silver", "make", "falling", "lady")
+    val (words, vectors) = TFIDF.tfIdfVectors(reader, "content", List(0,1,2), features)
+    assertResult(Vector("bridge", "down", "falling", "go", "lady", "make", "silver"))(words)
+    assertResult(
+      Vector(
+        2 * math.log(N/dfMap("bridge").toDouble),
+        4 * math.log(N/dfMap("down").toDouble),
+        4 * math.log(N/dfMap("falling").toDouble),
+        0.0,
+        1 * math.log(N/dfMap("lady").toDouble),
+        0.0,
+        0.0))(vectors(0))
+    assertResult(
+      Vector(
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1 * math.log(N/dfMap("lady").toDouble),
+        0.0,
+        0.0))(vectors(1))
+    assertResult(
+      Vector(
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1 * math.log(N/dfMap("lady").toDouble),
+        0.0,
+        2 * math.log(N/dfMap("silver").toDouble)))(vectors(2))
   }
 
 }

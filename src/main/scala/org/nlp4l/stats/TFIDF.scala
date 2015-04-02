@@ -59,4 +59,42 @@ object TFIDF {
     val vectors = countMaps.map(map => mergedWords.map(w => map.getOrElse(w, 0L)).toVector)
     (mergedWords.toVector, vectors)
   }
+
+  /**
+   * Generate basic tf-idf based feature vector from a document. Weight for each term is given by
+   *
+   *  (tf) * log(N / df)
+   *
+   * where tf is term frequency of the term in given document, N is the total number of documents and df is document frequency for the term.
+   *
+   * @param reader the IReader instance
+   * @param field the field name for counting words
+   * @param docId the Lucene document id
+   * @param words the set of words(terms) considered as feature. All words(terms) will be taken as features if empty set is given.
+   * @return the Vector of words and the feature vector
+   */
+  def tfIdfVector(reader: IReader, field: String, docId: Int, words: Set[String] = Set.empty): (Vector[String], Vector[Double]) = {
+    if (words.isEmpty) {
+      val countMap = WordCounts.count(reader, field, words, Set(docId))
+      val dfMap = WordCounts.countDF(reader, field, countMap.keys.toSet)
+      val tfIdfMap = countMap.map(e => (e._1, e._2 * math.log(reader.numDocs / dfMap(e._1).toDouble)))
+      val tMap = TreeMap(tfIdfMap.toArray: _*)
+      (tMap.keys.toVector, tMap.values.toVector)
+    } else {
+      val countMap = WordCounts.count(reader, field, words, Set(docId))
+      val dfMap = WordCounts.countDF(reader, field, words)
+      val features = words.toSeq.sorted
+      val vector = features.map(w => if (countMap.contains(w)) countMap(w) * math.log(reader.numDocs / dfMap(w).toDouble) else 0.0).toVector
+      (features.toVector, vector)
+    }
+  }
+
+  def tfIdfVectors(reader: IReader, field: String, docIds: List[Int], words: Set[String] = Set.empty): (Vector[String], List[Vector[Double]]) = {
+    val countMaps = docIds.map(id => WordCounts.count(reader, field, words, Set(id)))
+    val dfMap = if (words.isEmpty) WordCounts.countDF(reader, field, countMaps.flatMap(_.keys).toSet) else WordCounts.countDF(reader, field, words)
+    val mergedWords = if (words.isEmpty) countMaps.flatMap(_.keys).toSet.toSeq.sorted else words.toSeq.sorted
+    val vectors = countMaps.map(map => mergedWords.map(w => if (map.contains(w)) map(w) * math.log(reader.numDocs / dfMap(w).toDouble) else 0.0).toVector)
+    (mergedWords.toVector, vectors)
+  }
+
 }
