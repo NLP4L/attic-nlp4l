@@ -1,19 +1,3 @@
-/*
- * Copyright 2015 RONDHUIT Co.,LTD.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package org.nlp4l.core
 
 import java.nio.file.FileSystems
@@ -23,16 +7,18 @@ import org.apache.lucene.util.IntsRefBuilder
 import org.apache.lucene.util.fst._
 
 object SimpleFST {
-  def apply() = new SimpleFST()
+  def apply(generateUnknownWords: Boolean = false) = new SimpleFST(generateUnknownWords)
 }
 
-class SimpleFST() {
+class SimpleFST(generateUnknownWords: Boolean) {
   val outputs = PositiveIntOutputs.getSingleton.asInstanceOf[Outputs[Long]]
   val builder: Builder[Long] = new Builder[Long](FST.INPUT_TYPE.BYTE4, outputs)
   val scratchInts = new IntsRefBuilder
   val scratchArc = new FST.Arc[Long]
   var fst: FST[Long] = null
   var fstReader: FST.BytesReader = null
+  val MAX_LEN_UNKNOWN_WORD = 4
+  val UNKNOWN_WORD: Long = -1
 
   // add entries in alphabetical order
   def addEntry(text: String, value: Long): Unit = {
@@ -54,7 +40,12 @@ class SimpleFST() {
     if(str.length <= pos + index) result
     else{
       val codePoint = str.codePointAt(pos + index)
-      if(fst.findTargetArc(codePoint, scratchArc, scratchArc, fstReader) == null) result
+      if(fst.findTargetArc(codePoint, scratchArc, scratchArc, fstReader) == null){
+        if(result.size > 0 || !generateUnknownWords) result
+        else{
+          unknownWords(str, pos, 1, result)  // result is empty
+        }
+      }
       else{
         val nextIndex = index + Character.charCount(codePoint)
         val pendingOutput2 = fst.outputs.add(pendingOutput, scratchArc.output)
@@ -66,6 +57,13 @@ class SimpleFST() {
           leftMostSubstring(str, pos, nextIndex, pendingOutput2, result)
         }
       }
+    }
+  }
+
+  private def unknownWords(str: String, pos: Int, index: Int, result: List[(Int, Long)]): Seq[(Int, Long)] = {
+    if(str.length < pos + index || index > MAX_LEN_UNKNOWN_WORD) result
+    else{
+      unknownWords(str, pos, index + 1, result :+ (index, UNKNOWN_WORD))
     }
   }
 
