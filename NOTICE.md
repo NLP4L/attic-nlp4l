@@ -83,12 +83,14 @@ This product includes software developed at The Apache Software Foundation (http
   * NOTICE https://github.com/apache/lucene-solr/blob/trunk/lucene/NOTICE.txt
 
 * Apache HttpComponents Client
+
 Copyright 1999-2015 The Apache Software Foundation
 
 * ScalaTest (http://www.scalatest.org/)
   * NOTICE https://github.com/scalatest/scalatest/blob/master/NOTICE
 
 * Typsafe config (https://github.com/typesafehub/config)
+
 Copyright (C) 2011-2012 Typesafe Inc. <http://typesafe.com>
 
 ## EPFL LICENSE
