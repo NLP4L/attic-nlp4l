@@ -18,28 +18,34 @@ package org.nlp4l.spark.mllib
 
 import java.io.{FileWriter, BufferedWriter, File}
 
+import org.nlp4l.core.{IReader, SchemaLoader}
+import org.nlp4l.stats.TFIDF
 import resource._
 
-import org.nlp4l.core.{SchemaLoader, IReader}
-import org.nlp4l.stats.TFIDF
-
 /**
- * Experimental.
+ * Experimental
  */
-class VectorsAdapter {
-  def dumpVectors(vectors: List[Vector[Any]], out: String = "data.txt"): Unit = {
+class LabeledPointAdapter {
+
+  def dumpLabeledPoints(labels: Vector[Int], vectors: List[Vector[AnyVal]],  out: String = "data.txt"): Unit = {
+    assert(labels.size == vectors.size)
     val file: File = new File(out)
     for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
-      vectors.foreach(vec => {
-        output.write(vec.mkString(" "))
+      labels.zip(vectors).foreach{case(label: Int, vector: Vector[AnyVal]) => {
+        // output label
+        output.write(label.toString)
+        output.write(" ")
+        // output index:value pairs for LIBSVM format. indices are one-based and in ascending order.
+        val vecWithIdx = vector.zipWithIndex.filter(_._1 != 0).map(t => (t._2 + 1).toString + ":" + t._1.toString)
+        output.write(vecWithIdx.mkString(" "))
         output.newLine()
-      })
+      }}
       output.flush()
     }
   }
 }
 
-object VectorsAdapter {
+object LabeledPointAdapter {
   def main(args: Array[String]): Unit = {
     val idxDir = args(0)
     val schemaFile = args(1)
@@ -56,8 +62,10 @@ object VectorsAdapter {
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
     val docs = reader.universalset()
-    val (features, vectors) = TFIDF.tfVectors(reader, field, docs.toList)
-    new VectorsAdapter().dumpVectors(vectors, out)
+    val words = Set("time", "book", "drink", "beer", "job", "walk")
+    val (features, vectors) = TFIDF.tfIdfVectors(reader, field, docs.toList, words)
+    val labels = Vector.fill(vectors.size)(1)
+    new LabeledPointAdapter().dumpLabeledPoints(labels, vectors, out)
 
     // output words
     val writer = new BufferedWriter(new FileWriter(words_out))
