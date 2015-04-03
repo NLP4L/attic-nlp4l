@@ -33,7 +33,8 @@ object NLP4LBuild extends Build {
             "com.novocode" % "junit-interface" % "0.11" % "test",
             "org.scala-lang" % "scala-compiler" % "2.11.6",
             "jline" % "jline" % "2.12",
-            "com.typesafe" % "config" % "1.2.1"
+            "com.typesafe" % "config" % "1.2.1",
+            "com.jsuereth" % "scala-arm_2.10" % "1.3"
           ),
           testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
           packMain := Map("nlp4l" -> "org.nlp4l.repl.NLP4LMainGenericRunner"),

@@ -18,6 +18,8 @@ package org.nlp4l.spark.mllib
 
 import java.io.{FileWriter, BufferedWriter, File}
 
+import resource._
+
 import org.nlp4l.core.{SchemaLoader, IReader}
 import org.nlp4l.stats.TFIDF
 
@@ -27,14 +29,11 @@ import org.nlp4l.stats.TFIDF
 class VectorsAdapter {
   def dumpVectors(vectors: List[Vector[Any]], out: String = "data.txt"): Unit = {
     val file: File = new File(out)
-    val writer: BufferedWriter = new BufferedWriter(new FileWriter(file))
-    try {
+    for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
       vectors.foreach(vec => {
-        writer.write(vec.mkString(" "))
-        writer.newLine()
+        output.write(vec.mkString(" "))
+        output.newLine()
       })
-    } finally {
-      writer.close()
     }
   }
 }
@@ -56,7 +55,7 @@ object VectorsAdapter {
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
     val docs = reader.universalset()
-    val (features, vectors) = TFIDF.tfIdfVectors(reader, field, docs.toList)
+    val (features, vectors) = TFIDF.tfVectors(reader, field, docs.toList)
     new VectorsAdapter().dumpVectors(vectors, out)
 
     // output words
