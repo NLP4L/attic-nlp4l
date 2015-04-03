@@ -78,18 +78,18 @@ POSSIBILITY OF SUCH DAMAGE.
 
 This product includes software developed at The Apache Software Foundation (http://www.apache.org/).
 
-* Apache Lucene (https://lucene.apache.org/core/)
-  * LICENSE https://github.com/mocobeta/lucene-solr/blob/trunk/lucene/LICENSE.txt
-  * NOTICE https://github.com/apache/lucene-solr/blob/trunk/lucene/NOTICE.txt
+Apache Lucene (https://lucene.apache.org/core/)
+* LICENSE https://github.com/mocobeta/lucene-solr/blob/trunk/lucene/LICENSE.txt
+* NOTICE https://github.com/apache/lucene-solr/blob/trunk/lucene/NOTICE.txt
 
-* Apache HttpComponents Client
+Apache HttpComponents Client
 
 Copyright 1999-2015 The Apache Software Foundation
 
-* ScalaTest (http://www.scalatest.org/)
-  * NOTICE https://github.com/scalatest/scalatest/blob/master/NOTICE
+ScalaTest (http://www.scalatest.org/)
+* NOTICE https://github.com/scalatest/scalatest/blob/master/NOTICE
 
-* Typsafe config (https://github.com/typesafehub/config)
+Typsafe config (https://github.com/typesafehub/config)
 
 Copyright (C) 2011-2012 Typesafe Inc. <http://typesafe.com>
 
@@ -97,21 +97,21 @@ Copyright (C) 2011-2012 Typesafe Inc. <http://typesafe.com>
 
 The following softwares are provided under EPFL license.
 
-* scala-arm (https://github.com/jsuereth/scala-arm)
-  * LICENSE https://github.com/jsuereth/scala-arm
+scala-arm (https://github.com/jsuereth/scala-arm)
+* LICENSE https://github.com/jsuereth/scala-arm
 
 ## Eclipse Public License 1.0
 
 The following softwares are provided under Eclipse Public License 1.0
 
-* JUnit (https://github.com/junit-team/junit)
-  * LICENSE https://github.com/junit-team/junit/blob/master/LICENSE-junit.txt
-  * NOTICE https://github.com/junit-team/junit/blob/master/NOTICE.txt
+JUnit (https://github.com/junit-team/junit)
+* LICENSE https://github.com/junit-team/junit/blob/master/LICENSE-junit.txt
+* NOTICE https://github.com/junit-team/junit/blob/master/NOTICE.txt
   
 ## BSD License
 
 The following softwares are provided under BSD License.
   
-* jline2 (https://github.com/jline/jline2)
-  * LICENSE https://github.com/jline/jline2/blob/master/LICENSE.txt
+jline2 (https://github.com/jline/jline2)
+* LICENSE https://github.com/jline/jline2/blob/master/LICENSE.txt
   
