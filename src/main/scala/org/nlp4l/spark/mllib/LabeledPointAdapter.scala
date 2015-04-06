@@ -103,7 +103,7 @@ object LabeledPointAdapter {
     println("Schema file: " + schemaFile)
     println("Feature Field: " + field)
     println("Label Field: " + labelField)
-    println("Label Mapping File" + labelFile)
+    println("Label Mapping File: " + labelFile)
     println("Output vectors to: " + out)
     println("Output words to: " + wordsOut)
     println("(Optional) Features: " + words.mkString(","))
