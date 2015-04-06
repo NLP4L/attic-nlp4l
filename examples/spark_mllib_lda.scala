@@ -1,5 +1,7 @@
 import java.io.{FileWriter, BufferedWriter}
 
+import resource._
+
 import org.nlp4l.core.{IReader, SchemaLoader}
 import org.nlp4l.spark.mllib.VectorsAdapter
 import org.nlp4l.stats.{WordCounts, TFIDF}
@@ -21,11 +23,8 @@ import org.nlp4l.stats.{WordCounts, TFIDF}
  */
 
 def dumpWords(words: Vector[String], out: String): Unit = {
-  val writer = new BufferedWriter(new FileWriter(out))
-  try {
-    words.foreach(f => {writer.write(f); writer.newLine()})
-  } finally {
-    writer.close()
+  for (output <- managed(new BufferedWriter(new FileWriter(out)))) {
+    words.foreach(f => {output.write(f); output.newLine()})
   }
 }
 
