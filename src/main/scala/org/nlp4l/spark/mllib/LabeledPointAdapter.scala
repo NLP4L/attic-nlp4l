@@ -23,32 +23,10 @@ import org.nlp4l.stats.TFIDF
 import resource._
 
 /**
- * Experimental
- */
-class LabeledPointAdapter {
-
-  def dumpLabeledPoints(labels: Vector[Int], vectors: List[Vector[AnyVal]], out: String = "data.txt"): Unit = {
-    val file: File = new File(out)
-    for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
-      labels.zip(vectors).foreach{case(label: Int, vector: Vector[AnyVal]) => {
-        // output label
-        output.write(label.toString)
-        output.write(" ")
-        // output index:value pairs for LIBSVM format. indices are one-based and in ascending order.
-        val vecWithIdx = vector.zipWithIndex.filter(_._1 != 0).map(t => (t._2 + 1).toString + ":" + t._1.toString)
-        output.write(vecWithIdx.mkString(" "))
-        output.newLine()
-      }}
-      output.flush()
-    }
-  }
-}
-
-/**
- * Main for dump LabeledPointAdapter
+ * Main for dump LabeledPoints
  * Dumps feature vectors as LIBSVM format.
  */
-object LabeledPointAdapter {
+object LabeledPointAdapter extends Adapter {
   def main(args: Array[String]): Unit = {
     val usage =
       """
@@ -56,6 +34,10 @@ object LabeledPointAdapter {
         |LabelPointAdapter
         |       -s <schema file>
         |       -f <feature field>
+        |       [-t int|float]
+        |       [--tfmode <TF mode>]
+        |       [--smthterm <smoothing term>]
+        |       [--idfmode <IDF mode>]
         |       -l <label field>
         |       [--labelfile <label mapping file>]
         |       [--labelfileSep <sep>]
@@ -69,6 +51,10 @@ object LabeledPointAdapter {
       case Nil => parsed
       case "-s" :: value :: tail => parseOption(parsed + ('schema -> value), tail)
       case "-f" :: value :: tail => parseOption(parsed + ('field -> value), tail)
+      case "-t" :: value :: tail => parseOption(parsed + ('type -> value), tail)
+      case "--tfmode" :: value :: tail => parseOption(parsed + ('tfmode -> value), tail)
+      case "--smthterm" :: value :: tail => parseOption(parsed + ('smthterm -> value), tail)
+      case "--idfmode" :: value :: tail => parseOption(parsed + ('idfmode -> value), tail)
       case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail)
       case "--labelfile" :: value :: tail => parseOption(parsed + ('labelfile -> value), tail)
       case "--labelfileSep" :: value :: tail => parseOption(parsed + ('labelfileSep -> value), tail)
@@ -85,10 +71,18 @@ object LabeledPointAdapter {
       println(usage)
       System.exit(1)
     }
+    if (options.contains('type) && options('type).toLowerCase != "int" && options('type).toLowerCase != "float") {
+      println(usage)
+      System.exit(1)
+    }
 
     val idxDir = options('index)
     val schemaFile = options('schema)
     val field = options('field)
+    val vtype = options.getOrElse('type, "float").toLowerCase
+    val tfMode = options.getOrElse('tfmode, "n")
+    val smthterm = options.getOrElse('smthterm, "0.4").toDouble
+    val idfMode = options.getOrElse('idfmode, "t")
     val labelField = options('label)
     val labelFile = options.getOrElse('labelfile, "label.txt")
     val labelFileSep = options.getOrElse('labelfileSep, "\t")
@@ -102,6 +96,10 @@ object LabeledPointAdapter {
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
     println("Feature Field: " + field)
+    println("Value type for vectors: " + vtype)
+    println("TF mode: " + tfMode)
+    println("Smooth term (for TF mode = \"m\"): " + smthterm)
+    println("IDF mode: " + idfMode)
     println("Label Field: " + labelField)
     println("Label Mapping File: " + labelFile)
     println("Output vectors to: " + out)
@@ -113,50 +111,15 @@ object LabeledPointAdapter {
 
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
-
-    def makeLabelMap: Map[String, Int] = {
-      val file = new File(labelFile)
-      if (file.exists()) {
-        // generate mappings from existing file
-        val builder = Map.newBuilder[String, Int]
-        for (input <- managed(new BufferedReader(new FileReader(file)))) {
-          def read(): Unit = input.readLine() match {
-            case null => ()
-            case line => {
-              val cols = line.split(labelFileSep)
-              builder += (cols(0) -> cols(1).toInt)
-              read()
-            }
-          }
-          read()
-        }
-        builder.result()
-      } else {
-        // generate mappings from index
-        // labels (integer value) are automatically generated.
-        val labelMap = reader.field(labelField) match {
-          case Some(fieldInfo) => fieldInfo.terms.map(_.text).zipWithIndex.toMap
-          case _ => Map.empty[String, Int]
-        }
-        // output generated mappings to file for next use.
-        for (output <- managed(new PrintWriter(file))) {
-          labelMap.toList sortBy(x => x._2) foreach { case (value, label) =>
-              output.println("%s%s%d".format(value, labelFileSep, label))
-          }
-        }
-        labelMap
-      }
-    }
-
     val docIds = reader.universalset().toList
-
-    val labelMap = makeLabelMap
-    val labels = fieldValues(reader, docIds, Seq(labelField)).map(m => m(labelField)(0)).map(labelMap(_)).toVector
-
-    //val words = Set("time", "book", "drink", "beer", "job", "walk")
-    val (features, vectors) = TFIDF.tfIdfVectors(reader, field, docIds, words)
-    //val labels = Vector.fill(vectors.size)(1)
-    new LabeledPointAdapter().dumpLabeledPoints(labels, vectors, out)
+    val labelMap = makeLabelMap(reader, labelField, labelFile, labelFileSep)
+    val labels = fieldValues(reader, docIds, Seq(labelField)).map(m => m(labelField).head).map(labelMap(_)).toVector
+    val (features, vectors) = TFIDF.tfIdfVectors(reader, field, docIds, words, tfMode, smthterm, idfMode)
+    if (vtype == "int") {
+      dumpLabeledPoints(labels, vectors.map(_.map(_.toInt)), out)
+    } else {
+      dumpLabeledPoints(labels, vectors, out)
+    }
 
     // output words
     val wordsFile = new File(wordsOut)
@@ -180,13 +143,55 @@ object LabeledPointAdapter {
     })
   }
 
-  private def fieldValues(reader: RawReader, docIds: List[Int], fields: Seq[String]): List[Map[String, List[String]]] = {
-    docIds.map(id => reader.document(id) match {
-      case Some(doc) => {
-        fields.map(f => (f, doc.getValue(f).getOrElse(List.empty))).toMap
+  def makeLabelMap(reader: RawReader, labelField: String, labelFile: String, labelFileSep: String): Map[String, Int] = {
+    val file = new File(labelFile)
+    if (file.exists()) {
+      // generate mappings from existing file
+      val builder = Map.newBuilder[String, Int]
+      for (input <- managed(new BufferedReader(new FileReader(file)))) {
+        def read(): Unit = input.readLine() match {
+          case null => ()
+          case line => {
+            val cols = line.split(labelFileSep)
+            builder += (cols(0) -> cols(1).toInt)
+            read()
+          }
+        }
+        read()
       }
-      case _ => Map.empty[String, List[String]]
-    })
+      builder.result()
+    } else {
+      // generate mappings from index
+      // labels (integer value) are automatically generated.
+      val labelMap = reader.field(labelField) match {
+        case Some(fieldInfo) => fieldInfo.terms.map(_.text).zipWithIndex.toMap
+        case _ => Map.empty[String, Int]
+      }
+      // output generated mappings to file for next use.
+      for (output <- managed(new PrintWriter(file))) {
+        labelMap.toList sortBy(x => x._2) foreach { case (value, label) =>
+          output.println("%s%s%d".format(value, labelFileSep, label))
+        }
+      }
+      labelMap
+    }
   }
+
+  def dumpLabeledPoints(labels: Vector[Int], vectors: List[Vector[AnyVal]], out: String): Unit = {
+    val file: File = new File(out)
+    for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
+      labels.zip(vectors).foreach{case(label: Int, vector: Vector[AnyVal]) => {
+        // output label
+        output.write(label.toString)
+        output.write(" ")
+        // output index:value pairs for LIBSVM format. indices are one-based and in ascending order.
+        val vecWithIdx = vector.zipWithIndex.filter(_._1 != 0).map(t => (t._2 + 1).toString + ":" + t._1.toString)
+        output.write(vecWithIdx.mkString(" "))
+        output.newLine()
+      }}
+      output.flush()
+    }
+  }
+
 
 }

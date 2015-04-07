@@ -16,17 +16,125 @@
 
 package org.nlp4l.spark.mllib
 
-import java.io.{FileWriter, BufferedWriter, File}
+import java.io.{PrintWriter, FileWriter, BufferedWriter, File}
 
+import org.nlp4l.spark.mllib.LabeledPointAdapter._
 import resource._
 
 import org.nlp4l.core.{SchemaLoader, IReader}
 import org.nlp4l.stats.TFIDF
 
+
 /**
- * Experimental.
+ * Main for dump Vectors
+ * Dumps feature vectors as space separated format
  */
-class VectorsAdapter {
+object VectorsAdapter extends Adapter {
+  def main(args: Array[String]): Unit = {
+    val usage =
+      """
+        |Usage:
+        |LabelPointAdapter
+        |       -s <schema file>
+        |       -f <feature field>
+        |       [-t int|float]
+        |       [--tfmode <TF mode>]
+        |       [--smthterm <smoothing term>]
+        |       [--idfmode <IDF mode>]
+        |       [-d <data output file>]
+        |       [-w <words output file>]
+        |       [--features <feature1>{,<feature2>}]
+        |       [--values <field1>{,<field2>}] [--valuesDir <dir>] [--valuesSep <sep>]
+        |       <index dir>
+      """.stripMargin
+    def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
+      case Nil => parsed
+      case "-s" :: value :: tail => parseOption(parsed + ('schema -> value), tail)
+      case "-f" :: value :: tail => parseOption(parsed + ('field -> value), tail)
+      case "-t" :: value :: tail => parseOption(parsed + ('type -> value), tail)
+      case "--tfmode" :: value :: tail => parseOption(parsed + ('tfmode -> value), tail)
+      case "--smthterm" :: value :: tail => parseOption(parsed + ('smthterm -> value), tail)
+      case "--idfmode" :: value :: tail => parseOption(parsed + ('idfmode -> value), tail)
+      case "-d" :: value :: tail => parseOption(parsed + ('data -> value), tail)
+      case "-w" :: value :: tail => parseOption(parsed + ('words -> value), list)
+      case "--features" :: value :: tail => parseOption(parsed + ('features -> value), tail)
+      case "--values" :: value :: tail => parseOption(parsed + ('values -> value), tail)
+      case "--valuesDir" :: value :: tail => parseOption(parsed + ('valuesDir -> value), tail)
+      case "--valuesSep" :: value :: tail => parseOption(parsed + ('valuesSep -> value), tail)
+      case value :: tail => parseOption(parsed + ('index -> value), tail)
+    }
+    val options = parseOption(Map(), args.toList)
+    if (!List('index, 'schema, 'field).forall(options.contains)) {
+      println(usage)
+      System.exit(1)
+    }
+    if (options.contains('type) && options('type).toLowerCase != "int" && options('type).toLowerCase != "float") {
+      println(usage)
+      System.exit(1)
+    }
+
+    val idxDir = options('index)
+    val schemaFile = options('schema)
+    val field = options('field)
+    val vtype = options.getOrElse('type, "float").toLowerCase
+    val tfMode = options.getOrElse('tfmode, "n")
+    val smthterm = options.getOrElse('smthterm, "0.4").toDouble
+    val idfMode = options.getOrElse('idfmode, "t")
+    val out = options.getOrElse('data, "data.txt")
+    val wordsOut = options.getOrElse('words, "words.txt")
+    val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
+    val fNames = options.getOrElse('values, "").split(",").toList
+    val valuesOutDir = options.getOrElse('valuesDir, ".")
+    val valuesSep = options.getOrElse('valuesSep, ",")
+
+    println("Index directory: " + idxDir)
+    println("Schema file: " + schemaFile)
+    println("Feature Field: " + field)
+    println("Value type for vectors: " + vtype)
+    println("TF mode: " + tfMode)
+    println("Smooth term (for TF mode = \"m\"): " + smthterm)
+    println("IDF mode: " + idfMode)
+    println("Output vectors to: " + out)
+    println("Output words to: " + wordsOut)
+    println("(Optional) Features: " + words.mkString(","))
+    println("(Optional) Additional values: " + fNames.mkString(","))
+    println("(Optional) Additional values output to: " + valuesOutDir)
+    println("(Optional) Additional values separator: " + valuesSep)
+
+
+    val schema = SchemaLoader.loadFile(schemaFile)
+    val reader = IReader(idxDir, schema)
+    val docIds = reader.universalset().toList
+    val (features, vectors) = TFIDF.tfIdfVectors(reader, field, docIds, words, tfMode, smthterm, idfMode)
+    if (vtype == "int") {
+      dumpVectors(vectors.map(_.map(_.toInt)), out)
+    } else {
+      dumpVectors(vectors, out)
+    }
+
+    // output words
+    val wordsFile = new File(wordsOut)
+    for (output <- managed(new PrintWriter(new FileWriter(wordsFile)))) {
+      features.foreach(output.println)
+    }
+
+    // output additional values
+    // a file is created for each field
+    val dir = new File(valuesOutDir)
+    if (!dir.exists()) dir.mkdirs()
+    val values = fieldValues(reader, docIds, fNames)
+    fNames.foreach(fName => {
+      val file = new File(valuesOutDir, "values_" + fName + ".txt")
+      for (output <- managed(new PrintWriter(new FileWriter(file)))) {
+        values.foreach(m => {
+          val line = m.getOrElse(fName, List.empty).mkString(valuesSep)
+          output.println(line)
+        })
+      }
+    })
+
+  }
+
   def dumpVectors(vectors: List[Vector[Any]], out: String = "data.txt"): Unit = {
     val file: File = new File(out)
     for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
@@ -37,34 +145,5 @@ class VectorsAdapter {
       output.flush()
     }
   }
-}
 
-object VectorsAdapter {
-  def main(args: Array[String]): Unit = {
-    val idxDir = args(0)
-    val schemaFile = args(1)
-    val field = args(2)
-    val out = if (args.size > 3) args(3) else "data.txt"
-    val words_out = if (args.size > 4) args(4) else "words.txt"
-
-    println("Index directory: " + idxDir)
-    println("Schema file: " + schemaFile)
-    println("Field: " + field)
-    println("Output vectors to: " + out)
-    println("Output words to: " + words_out)
-
-    val schema = SchemaLoader.loadFile(schemaFile)
-    val reader = IReader(idxDir, schema)
-    val docs = reader.universalset()
-    val (features, vectors) = TFIDF.tfVectors(reader, field, docs.toList)
-    new VectorsAdapter().dumpVectors(vectors, out)
-
-    // output words
-    val writer = new BufferedWriter(new FileWriter(words_out))
-    try {
-      features.foreach(f => {writer.write(f); writer.newLine()})
-    } finally {
-      writer.close()
-    }
-  }
 }
