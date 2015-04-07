@@ -34,7 +34,7 @@ class HmmTokenizer(model: HmmModel) {
       val wrds = model.fst.leftMostSubstring(str, pos)
       wrds.foreach{ wrd =>
         val epos = wrd._1
-        val classes = model.costConditionalClasses(wrd._2.toInt)
+        val classes = model.conditionalClassesCost(wrd._2.toInt)
         debugPrintWord(str, pos, epos, classes)
         classes.foreach{ cls =>
           val node = Node(cls._1, cls._2, pos, epos)
@@ -49,7 +49,8 @@ class HmmTokenizer(model: HmmModel) {
 
   private def debugPrintWord(str: String, spos: Int, epos: Int, classes: List[(Int, Int)]): Unit = {
     if(debug){
-      println("%s %s".format(str.substring(spos, epos), classes.map(e => (model.classes(e._1)._1, e._2))))
+      println("%d %d".format(spos, epos))
+      println("%s %s".format(str.substring(spos, epos), classes.map(e => (model.className(e._1), e._2))))
     }
   }
 
@@ -80,7 +81,7 @@ class HmmTokenizer(model: HmmModel) {
       buf.toList.reverse
     }
     else{
-      val token = Token(str.substring(node.spos, node.epos), model.classes(node.cls)._1)
+      val token = Token(str.substring(node.spos, node.epos), model.className(node.cls))
       buf += token
       backTrace(str, node.backLink, buf)
     }

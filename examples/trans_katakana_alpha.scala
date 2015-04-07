@@ -2,26 +2,35 @@ import java.io.File
 
 import org.nlp4l.lm._
 
-import com.ibm.icu.text.Transliterator
-
 import scala.io._
+import scala.util.matching.Regex
 import scalax.file.Path
 
 val index = "/tmp/index-transliteration"
 
-// create hmm model index
-val trans = Transliterator.getInstance("Katakana-Latin")
-val aligner = new StringAligner
 // remove index directory before creating it
 val p = Path(new File(index))
 p.deleteRecursively()
 val indexer = new HmmModelIndexer(index)
 
-val file = Source.fromFile("train_data/alpha_katakana.txt", "UTF-8")
+val file = Source.fromFile("train_data/alpha_katakana_aligned.txt", "UTF-8")
 
+val pattern: Regex = """([\u30A0-\u30FF]+)([a-zA-Z]+)(.*)""".r
+
+def align(result: List[(String, String)], str: String): List[(String, String)] = {
+  str match {
+    case pattern(a, b, c) => {
+      align(result :+ (a, b), c)
+    }
+    case _ => {
+      result
+    }
+  }
+}
+
+// create hmm model index
 file.getLines.foreach{ line: String =>
-  val params = line.split(",").map(_.trim)
-  val doc = aligner.align(trans.transliterate(params(1)), params(0))
+  val doc = align(List.empty[(String, String)], line)
   indexer.addDocument(doc)
 }
 
@@ -34,9 +43,10 @@ val model = HmmModel(index)
 
 // print the model
 println("\n=== classes ===")
-model.classes.foreach(
-  println(_)
-)
+val tableSize = model.classNum
+for(i <- 0 to tableSize - 1){
+  println(model.className(i))
+}
 
 println("\n=== classNamesDic ===")
 model.classNamesDic.foreach{
@@ -49,14 +59,13 @@ model.costInitialState.foreach{
 }
 
 println("\n=== costConnection ===")
-val tableSize = model.classes.size
 print("   ")
 for(i <- 0 to tableSize - 1){
-  print("%10s".format(model.classes(i)._1))
+  print("%10s".format(model.className(i)))
 }
 println
 for(i <- 0 to tableSize - 1){
-  print("%4s ".format(model.classes(i)._1))
+  print("%4s ".format(model.className(i)))
   for(j <- 0 to tableSize - 1){
     print("%8d  ".format(model.costConnection(i)(j)))
   }
@@ -82,11 +91,16 @@ println("\n=== wordDic(tempDic) ===")
 model.tempDic.foreach{ e =>
   println(e._1)
   e._2.foreach{ g =>
-    println("\t%s(%d) %d".format(model.classes(g._1), g._1, g._2))
+    println("\t%s %d (%d) %d".format(model.className(g._1), model.classFreq(g._1), g._1, g._2))
   }
 }
 
 println("\n=== tokenizer test ===")
 val tokenizer = HmmTokenizer(model)
 
-tokenizer.tokens(trans.transliterate("パナソニック"))
+tokenizer.tokens("フランス")
+tokenizer.tokens("エンタープライズ")
+tokenizer.tokens("パナソニック")
+tokenizer.tokens("アクション")
+tokenizer.tokens("プログラム")
+tokenizer.tokens("ポイント")

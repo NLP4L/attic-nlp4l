@@ -48,10 +48,13 @@ object HmmModelIndexer {
 }
 
 class HmmModel(index: String) extends HmmModelSchema {
+  val UNKNOWN_WORD = -1
+  val UNKNOWN_CLASS = -1
+  val UNKNOWN_CLASS_LABEL = "X"
   val reader = IReader(index, schema)
 
   // create class# -> class name dictionary
-  val classes = reader.field("class").get.terms.map(e => (e.text, e.totalTermFreq.toDouble)).toArray
+  private val classes = reader.field("class").get.terms.map(e => (e.text, e.totalTermFreq.toDouble)).toArray
 
   // create class name -> class# dictionary
   val classNamesDic = (for{
@@ -104,7 +107,7 @@ class HmmModel(index: String) extends HmmModelSchema {
 
   // create FST
   val fst = SimpleFST(true)
-  val costConditionalClasses = new Array[List[(Int,Int)]](words.size)
+  private val costConditionalClasses = new Array[List[(Int,Int)]](words.size)
   addWord(fst, 0, tempDic, costConditionalClasses)
   fst.finish
 
@@ -153,6 +156,29 @@ class HmmModel(index: String) extends HmmModelSchema {
       addWord(fst, index + 1, entries.tail, costConditionalClasses)
     }
   }
+
+  def className(idx: Int): String = idx match {
+    case UNKNOWN_CLASS => {
+      UNKNOWN_CLASS_LABEL
+    }
+    case _ => {
+      classes(idx)._1
+    }
+  }
+
+  def classFreq(idx: Int): Int = classes(idx)._2.toInt
+
+  def classNum(): Int = classes.size
+
+  def conditionalClassesCost(idx: Int): List[(Int,Int)] =
+    idx match {
+      case UNKNOWN_WORD => {
+        List((UNKNOWN_CLASS, MAX_COST))
+      }
+      case _ => {
+        costConditionalClasses(idx)
+      }
+    }
 }
 
 object HmmModel {

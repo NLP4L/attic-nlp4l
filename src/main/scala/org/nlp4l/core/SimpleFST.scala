@@ -63,7 +63,7 @@ class SimpleFST(generateUnknownWords: Boolean) {
   private def unknownWords(str: String, pos: Int, index: Int, result: List[(Int, Long)]): Seq[(Int, Long)] = {
     if(str.length < pos + index || index > MAX_LEN_UNKNOWN_WORD) result
     else{
-      unknownWords(str, pos, index + 1, result :+ (index, UNKNOWN_WORD))
+      unknownWords(str, pos, index + 1, result :+ (pos + index, UNKNOWN_WORD))
     }
   }
 
