@@ -1,6 +1,8 @@
 # What's NLP4L ?
 
-NLP4L is a natural language processing tool for [Apache Lucene](https://lucene.apache.org/core/) written in Scala. As NLP4L processes document data registered in the Lucene index, you can directly access a word database normalized by powerful Lucene Analyzer and use handy search functions. Being written in Scala, NLP4L excels at trying ad hoc interactive processing as well. 
+NLP4L is a natural language processing tool for [Apache Lucene](https://lucene.apache.org/core/) written in Scala. The main purpose of NLP4L is to use the NLP technology to improve Lucene users' search experience. Lucene/Solr, for example, already provides its users with auto-complete and suggestion functions for search keywords. Using NLP technology, NLP4L development members may be able to present better keywords. In addition, NLP4L provides functions to collaborate with existing machine learning tools, including one to directly create document vector from a Lucene index and write it to a LIBSVM format file.
+
+As NLP4L processes document data registered in the Lucene index, you can directly access a word database normalized by powerful Lucene Analyzer and use handy search functions. Being written in Scala, NLP4L excels at trying ad hoc interactive processing as well. 
 
 Refer to the following documents for more details.
 
