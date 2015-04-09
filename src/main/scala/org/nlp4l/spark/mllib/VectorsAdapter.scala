@@ -18,7 +18,7 @@ package org.nlp4l.spark.mllib
 
 import java.io.{PrintWriter, FileWriter, BufferedWriter, File}
 
-import org.nlp4l.spark.mllib.LabeledPointAdapter._
+import org.nlp4l.util.Adapter
 import resource._
 
 import org.nlp4l.core.{SchemaLoader, IReader}
@@ -47,23 +47,7 @@ object VectorsAdapter extends Adapter {
         |       [--values <field1>{,<field2>}] [--valuesDir <dir>] [--valuesSep <sep>]
         |       <index dir>
       """.stripMargin
-    def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
-      case Nil => parsed
-      case "-s" :: value :: tail => parseOption(parsed + ('schema -> value), tail)
-      case "-f" :: value :: tail => parseOption(parsed + ('field -> value), tail)
-      case "-t" :: value :: tail => parseOption(parsed + ('type -> value), tail)
-      case "--tfmode" :: value :: tail => parseOption(parsed + ('tfmode -> value), tail)
-      case "--smthterm" :: value :: tail => parseOption(parsed + ('smthterm -> value), tail)
-      case "--idfmode" :: value :: tail => parseOption(parsed + ('idfmode -> value), tail)
-      case "-d" :: value :: tail => parseOption(parsed + ('data -> value), tail)
-      case "-w" :: value :: tail => parseOption(parsed + ('words -> value), list)
-      case "--features" :: value :: tail => parseOption(parsed + ('features -> value), tail)
-      case "--values" :: value :: tail => parseOption(parsed + ('values -> value), tail)
-      case "--valuesDir" :: value :: tail => parseOption(parsed + ('valuesDir -> value), tail)
-      case "--valuesSep" :: value :: tail => parseOption(parsed + ('valuesSep -> value), tail)
-      case value :: tail => parseOption(parsed + ('index -> value), tail)
-    }
-    val options = parseOption(Map(), args.toList)
+    val options = parseCommonOption(Map(), args.toList)
     if (!List('index, 'schema, 'field).forall(options.contains)) {
       println(usage)
       System.exit(1)

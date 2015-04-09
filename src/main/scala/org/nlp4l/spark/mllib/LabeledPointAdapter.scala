@@ -20,6 +20,7 @@ import java.io._
 
 import org.nlp4l.core.{RawReader, IReader, SchemaLoader}
 import org.nlp4l.stats.TFIDF
+import org.nlp4l.util.Adapter
 import resource._
 
 /**
@@ -49,24 +50,12 @@ object LabeledPointAdapter extends Adapter {
       """.stripMargin
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
       case Nil => parsed
-      case "-s" :: value :: tail => parseOption(parsed + ('schema -> value), tail)
-      case "-f" :: value :: tail => parseOption(parsed + ('field -> value), tail)
-      case "-t" :: value :: tail => parseOption(parsed + ('type -> value), tail)
-      case "--tfmode" :: value :: tail => parseOption(parsed + ('tfmode -> value), tail)
-      case "--smthterm" :: value :: tail => parseOption(parsed + ('smthterm -> value), tail)
-      case "--idfmode" :: value :: tail => parseOption(parsed + ('idfmode -> value), tail)
       case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail)
       case "--labelfile" :: value :: tail => parseOption(parsed + ('labelfile -> value), tail)
       case "--labelfileSep" :: value :: tail => parseOption(parsed + ('labelfileSep -> value), tail)
-      case "-d" :: value :: tail => parseOption(parsed + ('data -> value), tail)
-      case "-w" :: value :: tail => parseOption(parsed + ('words -> value), list)
-      case "--features" :: value :: tail => parseOption(parsed + ('features -> value), tail)
-      case "--values" :: value :: tail => parseOption(parsed + ('values -> value), tail)
-      case "--valuesDir" :: value :: tail => parseOption(parsed + ('valuesDir -> value), tail)
-      case "--valuesSep" :: value :: tail => parseOption(parsed + ('valuesSep -> value), tail)
-      case value :: tail => parseOption(parsed + ('index -> value), tail)
+      case value :: tail => parseOption(parsed, tail)
     }
-    val options = parseOption(Map(), args.toList)
+    val options = parseCommonOption(Map(), args.toList) ++ parseOption(Map(), args.toList)
     if (!List('index, 'schema, 'label, 'field).forall(options.contains)) {
       println(usage)
       System.exit(1)
