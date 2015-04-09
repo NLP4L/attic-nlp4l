@@ -97,7 +97,7 @@ Fields Info:
 
 ```shell
 nlp4l> browseTerms("title")
-Browse terms for field title, page size 20
+Browse terms for field 'title', page size 20
 Type "nextTerms(skip)" or "nt" to browse next terms.
 Type "prevTerms(skip)" or "pt" to browse prev terms.
 Type "topTerms(n)" to find top n frequent terms.
@@ -126,7 +126,7 @@ christian (DF=1, Total TF=1)
 
 ```shell
 nlp4l> browseTermDocs("title", "iphone")
-Browse docs for term title in field iphone, page size 20
+Browse docs for term 'iphone' in field 'title', page size 20
 Type "nextDocs(skip)" or "nd" to browse next terms.
 Type "prevDocs(skip)" or "pd" to browse prev terms.
 

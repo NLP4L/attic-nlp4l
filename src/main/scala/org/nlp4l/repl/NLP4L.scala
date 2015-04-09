@@ -58,7 +58,7 @@ object NLP4L {
         val (next, prev) = termsPager(pageSize)
         _nextTerms = next
         _prevTerms = prev
-        println("Browse terms for field %s, page size %d".format(field.name, pageSize))
+        println("Browse terms for field '%s', page size %d".format(field.name, pageSize))
         println("Type \"nextTerms(skip)\" or \"nt\" to browse next terms.")
         println("Type \"prevTerms(skip)\" or \"pt\" to browse prev terms.")
         println("Type \"topTerms(n)\" to find top n frequent terms.")
@@ -76,7 +76,7 @@ object NLP4L {
           val (next, prev) = docsPager(pageSize)
           _nextDocs = next
           _prevDocs = prev
-          println("Browse docs for term %s in field %s, page size %d".format(field.name, term.text, pageSize))
+          println("Browse docs for term '%s' in field '%s', page size %d".format(term.text, field.name, pageSize))
           println("Type \"nextDocs(skip)\" or \"nd\" to browse next terms.")
           println("Type \"prevDocs(skip)\" or \"pd\" to browse prev terms.")
         }

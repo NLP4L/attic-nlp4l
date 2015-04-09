@@ -967,7 +967,7 @@ title フィールド中に含まれる単語を閲覧してみましょう。�
 
 ```shell
 nlp4l> browseTerms("title")
-Browse terms for field title, page size 20
+Browse terms for field 'title', page size 20
 Type "nextTerms(skip)" or "nt" to browse next terms.
 Type "prevTerms(skip)" or "pt" to browse prev terms.
 Type "topTerms(n)" to find top n frequent terms.
@@ -1013,7 +1013,7 @@ title フィールドに "iphone" という単語を含むドキュメントを�
 
 ```shell
 nlp4l> browseTermDocs("title", "iphone")
-Browse docs for term title in field iphone, page size 20
+Browse docs for term 'iphone' in field 'title', page size 20
 Type "nextDocs(skip)" or "nd" to browse next terms.
 Type "prevDocs(skip)" or "pd" to browse prev terms.
 
@@ -1184,8 +1184,6 @@ scala> topics.take(5).foreach(println)
 ```
 
 詳しい Spark MLlib の使い方は Spark の API ドキュメントを参照してください。
-
-TBD
 
 # Luceneを使う{#useLucene}
 
