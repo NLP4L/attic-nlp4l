@@ -83,6 +83,53 @@ class SimpleFST(generateUnknownWords: Boolean) {
     }
   }
 
+  def exactMatch(str: String): Long = {
+    // TODO avoid using leftMostSubstring() in exactMatch() as it is somewhat inefficient
+    val result = leftMostSubstring(str, 0)
+    if(result.length > 0){
+      val last = result.last
+      if(last._1 == str.length) last._2
+      else UNKNOWN_WORD
+    }
+    else UNKNOWN_WORD
+  }
+/*
+  def exactMatch(str: String): Long = {
+    val pendingOutput = outputs.getNoOutput
+    fst.getFirstArc(scratchArc)
+    exactMatch(str, 0, pendingOutput)
+  }
+
+  private def exactMatch(str: String, index: Int, pendingOutput: Long): Long = {
+    println("index = %d".format(index))
+    if(str.length <= index){
+      if(scratchArc.isFinal()){
+        val pendingOutput2 = fst.outputs.add(pendingOutput, scratchArc.output)
+        fst.outputs.add(pendingOutput2, scratchArc.nextFinalOutput)
+      }
+      else{
+        UNKNOWN_WORD
+      }
+    }
+    else{
+      val codePoint = str.codePointAt(index)
+      if(fst.findTargetArc(codePoint, scratchArc, scratchArc, fstReader) == null){
+        UNKNOWN_WORD
+      }
+      else{
+        val nextIndex = index + Character.charCount(codePoint)
+        val pendingOutput2 = fst.outputs.add(pendingOutput, scratchArc.output)
+        if(scratchArc.isFinal()){
+          val matchOutputs = fst.outputs.add(pendingOutput2, scratchArc.nextFinalOutput)
+          exactMatch(str, nextIndex, matchOutputs)
+        }
+        else{
+          exactMatch(str, nextIndex, pendingOutput2)
+        }
+      }
+    }
+  }
+*/
   def save(dirStr: String, file: String = "fst.dic"): Unit = {
     val dir: Directory = FSDirectory.open(FileSystems.getDefault.getPath(dirStr))
     val out: IndexOutput = dir.createOutput(file, IOContext.DEFAULT)

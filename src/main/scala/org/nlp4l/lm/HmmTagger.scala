@@ -16,67 +16,65 @@
 
 package org.nlp4l.lm
 
-object HmmTokenizer {
-  def apply(model: HmmModel) = new HmmTokenizer(model)
+object HmmTagger {
+  def apply(model: HmmModel) = new HmmTagger(model)
 }
 
-class HmmTokenizer(model: HmmModel) {
+class HmmTagger(model: HmmModel) {
 
-  var nodesTableByEnd = scala.collection.mutable.Map.empty[Int, Node]
+  var lattice: Array[Node] = null
   val CLASS_BOS = -2
   val CLASS_EOS = -2
   val debug = true
 
   def tokens(str: String): Seq[Token] = {
-    nodesTableByEnd.clear()
-    val node = parseForward(str)
+    val words = str.split("\\s+").toList
+    lattice = new Array[Node](words.length + 1)
+    val node = parseForward(words)
     backTrace(str, node.backLink)
   }
 
-  def parseForward(str: String): Node = {
-    val BOS = Node(CLASS_BOS, 0, -1, 0, 0)
-    val EOS = Node(CLASS_EOS, 0, str.length, -1)
-    addNodeToLattice(0, BOS)
-    parseForward(str, 0, EOS)
+  def parseForward(words: List[String]): Node = {
+    val BOS = Node("<s>", CLASS_BOS, 0, -1, 0)
+    val EOS = Node("</s>", CLASS_EOS, 0, words.length, 0)
+    addNodeToLattice(-1, BOS)
+    parseForward(words, 0, EOS)
   }
 
-  def parseForward(str: String, pos: Int, EOS: Node): Node = {
-    if(pos == str.length){
-      val leftNode = nodesTableByEnd.getOrElse(pos, null)
+  def parseForward(words: List[String], pos: Int, EOS: Node): Node = {
+    if(pos == words.length){
+      val leftNode = lattice(pos)
       processLeftLink(leftNode, EOS)
       EOS
     }
     else{
-      val wrds = model.fst.leftMostSubstring(str, pos)
-      wrds.foreach{ wrd =>
-        val epos = wrd._1
-        val classes = model.conditionalClassesCost(wrd._2.toInt)
-        debugPrintWord(str, pos, epos, classes)
-        classes.foreach{ cls =>
-          val node = Node(cls._1, cls._2, pos, epos)
-          addNodeToLattice(epos, node)
-          val leftNode = nodesTableByEnd.getOrElse(pos, null)
-          processLeftLink(leftNode, node)
-        }
+      val word = model.fst.exactMatch(words(pos))
+      val classes = model.conditionalClassesCost(word.toInt)
+      debugPrintWord(words(pos), pos, classes)
+      classes.foreach{ cls =>
+        val node = Node(words(pos), cls._1, cls._2, pos)
+        addNodeToLattice(pos, node)
+        val leftNode = lattice(pos)
+        processLeftLink(leftNode, node)
       }
-      parseForward(str, pos + 1, EOS)
+      parseForward(words, pos + 1, EOS)
     }
   }
 
-  private def debugPrintWord(str: String, spos: Int, epos: Int, classes: List[(Int, Int)]): Unit = {
+  private def debugPrintWord(word: String, pos: Int, classes: List[(Int, Int)]): Unit = {
     if(debug){
-      println("%d %d".format(spos, epos))
-      println("%s %s".format(str.substring(spos, epos), classes.map(e => (model.className(e._1), e._2))))
+      println("%d".format(pos))
+      println("%s %s".format(word, classes.map(e => (model.className(e._1), e._2))))
     }
   }
 
   def addNodeToLattice(pos: Int, node: Node): Unit = {
-    val topNode = nodesTableByEnd.getOrElse(pos, null)
-    if(topNode == null) nodesTableByEnd += pos -> node
+    val idx = pos + 1
+    val topNode = lattice(idx)
+    if(topNode == null) lattice(idx) = node
     else{
-      nodesTableByEnd -= pos
       node.nextSameEnd = topNode
-      nodesTableByEnd += (pos -> node)
+      lattice(idx) = node
     }
   }
 
@@ -97,7 +95,7 @@ class HmmTokenizer(model: HmmModel) {
       buf.toList.reverse
     }
     else{
-      val token = Token(str.substring(node.spos, node.epos), model.className(node.cls))
+      val token = Token(node.word, model.className(node.cls))
       buf += token
       backTrace(str, node.backLink, buf)
     }
@@ -105,7 +103,7 @@ class HmmTokenizer(model: HmmModel) {
 
   case class Token(word: String, cls: String)
 
-  case class Node(cls: Int, cost: Int, spos: Int, epos: Int, tcost: Int = Int.MaxValue){
+  case class Node(word: String, cls: Int, cost: Int, pos: Int, tcost: Int = Int.MaxValue){
 
     var backLink: Node = null
     var total: Int = tcost

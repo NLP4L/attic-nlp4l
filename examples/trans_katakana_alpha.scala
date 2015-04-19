@@ -53,8 +53,8 @@ file.getLines.foreach{ line: String =>
 file.close
 
 indexer.close
-
 // read the model index
+
 val model = HmmModel(index)
 
 // print the model
