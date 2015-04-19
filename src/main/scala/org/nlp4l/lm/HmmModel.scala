@@ -119,6 +119,7 @@ class HmmModel(index: String) extends HmmModelSchema {
 
   // compute P( W_n | C_n ) = Count( C_n, W_n ) / Count( C_n )
   val wordClasses = reader.field("word_class").get.terms.map(e => (e.text, e.totalTermFreq.toDouble)).toList
+  println("size of wordClasses = %d".format(wordClasses.size))
   val tempDic = createDictionary(List.empty[(String, List[(Int, Int)])], List.empty[(Int, Int)], "", wordClasses)
 
   // create FST
@@ -141,7 +142,7 @@ class HmmModel(index: String) extends HmmModelSchema {
     }
     else{
       val h = list.head
-      println(h)
+      //println(h)
       val wcs = h._1.split("_")
       val w1 = wcs(0)
       val idx0 = wordDic.get(w1).get
