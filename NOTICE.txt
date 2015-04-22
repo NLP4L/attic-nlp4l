@@ -126,4 +126,12 @@ The following softwares are provided under BSD License.
   
 jline2 (https://github.com/jline/jline2)
 [LICENSE] https://github.com/jline/jline2/blob/master/LICENSE.txt
+
+================================================================================
+MIT License
+================================================================================
+
+The following softwares are provided under MIT License.
   
+ICU4J (http://site.icu-project.org/)
+[LICENSE] http://source.icu-project.org/repos/icu/icu/trunk/license.html

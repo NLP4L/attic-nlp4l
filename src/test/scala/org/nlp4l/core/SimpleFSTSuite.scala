@@ -44,13 +44,21 @@ class SimpleFSTSuite extends FunSuite with BeforeAndAfterAll {
     fst.finish()
   }
 
-  test("FST in memory random number test"){
+  test("FST in memory random number test for leftMostSubstring"){
     DATA.foreach{ k =>
       val result = fst.leftMostSubstring(k._1, 0)
       assert(result.size == 1)
       assert(result.head._1 == k._1.length)
       assert(result.head._2 == k._2)
     }
+  }
+
+  test("FST in memory random number test for exactMatch"){
+    DATA.foreach{ k =>
+      val result = fst.exactMatch(k._1)
+      assert(result === k._2)
+    }
+    assert(fst.exactMatch("notexist") == -1)
   }
 
   test("FST save/load with random number test"){
