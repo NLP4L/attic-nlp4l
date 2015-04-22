@@ -72,12 +72,11 @@ class HmmTokenizer(model: HmmModel) {
 
   def addNodeToLattice(pos: Int, node: Node): Unit = {
     val topNode = nodesTableByEnd.getOrElse(pos, null)
-    if(topNode == null) nodesTableByEnd += pos -> node
-    else{
+    if(topNode != null){
       nodesTableByEnd -= pos
       node.nextSameEnd = topNode
-      nodesTableByEnd += (pos -> node)
     }
+    nodesTableByEnd += (pos -> node)
   }
 
   private def processLeftLink(leftNode: Node, rightNode: Node): Unit = {

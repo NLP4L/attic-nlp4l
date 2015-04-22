@@ -110,4 +110,5 @@ model.tempDic.foreach{ e =>
 println("\n=== tagger test ===")
 val tagger = HmmTagger(model)
 
-tagger.tokens("I like to go to France .")
+tagger.tokens("i like to go to france .")
+tagger.tokens("you executed lucene program .")

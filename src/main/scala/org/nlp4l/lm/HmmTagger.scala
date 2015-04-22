@@ -36,7 +36,7 @@ class HmmTagger(model: HmmModel) {
 
   def parseForward(words: List[String]): Node = {
     val BOS = Node("<s>", CLASS_BOS, 0, -1, 0)
-    val EOS = Node("</s>", CLASS_EOS, 0, words.length, 0)
+    val EOS = Node("</s>", CLASS_EOS, 0, words.length)
     addNodeToLattice(-1, BOS)
     parseForward(words, 0, EOS)
   }
@@ -71,11 +71,10 @@ class HmmTagger(model: HmmModel) {
   def addNodeToLattice(pos: Int, node: Node): Unit = {
     val idx = pos + 1
     val topNode = lattice(idx)
-    if(topNode == null) lattice(idx) = node
-    else{
+    if(topNode != null){
       node.nextSameEnd = topNode
-      lattice(idx) = node
     }
+    lattice(idx) = node
   }
 
   private def processLeftLink(leftNode: Node, rightNode: Node): Unit = {

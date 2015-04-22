@@ -118,9 +118,10 @@ class HmmModel(index: String) extends HmmModelSchema {
   } yield p).toMap
 
   // compute P( W_n | C_n ) = Count( C_n, W_n ) / Count( C_n )
-  val wordClasses = reader.field("word_class").get.terms.map(e => (e.text, e.totalTermFreq.toDouble)).toList
+  val wordClasses = reader.field("word_class").get.terms.map(e => (e.text, e.totalTermFreq.toInt)).toArray
   println("size of wordClasses = %d".format(wordClasses.size))
-  val tempDic = createDictionary(List.empty[(String, List[(Int, Int)])], List.empty[(Int, Int)], "", wordClasses)
+  //val tempDic = createDictionary(List.empty[(String, List[(Int, Int)])], List.empty[(Int, Int)], "", wordClasses, 0)
+  val tempDic = createDictionary(wordClasses)
 
   // create FST
   val fst = SimpleFST(true)
@@ -134,14 +135,15 @@ class HmmModel(index: String) extends HmmModelSchema {
     (scala.math.log10(probability) * (-1000.toDouble)).toInt
   }
 
-  def createDictionary(result: List[(String, List[(Int, Int)])], value: List[(Int, Int)], word: String, list: List[(String, Double)]):
-    List[(String, List[(Int, Int)])] = {
-    if(list.isEmpty){
+  /* recursive version of this function leads StackOverFlow...
+  def createDictionary(result: List[(String, List[(Int, Int)])], value: List[(Int, Int)], word: String,
+                       list: Array[(String, Int)], index: Int): List[(String, List[(Int, Int)])] = {
+    if(list.size <= index){
       if(!value.isEmpty) result :+ (word, value)
       else result
     }
     else{
-      val h = list.head
+      val h = list(index)
       //println(h)
       val wcs = h._1.split("_")
       val w1 = wcs(0)
@@ -149,13 +151,56 @@ class HmmModel(index: String) extends HmmModelSchema {
       val idx1 = classNamesDic.get(wcs(1)).get
       val prob = h._2 / words(idx0)._2
       if(w1 == word){
-        createDictionary(result, value :+ (idx1, cost(prob)), word, list.tail)
+        createDictionary(result, value :+ (idx1, cost(prob)), word, list, index + 1)
       }
       else{
-        if(!value.isEmpty) createDictionary(result :+ (word, value), List((idx1, cost(prob))), w1, list.tail)
-        else createDictionary(result, List((idx1, cost(prob))), w1, list.tail)
+        if(!value.isEmpty) createDictionary(result :+ (word, value), List((idx1, cost(prob))), w1, list, index + 1)
+        else createDictionary(result, List((idx1, cost(prob))), w1, list, index + 1)
       }
     }
+  }
+  */
+
+  def createDictionary(wcCounts: Array[(String, Int)]): List[(String, List[(Int, Int)])] = {
+    var value = scala.collection.mutable.ArrayBuffer.empty[(Int, Int)]
+    var word: String = null
+    var result = scala.collection.mutable.ArrayBuffer.empty[(String, List[(Int, Int)])]
+    var wcs: Array[String] = null
+    var w1: String = null
+    var prob: Double = 0.0
+    var idx1: Int = -1
+
+    wcCounts.foreach{ h =>
+      wcs = h._1.split("_")
+      w1 = wcs(0)
+      val idx0 = wordDic.get(w1).get              // get word index
+      idx1 = classNamesDic.get(wcs(1)).get    // get class index
+      prob = h._2 / words(idx0)._2
+
+      word match {
+        case null => {
+          word = w1
+          value += Pair(idx1, cost(prob))
+        }
+        case w if w == w1 => {
+          value += Pair(idx1, cost(prob))
+        }
+        case _ => {
+          if(!value.isEmpty){
+            result += Pair(word, value.toList)
+          }
+          value = scala.collection.mutable.ArrayBuffer.empty[(Int, Int)]
+          word = w1
+          value += Pair(idx1, cost(prob))
+        }
+      }
+    }
+
+    if(!value.isEmpty){
+      result += Pair(word, value.toList)
+    }
+
+    result.sortBy{e => e._1}.toList
   }
 
   def connectionCost(leftClass: Int, rightClass: Int): Int = {
