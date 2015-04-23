@@ -23,8 +23,6 @@ object HmmTokenizer {
 class HmmTokenizer(model: HmmModel) extends HmmTracer {
 
   var nodesTableByEnd = scala.collection.mutable.Map.empty[Int, Node]
-  val CLASS_BOS = -2
-  val CLASS_EOS = -2
   val debug = true
 
   def tokens(str: String): Seq[Token] = {
@@ -79,27 +77,8 @@ class HmmTokenizer(model: HmmModel) extends HmmTracer {
     nodesTableByEnd += (pos -> node)
   }
 
-  private def processLeftLink(leftNode: AbstractNode, rightNode: AbstractNode): Unit = {
-    if(leftNode != null){
-      rightNode.replaceTotalCostIfSmaller(leftNode)
-      processLeftLink(leftNode.nextSameEnd, rightNode)
-    }
-  }
-
-  def backTrace(str: String, node: AbstractNode): Seq[Token] = {
-    val buf = scala.collection.mutable.ArrayBuffer.empty[Token]
-    backTrace(str, node, buf)
-  }
-
-  def backTrace(str: String, node: AbstractNode, buf: scala.collection.mutable.ArrayBuffer[Token]): Seq[Token] = {
-    if(node.cls == CLASS_BOS){
-      buf.toList.reverse
-    }
-    else{
-      val token = Token(str.substring(node.asInstanceOf[Node].spos, node.asInstanceOf[Node].epos), model.className(node.cls))
-      buf += token
-      backTrace(str, node.backLink, buf)
-    }
+  def createToken(str: String, node: AbstractNode): Token = {
+    Token(str.substring(node.asInstanceOf[Node].spos, node.asInstanceOf[Node].epos), model.className(node.cls))
   }
 
   object Node {

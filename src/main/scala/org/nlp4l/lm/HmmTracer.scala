@@ -17,6 +17,36 @@
 package org.nlp4l.lm
 
 abstract class HmmTracer {
+
+  val CLASS_BOS = -2
+  val CLASS_EOS = -2
+
+  def tokens(str: String): Seq[Token]
+
+  protected def processLeftLink(leftNode: AbstractNode, rightNode: AbstractNode): Unit = {
+    if(leftNode != null){
+      rightNode.replaceTotalCostIfSmaller(leftNode)
+      processLeftLink(leftNode.nextSameEnd, rightNode)
+    }
+  }
+
+  def createToken(str: String, node: AbstractNode): Token
+
+  def backTrace(str: String, node: AbstractNode): Seq[Token] = {
+    val buf = scala.collection.mutable.ArrayBuffer.empty[Token]
+    backTrace(str, node, buf)
+  }
+
+  def backTrace(str: String, node: AbstractNode, buf: scala.collection.mutable.ArrayBuffer[Token]): Seq[Token] = {
+    if(node.cls == CLASS_BOS){
+      buf.toList.reverse
+    }
+    else{
+      val token = createToken(str, node)
+      buf += token
+      backTrace(str, node.backLink, buf)
+    }
+  }
 }
 
 case class Token(word: String, cls: String)
