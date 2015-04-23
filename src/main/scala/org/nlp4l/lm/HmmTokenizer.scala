@@ -20,7 +20,7 @@ object HmmTokenizer {
   def apply(model: HmmModel) = new HmmTokenizer(model)
 }
 
-class HmmTokenizer(model: HmmModel) {
+class HmmTokenizer(model: HmmModel) extends HmmTracer {
 
   var nodesTableByEnd = scala.collection.mutable.Map.empty[Int, Node]
   val CLASS_BOS = -2
@@ -79,42 +79,32 @@ class HmmTokenizer(model: HmmModel) {
     nodesTableByEnd += (pos -> node)
   }
 
-  private def processLeftLink(leftNode: Node, rightNode: Node): Unit = {
+  private def processLeftLink(leftNode: AbstractNode, rightNode: AbstractNode): Unit = {
     if(leftNode != null){
       rightNode.replaceTotalCostIfSmaller(leftNode)
       processLeftLink(leftNode.nextSameEnd, rightNode)
     }
   }
 
-  def backTrace(str: String, node: Node): Seq[Token] = {
+  def backTrace(str: String, node: AbstractNode): Seq[Token] = {
     val buf = scala.collection.mutable.ArrayBuffer.empty[Token]
     backTrace(str, node, buf)
   }
 
-  def backTrace(str: String, node: Node, buf: scala.collection.mutable.ArrayBuffer[Token]): Seq[Token] = {
+  def backTrace(str: String, node: AbstractNode, buf: scala.collection.mutable.ArrayBuffer[Token]): Seq[Token] = {
     if(node.cls == CLASS_BOS){
       buf.toList.reverse
     }
     else{
-      val token = Token(str.substring(node.spos, node.epos), model.className(node.cls))
+      val token = Token(str.substring(node.asInstanceOf[Node].spos, node.asInstanceOf[Node].epos), model.className(node.cls))
       buf += token
       backTrace(str, node.backLink, buf)
     }
   }
 
-  case class Token(word: String, cls: String)
-
-  case class Node(cls: Int, cost: Int, spos: Int, epos: Int, tcost: Int = Int.MaxValue){
-
-    var backLink: Node = null
-    var total: Int = tcost
-    var nextSameEnd: Node = null
-
-    def replaceTotalCostIfSmaller(leftNode: Node): Unit = {
-      if(leftNode.total + cost < total){
-        backLink = leftNode
-        total = leftNode.total + cost
-      }
-    }
+  object Node {
+    def apply(cls: Int, cost: Int, spos: Int, epos: Int, tcost: Int = Int.MaxValue) = new Node(cls, cost, spos, epos, tcost)
   }
+
+  class Node(cls: Int, cost: Int, val spos: Int, val epos: Int, tcost: Int = Int.MaxValue) extends AbstractNode(cls, cost, tcost)
 }

@@ -20,7 +20,7 @@ object HmmTagger {
   def apply(model: HmmModel) = new HmmTagger(model)
 }
 
-class HmmTagger(model: HmmModel) {
+class HmmTagger(model: HmmModel) extends HmmTracer {
 
   var lattice: Array[Node] = null
   val CLASS_BOS = -2
@@ -77,42 +77,32 @@ class HmmTagger(model: HmmModel) {
     lattice(idx) = node
   }
 
-  private def processLeftLink(leftNode: Node, rightNode: Node): Unit = {
+  private def processLeftLink(leftNode: AbstractNode, rightNode: AbstractNode): Unit = {
     if(leftNode != null){
       rightNode.replaceTotalCostIfSmaller(leftNode)
       processLeftLink(leftNode.nextSameEnd, rightNode)
     }
   }
 
-  def backTrace(str: String, node: Node): Seq[Token] = {
+  def backTrace(str: String, node: AbstractNode): Seq[Token] = {
     val buf = scala.collection.mutable.ArrayBuffer.empty[Token]
     backTrace(str, node, buf)
   }
 
-  def backTrace(str: String, node: Node, buf: scala.collection.mutable.ArrayBuffer[Token]): Seq[Token] = {
+  def backTrace(str: String, node: AbstractNode, buf: scala.collection.mutable.ArrayBuffer[Token]): Seq[Token] = {
     if(node.cls == CLASS_BOS){
       buf.toList.reverse
     }
     else{
-      val token = Token(node.word, model.className(node.cls))
+      val token = Token(node.asInstanceOf[Node].word, model.className(node.cls))
       buf += token
       backTrace(str, node.backLink, buf)
     }
   }
 
-  case class Token(word: String, cls: String)
-
-  case class Node(word: String, cls: Int, cost: Int, pos: Int, tcost: Int = Int.MaxValue){
-
-    var backLink: Node = null
-    var total: Int = tcost
-    var nextSameEnd: Node = null
-
-    def replaceTotalCostIfSmaller(leftNode: Node): Unit = {
-      if(leftNode.total + cost < total){
-        backLink = leftNode
-        total = leftNode.total + cost
-      }
-    }
+  object Node {
+    def apply(word: String, cls: Int, cost: Int, pos: Int, tcost: Int = Int.MaxValue) = new Node(word, cls, cost, pos, tcost)
   }
+
+  class Node(val word: String, cls: Int, cost: Int, val pos: Int, tcost: Int = Int.MaxValue) extends AbstractNode(cls, cost, tcost)
 }
