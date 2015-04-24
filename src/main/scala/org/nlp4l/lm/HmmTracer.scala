@@ -23,10 +23,10 @@ abstract class HmmTracer {
 
   def tokens(str: String): Seq[Token]
 
-  protected def processLeftLink(leftNode: AbstractNode, rightNode: AbstractNode): Unit = {
+  protected def processLeftLink(model: HmmModel, leftNode: AbstractNode, rightNode: AbstractNode): Unit = {
     if(leftNode != null){
-      rightNode.replaceTotalCostIfSmaller(leftNode)
-      processLeftLink(leftNode.nextSameEnd, rightNode)
+      rightNode.replaceTotalCostIfSmaller(model, leftNode)
+      processLeftLink(model, leftNode.nextSameEnd, rightNode)
     }
   }
 
@@ -44,6 +44,7 @@ abstract class HmmTracer {
     else{
       val token = createToken(str, node)
       buf += token
+      //println("buf -> %s".format(buf))
       backTrace(str, node.backLink, buf)
     }
   }
@@ -57,10 +58,10 @@ abstract case class AbstractNode(cls: Int, cost: Int, tcost: Int = Int.MaxValue)
   var total: Int = tcost
   var nextSameEnd: AbstractNode = null
 
-  def replaceTotalCostIfSmaller(leftNode: AbstractNode): Unit = {
-    if(leftNode.total + cost < total){
+  def replaceTotalCostIfSmaller(model: HmmModel, leftNode: AbstractNode): Unit = {
+    if(leftNode.total + model.connectionCost(leftNode.cls, cls) + cost < total){
       backLink = leftNode
-      total = leftNode.total + cost
+      total = leftNode.total + model.connectionCost(leftNode.cls, cls) + cost
     }
   }
 }

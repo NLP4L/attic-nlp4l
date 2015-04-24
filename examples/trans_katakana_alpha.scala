@@ -57,6 +57,7 @@ indexer.close
 // read the model index
 val model = HmmModel(index)
 
+/*
 // print the model
 println("\n=== classes ===")
 val tableSize = model.classNum
@@ -110,13 +111,14 @@ model.tempDic.foreach{ e =>
     println("\t%s %d (%d) %d".format(model.className(g._1), model.classFreq(g._1), g._1, g._2))
   }
 }
+*/
 
 println("\n=== tokenizer test ===")
 val tokenizer = HmmTokenizer(model)
 
-tokenizer.tokens("フランス")
-tokenizer.tokens("エンタープライズ")
 tokenizer.tokens("パナソニック")
 tokenizer.tokens("アクション")
 tokenizer.tokens("プログラム")
 tokenizer.tokens("ポイント")
+tokenizer.tokens("テキスト")
+tokenizer.tokens("コミュニティ")

@@ -23,7 +23,7 @@ object HmmTagger {
 class HmmTagger(model: HmmModel) extends HmmTracer {
 
   var lattice: Array[Node] = null
-  val debug = true
+  val debug = false
 
   def tokens(str: String): Seq[Token] = {
     val words = str.split("\\s+").toList
@@ -42,7 +42,7 @@ class HmmTagger(model: HmmModel) extends HmmTracer {
   def parseForward(words: List[String], pos: Int, EOS: Node): Node = {
     if(pos == words.length){
       val leftNode = lattice(pos)
-      processLeftLink(leftNode, EOS)
+      processLeftLink(model, leftNode, EOS)
       EOS
     }
     else{
@@ -53,7 +53,7 @@ class HmmTagger(model: HmmModel) extends HmmTracer {
         val node = Node(words(pos), cls._1, cls._2, pos)
         addNodeToLattice(pos, node)
         val leftNode = lattice(pos)
-        processLeftLink(leftNode, node)
+        processLeftLink(model, leftNode, node)
       }
       parseForward(words, pos + 1, EOS)
     }

@@ -23,7 +23,7 @@ object HmmTokenizer {
 class HmmTokenizer(model: HmmModel) extends HmmTracer {
 
   var nodesTableByEnd = scala.collection.mutable.Map.empty[Int, Node]
-  val debug = true
+  val debug = false
 
   def tokens(str: String): Seq[Token] = {
     nodesTableByEnd.clear()
@@ -39,25 +39,29 @@ class HmmTokenizer(model: HmmModel) extends HmmTracer {
   }
 
   def parseForward(str: String, pos: Int, EOS: Node): Node = {
-    if(pos == str.length){
-      val leftNode = nodesTableByEnd.getOrElse(pos, null)
-      processLeftLink(leftNode, EOS)
-      EOS
+    val leftNode = nodesTableByEnd.getOrElse(pos, null)
+    if(leftNode == null && pos < str.length){
+      parseForward(str, pos + 1, EOS)
     }
     else{
-      val wrds = model.fst.leftMostSubstring(str, pos)
-      wrds.foreach{ wrd =>
-        val epos = wrd._1
-        val classes = model.conditionalClassesCost(wrd._2.toInt)
-        debugPrintWord(str, pos, epos, classes)
-        classes.foreach{ cls =>
-          val node = Node(cls._1, cls._2, pos, epos)
-          addNodeToLattice(epos, node)
-          val leftNode = nodesTableByEnd.getOrElse(pos, null)
-          processLeftLink(leftNode, node)
-        }
+      if(pos == str.length){
+        processLeftLink(model, leftNode, EOS)
+        EOS
       }
-      parseForward(str, pos + 1, EOS)
+      else{
+        val wrds = model.fst.leftMostSubstring(str, pos)
+        wrds.foreach{ wrd =>
+          val epos = wrd._1
+          val classes = model.conditionalClassesCost(wrd._2.toInt)
+          debugPrintWord(str, pos, epos, classes)
+          classes.foreach{ cls =>
+            val node = Node(cls._1, cls._2, pos, epos)
+            addNodeToLattice(epos, node)
+            processLeftLink(model, leftNode, node)
+          }
+        }
+        parseForward(str, pos + 1, EOS)
+      }
     }
   }
 
