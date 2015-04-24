@@ -504,6 +504,134 @@ To shutdown the server, access this URL -> http://localhost:6574/shutdown
 
 以上のチャート表示のコードは examples/chart_experimental.scala として1つのスクリプトにまとめてあります。
 
+## 隠れマルコフモデル
+
+NLP4L では、ラベルつき訓練データから隠れマルコフモデルを学習することができる HmmModel クラスが提供されています。HmmModel と HmmModelIndexer はともに次の HmmModelSchema で定義されている Luceneインデックスのスキーマを参照しています。
+
+```scala
+trait HmmModelSchema {
+  def schema(): Schema = {
+    val analyzer = Analyzer(new org.apache.lucene.analysis.core.WhitespaceAnalyzer)
+    val builder = AnalyzerBuilder()
+    builder.withTokenizer("whitespace")
+    builder.addTokenFilter("shingle", "minShingleSize", "2", "maxShingleSize", "2", "outputUnigrams", "false")
+    val analyzer2g = builder.build
+    val fieldTypes = Map(
+      "begin" -> FieldType(analyzer, true, true, true, true),
+      "class" -> FieldType(analyzer, true, true, true, true),
+      "class_2g" -> FieldType(analyzer2g, true, true, true, true),
+      "class_word" -> FieldType(analyzer, true, true, true, true),
+      "word" -> FieldType(analyzer, true, true, true, true)
+    )
+    val analyzerDefault = analyzer
+    Schema(analyzerDefault, fieldTypes)
+  }
+}
+```
+
+隠れマルコフモデルでは、ある状態（クラス）からある状態へ遷移する確率とある状態における記号（単語）の出力確率を使います。NLP4Lではこれらの確率を HmmModelSchema で定義されるスキーマを持つ Luceneインデックスを使って求めます。状態遷移確率は class と class_2g フィールドのクラス出現数を使います。class_2g フィールドは Lucene の ShingleFilter を使ってクラス2グラムを記録しているフィールドです。class フィールドは単純にクラスを記録しているフィールドです。この2つのフィールドを使って P( vb | nn ) すなわち品詞 nn のあとに品詞 vb が出現する確率を求めることを考えます。これは実は非常に簡単で、先の単語の数を数える totalTermFreq() を使って次のように計算できます。
+
+```math
+P( vb | nn ) = "nn vb".totalTermFreq() / "nn".totalTermFreq()
+```
+
+"nn vb" という2つのクラスの連続は class_2g フィールドを参照します。"nn" は class フィールドを参照します。同様にクラス nn における単語 program の出力確率は次のように計算できます。
+
+```math
+P( program | nn ) = "nn_program".totalTermFreq() / "nn".totalTermFreq()
+```
+
+ここで "nn_program" は単語 program とクラス nn が同時に観測された場合の Luceneインデックスに登録する文字列です。これは class_word フィールドに記録されます。
+
+begin フィールドには Lucene ドキュメントの最初のクラスが記録されます。このフィールドの totalTermFreq() を使えば、各クラスの初期状態確率分布が計算できます。
+
+それでは HmmModel を使った具体例を見てみましょう。
+
+### 英語の品詞タグ付け
+
+隠れマルコフモデルを応用した成功例には英語の品詞タグ付けが知られています。ブラウンコーパスの英文には品詞タグがつけられていますので、ここから HmmModel を学習して、未知の英文に品詞タグをつけてみましょう。ブラウンコーパスを用意した状態で、次のようにサンプルスクリプトを実行します。
+
+```shell
+nlp4l> :load examples/hmm_postagger.scala
+```
+
+プログラムの最後に学習後のLuceneインデックスモデルを用いて未知の英文に品詞タグ付けを行っています。たとえば、"i like to go to france ." という英文の品詞タグ付け結果は次のように出力されます。
+
+```scala
+res8: Seq[org.nlp4l.lm.Token] = List(Token(i,ppss), Token(like,vb), Token(to,to), Token(go,vb), Token(to,in), Token(france,np), Token(.,.))
+```
+
+ではサンプルプログラム冒頭の学習部分を見てみましょう。
+
+```scala
+// (1)
+val index = "/tmp/index-brown-hmm"
+
+// (2)
+val c: PathSet[Path] = Path("corpora", "brown", "brown").children()
+
+// (3)
+val indexer = HmmModelIndexer(index)
+c.filter{ e =>
+  val s = e.name
+  val c = s.charAt(s.length - 1)
+  c >= '0' && c <= '9'
+}.foreach{ f =>
+  val source = Source.fromFile(f.path, "UTF-8")
+  source.getLines().map(_.trim).filter(_.length > 0).foreach { g =>
+    val pairs = g.split("\\s+")
+    val doc = pairs.map{h => h.split("/")}.filter{_.length==2}.map{i => (i(0).toLowerCase(), i(1))}
+    indexer.addDocument(doc)
+  }
+}
+
+// (4)
+indexer.close()
+
+// (5)
+val model = HmmModel(index)
+```
+
+最初に (1) でブラウンコーパスを登録するLuceneインデックスを指定しています。(2) でブラウンコーパスのディレクトリを指定しています。これは下の(3) でファイルをひとつずつ取り出すのに参照されます。(3) で HmmModelIndexer を作成し、ブラウンコーパスのファイルの1行をLuceneドキュメントの1つとみなしてaddDocument()で HmmModelIndexer に追加しています。追加するドキュメントの形式は、単語と品詞のペアのタプルの配列です。
+
+Luceneインデックスを作成し終わったら(4)でクローズします。このようにして作成したLuceneインデックスを(5)で HmmModel で読み込んだときに隠れマルコフモデルが計算されます。
+
+英語の品詞タグ付けでモデルを使う場合は、次のように HmmTagger にモデルを適用し、HmmTagger の tokens() を呼び出します。
+
+```scala
+val tagger = HmmTagger(model)
+
+tagger.tokens("i like to go to france .")
+tagger.tokens("you executed lucene program .")
+tagger.tokens("nlp4l development members may be able to present better keywords .")
+```
+
+### カタカナ語からの英単語推定
+
+NLP4L にはカタカナ語とその元になった英単語のペアに、独自にアライメントをつけた訓練データが付属しています（train_data/alpha_katakana_aligned.txt）。
+
+```shell
+$ head train_data/alpha_katakana_aligned.txt 
+アaカcaデdeミーmy
+アaクcセceンnトt
+アaクcセceスss
+アaクcシciデdeンnトt
+アaクcロroバッbaトt
+アaクcショtioンn
+アaダdaプpターter
+アaフfリriカca
+エaアirバbuスs
+アaラlaスsカka
+```
+
+このデータを使って、カタカナ部分を単語に、アルファベット部分を品詞に見立てて隠れマルコフモデルを学習します。すると未知のカタカナ語から英単語を予測する事ができます。それを実装したのがexamples/trans_katakana_alpha.scala です。
+
+```shell
+nlp4l> :load examples/trans_katakana_alpha.scala
+```
+
+前の examples/hmm_postagger.scala とほぼ同じプログラムなので興味がある方は読み解いてみてください。
+
 ## ジップの法則を確認する
 
 ## 仮説検定
