@@ -78,27 +78,27 @@ class HmmModel(index: String) extends HmmModelSchema {
     p = Pair(classes(i)._1, i)
   } yield p).toMap
 
-  // create initial state costs dictionary and connection costs table
+  // create initial state costs dictionary
+  // compute P( C_1 | C_0 ) = Count( beginClass ) / totalBeginCount
   val SMALL_PROB = 0.0000001.toDouble
   val MAX_COST = cost(SMALL_PROB)
   val beginClasses = reader.field("begin").get.terms.map(e => (e.text, e.totalTermFreq.toDouble)).toMap
   val totalBeginCount = reader.sumTotalTermFreq("begin").toDouble
   val costInitialState = new Array[Int](classes.size)
-  val costConnection = new Array[Array[Int]](classes.size)
-  for(i <- 0 to classes.size - 1){
-    costConnection(i) = new Array[Int](classes.size)
-    for(j <- 0 to classes.size - 1){
-      costConnection(i)(j) = MAX_COST
-    }
-  }
-
-  // compute P( C_1 | C_0 ) = Count( beginClass ) / totalBeginCount
   for(i <- 0 to classes.size - 1){
     val c = classes(i)._1
     val prob = beginClasses.getOrElse(c, SMALL_PROB) / totalBeginCount
     costInitialState(i) = cost(prob)
   }
 
+  // create connection costs table
+  private val costConnection = new Array[Array[Int]](classes.size)
+  for(i <- 0 to classes.size - 1){
+    costConnection(i) = new Array[Int](classes.size)
+    for(j <- 0 to classes.size - 1){
+      costConnection(i)(j) = MAX_COST
+    }
+  }
   // compute P( C_n | C_m ) = Count( C_m C_n ) / Count( C_m )
   for(i <- reader.field("class_2g").get.terms.map(e => (e.text, e.totalTermFreq.toDouble))){
     val cns = i._1.split(" ")
