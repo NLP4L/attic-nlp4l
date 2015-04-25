@@ -175,7 +175,7 @@ class HmmModel(index: String) extends HmmModelSchema {
       w1 = wcs(0)
       val idx0 = wordDic.get(w1).get              // get word index
       idx1 = classNamesDic.get(wcs(1)).get    // get class index
-      prob = h._2 / words(idx0)._2
+      prob = h._2 / classes(idx1)._2
 
       word match {
         case null => {

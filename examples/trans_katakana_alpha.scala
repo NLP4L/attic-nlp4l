@@ -116,9 +116,9 @@ model.tempDic.foreach{ e =>
 println("\n=== tokenizer test ===")
 val tokenizer = HmmTokenizer(model)
 
-tokenizer.tokens("パナソニック")
 tokenizer.tokens("アクション")
 tokenizer.tokens("プログラム")
 tokenizer.tokens("ポイント")
 tokenizer.tokens("テキスト")
-tokenizer.tokens("コミュニティ")
+tokenizer.tokens("コミュニケーション")
+tokenizer.tokens("エントリー")

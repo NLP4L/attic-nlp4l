@@ -520,7 +520,7 @@ trait HmmModelSchema {
       "begin" -> FieldType(analyzer, true, true, true, true),
       "class" -> FieldType(analyzer, true, true, true, true),
       "class_2g" -> FieldType(analyzer2g, true, true, true, true),
-      "class_word" -> FieldType(analyzer, true, true, true, true),
+      "word_class" -> FieldType(analyzer, true, true, true, true),
       "word" -> FieldType(analyzer, true, true, true, true)
     )
     val analyzerDefault = analyzer
@@ -538,10 +538,10 @@ P( vb | nn ) = "nn vb".totalTermFreq() / "nn".totalTermFreq()
 "nn vb" という2つのクラスの連続は class_2g フィールドを参照します。"nn" は class フィールドを参照します。同様にクラス nn における単語 program の出力確率は次のように計算できます。
 
 ```math
-P( program | nn ) = "nn_program".totalTermFreq() / "nn".totalTermFreq()
+P( program | nn ) = "program_nn".totalTermFreq() / "nn".totalTermFreq()
 ```
 
-ここで "nn_program" は単語 program とクラス nn が同時に観測された場合の Luceneインデックスに登録する文字列です。これは class_word フィールドに記録されます。
+ここで "program_nn" は単語 program とクラス nn が同時に観測された場合の Luceneインデックスに登録する文字列です。これは word_class フィールドに記録されます。
 
 begin フィールドには Lucene ドキュメントの最初のクラスが記録されます。このフィールドの totalTermFreq() を使えば、各クラスの初期状態確率分布が計算できます。
 
@@ -592,7 +592,7 @@ indexer.close()
 val model = HmmModel(index)
 ```
 
-最初に (1) でブラウンコーパスを登録するLuceneインデックスを指定しています。(2) でブラウンコーパスのディレクトリを指定しています。これは下の(3) でファイルをひとつずつ取り出すのに参照されます。(3) で HmmModelIndexer を作成し、ブラウンコーパスのファイルの1行をLuceneドキュメントの1つとみなしてaddDocument()で HmmModelIndexer に追加しています。追加するドキュメントの形式は、単語と品詞のペアのタプルの配列です。
+最初に (1) でブラウンコーパスを登録するLuceneインデックスを指定しています。(2) でブラウンコーパスのディレクトリを指定しています。これは下の(3) でファイルをひとつずつ取り出すのに参照されます。(3) で HmmModelIndexer を作成し、ブラウンコーパスのファイルの1行をLuceneドキュメントの1つとみなしてaddDocument()で HmmModelIndexer に追加しています。追加するドキュメントの形式は、単語と品詞のタプルの配列です。
 
 Luceneインデックスを作成し終わったら(4)でクローズします。このようにして作成したLuceneインデックスを(5)で HmmModel で読み込んだときに隠れマルコフモデルが計算されます。
 
@@ -604,6 +604,14 @@ val tagger = HmmTagger(model)
 tagger.tokens("i like to go to france .")
 tagger.tokens("you executed lucene program .")
 tagger.tokens("nlp4l development members may be able to present better keywords .")
+```
+
+実行結果は次のように、単語とクラス（品詞）を要素に持つTokenオブジェクトのListとして返されます。
+
+```shell
+res23: Seq[org.nlp4l.lm.Token] = List(Token(i,ppss), Token(like,vb), Token(to,to), Token(go,vb), Token(to,in), Token(france,np), Token(.,.))
+res24: Seq[org.nlp4l.lm.Token] = List(Token(you,ppo-tl), Token(executed,vbn), Token(lucene,X), Token(program,nil), Token(.,.))
+res25: Seq[org.nlp4l.lm.Token] = List(Token(nlp4l,X), Token(development,nn), Token(members,nns), Token(may,md), Token(be,be), Token(able,jj), Token(to,to), Token(present,vb), Token(better,rbr), Token(keywords,X), Token(.,.-hl))
 ```
 
 ### カタカナ語からの英単語推定
@@ -624,13 +632,37 @@ $ head train_data/alpha_katakana_aligned.txt
 アaラlaスsカka
 ```
 
-このデータを使って、カタカナ部分を単語に、アルファベット部分を品詞に見立てて隠れマルコフモデルを学習します。すると未知のカタカナ語から英単語を予測する事ができます。それを実装したのがexamples/trans_katakana_alpha.scala です。
+このデータを使って、カタカナ部分を単語に、アルファベット部分を品詞に見立てて隠れマルコフモデルを学習することを考えてみましょう。すると未知のカタカナ語から英単語を予測する事ができます。それを実装したのがexamples/trans_katakana_alpha.scala です。
 
 ```shell
 nlp4l> :load examples/trans_katakana_alpha.scala
 ```
 
 前の examples/hmm_postagger.scala とほぼ同じプログラムなので興味がある方は読み解いてみてください。
+
+同じくプログラムの最後は学習したモデルを使って、未知のカタカナ語から英単語を推定した結果を表示しています。
+
+```scala
+val tokenizer = HmmTokenizer(model)
+
+tokenizer.tokens("アクション")
+tokenizer.tokens("プログラム")
+tokenizer.tokens("ポイント")
+tokenizer.tokens("テキスト")
+tokenizer.tokens("コミュニケーション")
+tokenizer.tokens("エントリー")
+```
+
+この実行結果は次のようになります。
+
+```shell
+res35: Seq[org.nlp4l.lm.Token] = List(Token(ア,a), Token(ク,c), Token(ショ,tio), Token(ン,n))
+res36: Seq[org.nlp4l.lm.Token] = List(Token(プ,p), Token(ロ,ro), Token(グ,g), Token(ラ,ra), Token(ム,m))
+res37: Seq[org.nlp4l.lm.Token] = List(Token(ポ,po), Token(イ,i), Token(ン,n), Token(ト,t))
+res38: Seq[org.nlp4l.lm.Token] = List(Token(テ,te), Token(キス,x), Token(ト,t))
+res39: Seq[org.nlp4l.lm.Token] = List(Token(コ,co), Token(ミュ,mmu), Token(ニ,ni), Token(ケー,ca), Token(ショ,tio), Token(ン,n))
+res40: Seq[org.nlp4l.lm.Token] = List(Token(エ,e), Token(ン,n), Token(ト,t), Token(リー,ree))
+```
 
 ## ジップの法則を確認する
 
