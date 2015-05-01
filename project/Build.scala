@@ -17,6 +17,7 @@ object NLP4LBuild extends Build {
             "org.apache.lucene" % "lucene-analyzers-icu" % "5.1.0",
             "org.apache.lucene" % "lucene-queries" % "5.1.0",
             "org.apache.lucene" % "lucene-queryparser" % "5.1.0",
+            "org.apache.lucene" % "lucene-suggest" % "5.1.0",
             "org.apache.lucene" % "lucene-codecs" % "5.1.0",
             "org.apache.lucene" % "lucene-backward-codecs" % "5.1.0",
             "org.apache.lucene" % "lucene-misc" % "5.1.0",
