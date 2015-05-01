@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.nlp4l.util
+package org.nlp4l.spark
 
 import org.nlp4l.core.RawReader
 

@@ -19,8 +19,8 @@ package org.nlp4l.spark.mllib
 import java.io._
 
 import org.nlp4l.core.{RawReader, IReader, SchemaLoader}
+import org.nlp4l.spark.Adapter
 import org.nlp4l.stats.TFIDF
-import org.nlp4l.util.Adapter
 import resource._
 
 /**
