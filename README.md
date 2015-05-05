@@ -15,6 +15,10 @@ Refer to the following documents for more details.
 - Users who want to try out various document vectors to input data to existing machine learning tools including [Apache Spark](https://spark.apache.org/) and [Apache Mahout](http://mahout.apache.org/).
 - Other NLP tool users and Scala programers.
 
+# Architecture
+
+![Architecture](nlp4l-architecture-20150505.png)
+
 # Basic Usage
 
 ## Building NLP4L 
