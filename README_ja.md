@@ -15,6 +15,10 @@ NLP4L は Lucene インデックスに登録されている文書データを処
 - [Apache Spark](https://spark.apache.org/) や [Apache Mahout](http://mahout.apache.org/) など既存の機械学習ツールへの入力に、さまざまな文書ベクトルを試したいユーザ
 - その他の NLPツールユーザや Scala プログラマ
 
+# アーキテクチャ
+
+![アーキテクチャ](nlp4l-architecture-20150505.png)
+
 # 簡単な使い方
 
 ## NLP4L のビルド
