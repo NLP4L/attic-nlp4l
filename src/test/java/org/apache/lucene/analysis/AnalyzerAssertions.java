@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-package org.apache.lucene.analysis.brown;
+package org.apache.lucene.analysis;
 
-import org.apache.lucene.analysis.TokenStream;
-import org.apache.lucene.analysis.util.TokenFilterFactory;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
-import java.util.Map;
+import static org.junit.Assert.assertEquals;
 
-public class BrownCorpusFilterFactory extends TokenFilterFactory {
+public abstract class AnalyzerAssertions {
 
-  public BrownCorpusFilterFactory(Map<String, String> args) {
-    super(args);
-  }
+  public static void assertTokens(Analyzer analyzer, String text, String... expected) throws Exception {
+    TokenStream stream = analyzer.tokenStream("", text);
+    stream.reset();
 
-  @Override
-  public TokenStream create(TokenStream stream) {
-    return new BrownCorpusFilter(stream);
+    CharTermAttribute termAtt = stream.getAttribute(CharTermAttribute.class);
+    int i = 0;
+    while(stream.incrementToken()) {
+      assertEquals(expected[i++], termAtt.toString());
+    }
+    assertEquals(expected.length, i);
   }
 }

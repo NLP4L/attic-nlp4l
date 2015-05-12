@@ -14,21 +14,26 @@
  * limitations under the License.
  */
 
-package org.apache.lucene.analysis.brown;
+package org.apache.lucene.analysis.core;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.util.TokenFilterFactory;
 
 import java.util.Map;
 
-public class BrownCorpusFilterFactory extends TokenFilterFactory {
+public class BothEndsFilterFactory extends TokenFilterFactory {
 
-  public BrownCorpusFilterFactory(Map<String, String> args) {
+  private final String tokenSeparator;
+  private final boolean reverse;
+
+  public BothEndsFilterFactory(Map<String, String> args){
     super(args);
+    tokenSeparator = get(args, "tokenSeparator", BothEndsFilter.TOKEN_SEPARATOR);
+    reverse = getBoolean(args, "reverse", false);
   }
 
   @Override
   public TokenStream create(TokenStream stream) {
-    return new BrownCorpusFilter(stream);
+    return new BothEndsFilter(stream, tokenSeparator, reverse);
   }
 }
