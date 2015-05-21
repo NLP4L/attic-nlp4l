@@ -183,4 +183,5 @@ $ sbt test
 
 # Known Limitations
 
-With unoptimized index, you may not be able to get an accurate word count.
+- With unoptimized index, you may not be able to get an accurate word count.
+- You might get OutOfMemoryError when you try to process a large amount of data.

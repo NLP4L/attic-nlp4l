@@ -664,6 +664,27 @@ res39: Seq[org.nlp4l.lm.Token] = List(Token(コ,co), Token(ミュ,mmu), Token(�
 res40: Seq[org.nlp4l.lm.Token] = List(Token(エ,e), Token(ン,n), Token(ト,t), Token(リー,ree))
 ```
 
+## 連語分析モデル
+
+NLP4Lでは、コーパス中に発生するある単語に注目したとき、その単語の前後に発生する単語を発生頻度付きで分析することができます。この分析を行うデータモデルをNLP4Lでは連語分析モデル（CollocationalAnalysisModel）と名付けました。連語分析モデルを使うと、ある動詞と共起しやすい前置詞などがわかります。たとえば英語学習者が英語コーパスを連語分析モデルを使って調べることで、よく使われる言い回しを得ることができるでしょう。
+
+examples/colloc_analysis_brown.scala はブラウンコーパスを分析して単語"found"の前後に出現しやすい単語を出現順に表示します。examples/colloc_analysis_brown.scala の出力を見やすく表にすると、次のようになります。
+
+| 3単語前 | 2単語前 | 1単語前 | 注目している単語 | 1単語後 | 2単語後 | 3単語後 |
+|:------------:|:------------:|:------------:|:--------:|:------------:|:------------:|:------------:|
+|       the( 3)|        to( 4)|        be( 9)|     found|        in( 9)|       the( 4)|        on( 3)|
+|       all( 2)|       can( 2)|      been( 4)|          |        to( 6)|      have( 2)|        as( 2)|
+|       and( 2)|       has( 2)|       had( 3)|          |         a( 4)|      some( 2)|        in( 2)|
+|         3( 1)|      have( 2)|        is( 3)|          |       out( 2)|         a( 1)|        is( 2)|
+|         a( 1)|        he( 2)|     still( 3)|          |       the( 2)|    allied( 1)|        of( 2)|
+|        an( 1)|        it( 2)|      they( 3)|          |themselves( 2)|        be( 1)|        or( 2)|
+|       are( 1)|       400( 1)|       and( 2)|          |        an( 1)|    behave( 1)|        to( 2)|
+|        as( 1)|         a( 1)|     forms( 2)|          |    arable( 1)|    bogeys( 1)|      with( 2)|
+|  asserted( 1)|alternative( 1)|        he( 2)|          |   beaming( 1)|   certain( 1)|       100( 1)|
+|        be( 1)|       and( 1)|         i( 2)|          |       but( 1)|      days( 1)|         a( 1)|
+
+"found in" というフレーズが多く発生していることがわかります。また、注目している単語 "found" の前の単語もわかるので、"be found" や "to be found", "can be found" といったフレーズも発生している可能性がうかがえます。
+
 ## ジップの法則を確認する
 
 ## 仮説検定
