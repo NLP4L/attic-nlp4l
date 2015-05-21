@@ -27,7 +27,7 @@ import scalax.file.PathSet
 val index = "/tmp/index-ldcc"
 
 def document(file: Path): Document = {
-  val ps: Array[String] = file.path.split("/")
+  val ps: Array[String] = file.path.split(File.separator)
   val cat = ps(3)
   val lines = file.lines().toArray
   val url = lines(0)
