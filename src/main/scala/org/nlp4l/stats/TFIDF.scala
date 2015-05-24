@@ -33,7 +33,7 @@ object TFIDF {
    * @param words the set of words(terms) considered as feature. All words(terms) will be taken as features if empty set is given.
    * @return the Vector of words and the feature vector
    */
-  def tfVector(reader: IReader, field: String, docId: Int, words: Set[String] = Set.empty): (Vector[String], Vector[Long]) = {
+  def tfVector(reader: IReader, field: String, docId: Int, words: Set[String] = Set.empty): (Seq[String], Seq[Long]) = {
     val (features, vector) =  tfIdfVector(reader, field, docId, words, tfMode="n", idfMode="n")
     (features, vector.map(_.toLong))
   }
@@ -46,7 +46,7 @@ object TFIDF {
    * @param words the set of words(terms) considered as feature. All words(terms) will be taken as features if empty set is given.
    * @return the pair of words and the feature vectors
    */
-  def tfVectors(reader: IReader, field: String, docIds: List[Int], words: Set[String] = Set.empty): (Vector[String], List[Vector[Long]]) = {
+  def tfVectors(reader: IReader, field: String, docIds: List[Int], words: Set[String] = Set.empty): (Seq[String], Stream[Seq[Long]]) = {
     val (features, vectors) = tfIdfVectors(reader, field, docIds, words, tfMode="n", idfMode="n")
     (features, vectors.map(_.map(_.toLong)))
   }
@@ -72,7 +72,7 @@ object TFIDF {
    * @param idfMode idf calculation mode. Expected values are "n" (no), "t" (idf), "p" (prob idf). The default value is "t"
    * @return the Vector of words and the feature vector
    */
-  def tfIdfVector(reader: IReader, field: String, docId: Int, words: Set[String] = Set.empty, tfMode: String = "n", a: Double = 0.4, idfMode: String = "t"): (Vector[String], Vector[Double]) = {
+  def tfIdfVector(reader: IReader, field: String, docId: Int, words: Set[String] = Set.empty, tfMode: String = "n", a: Double = 0.4, idfMode: String = "t"): (Seq[String], Seq[Double]) = {
     val numDocs = Some(reader.numDocs)
     val maxTF = if (tfMode == "m") Some(reader.topTermsByTotalTermFreq(field, 1)(0)._3) else None
     val countMap = WordCounts.count(reader, field, words, Set(docId))
@@ -104,17 +104,21 @@ object TFIDF {
    * @param idfMode idf calculation mode. The default value is "t"
    * @return the pair of words and the feature vectors
    */
-  def tfIdfVectors(reader: IReader, field: String, docIds: List[Int], words: Set[String] = Set.empty, tfMode: String = "n", a: Double = 0.4, idfMode: String = "t"): (Vector[String], List[Vector[Double]]) = {
+  def tfIdfVectors(reader: IReader, field: String, docIds: List[Int], words: Set[String] = Set.empty, tfMode: String = "n", a: Double = 0.4, idfMode: String = "t"): (Seq[String], Stream[Seq[Double]]) = {
     val numDocs = Some(reader.numDocs)
     val maxTF = if (tfMode == "m") Some(reader.topTermsByTotalTermFreq(field, 1)(0)._3) else None
     val countMaps = docIds.map(id => WordCounts.count(reader, field, words, Set(id)))
     val dfMap = if (words.isEmpty) WordCounts.countDF(reader, field, countMaps.flatMap(_.keys).toSet) else WordCounts.countDF(reader, field, words)
     val mergedWords = if (words.isEmpty) countMaps.flatMap(_.keys).toSet.toSeq.sorted else words.toSeq.sorted
-    val vectors = countMaps.map(map => {
-      val aveTF = if (tfMode == "L") Some(Stats.average(map.values)) else None
-      mergedWords.map(w => if (map.contains(w)) tf(map(w), tfMode, maxTF, a, aveTF) * idf(dfMap(w), idfMode, numDocs) else 0.0).toVector
-    })
-    (mergedWords.toVector, vectors)
+    def vectors(countMaps: List[Map[String, Long]]): Stream[Seq[Double]] = countMaps match {
+      case Nil => Stream.empty
+      case map :: tail => {
+        val aveTF = if (tfMode == "L") Some(Stats.average(map.values)) else None
+        def vec = mergedWords.view.map(w => if (map.contains(w)) tf(map(w), tfMode, maxTF, a, aveTF) * idf(dfMap(w), idfMode, numDocs) else 0.0)
+        vec #:: vectors(tail)
+      }
+    }
+    (mergedWords.toVector, vectors(countMaps))
   }
 
   /**

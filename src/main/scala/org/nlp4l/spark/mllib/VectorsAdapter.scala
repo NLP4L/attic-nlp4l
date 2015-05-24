@@ -23,6 +23,8 @@ import resource._
 import org.nlp4l.core.{SchemaLoader, IReader}
 import org.nlp4l.stats.TFIDF
 
+import scala.annotation.tailrec
+
 
 /**
  * Main for dump Vectors
@@ -88,12 +90,13 @@ object VectorsAdapter extends Adapter {
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
     val docIds = reader.universalset().toList
-    val (features, vectors) = TFIDF.tfIdfVectors(reader, field, docIds, words, tfMode, smthterm, idfMode)
-    if (vtype == "int") {
-      dumpVectors(vectors.map(_.map(_.toInt)), out)
-    } else {
-      dumpVectors(vectors, out)
-    }
+    val (features, vectors) =
+      if (vtype == "int")
+        TFIDF.tfVectors(reader, field, docIds, words)
+      else
+        TFIDF.tfIdfVectors(reader, field, docIds, words, tfMode, smthterm, idfMode)
+    dumpVectors(vectors, out)
+
 
     // output words
     val wordsFile = new File(wordsOut)
@@ -118,13 +121,18 @@ object VectorsAdapter extends Adapter {
 
   }
 
-  def dumpVectors(vectors: List[Vector[Any]], out: String = "data.txt"): Unit = {
+  def dumpVectors(vectors: => Stream[Seq[Any]], out: String = "data.txt"): Unit = {
     val file: File = new File(out)
     for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
-      vectors.foreach(vec => {
-        output.write(vec.mkString(" "))
-        output.newLine()
-      })
+      @tailrec def loop(xs: Stream[Seq[Any]]): Unit = xs match {
+        case Stream.Empty => ()
+        case vec #:: tail => {
+          for (v <- vec) output.write(v.toString + " ")
+          output.newLine()
+          loop(tail)
+        }
+      }
+      loop(vectors)
       output.flush()
     }
   }

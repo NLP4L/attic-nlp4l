@@ -79,7 +79,7 @@ object LabeledPointAdapter extends Adapter {
     val wordsOut = options.getOrElse('words, "words.txt")
     val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
     val fNames = options.getOrElse('values, "").split(",").toList
-    val valuesOutDir = options.getOrElse('valuesDir, ".")
+    val valuesOutDir = options.getOrElse('valuesDir, "values")
     val valuesSep = options.getOrElse('valuesSep, ",")
 
     println("Index directory: " + idxDir)
@@ -103,12 +103,12 @@ object LabeledPointAdapter extends Adapter {
     val docIds = reader.universalset().toList
     val labelMap = makeLabelMap(reader, labelField, labelFile, labelFileSep)
     val labels = fieldValues(reader, docIds, Seq(labelField)).map(m => m(labelField).head).map(labelMap(_)).toVector
-    val (features, vectors) = TFIDF.tfIdfVectors(reader, field, docIds, words, tfMode, smthterm, idfMode)
-    if (vtype == "int") {
-      dumpLabeledPoints(labels, vectors.map(_.map(_.toInt)), out)
-    } else {
-      dumpLabeledPoints(labels, vectors, out)
-    }
+    val (features, vectors) =
+      if (vtype == "int")
+        TFIDF.tfVectors(reader, field, docIds, words)
+      else
+        TFIDF.tfIdfVectors(reader, field, docIds, words, tfMode, smthterm, idfMode)
+    dumpLabeledPoints(labels, vectors, out)
 
     // output words
     val wordsFile = new File(wordsOut)
@@ -118,18 +118,20 @@ object LabeledPointAdapter extends Adapter {
 
     // output additional values
     // a file is created for each field
-    val dir = new File(valuesOutDir)
-    if (!dir.exists()) dir.mkdirs()
-    val values = fieldValues(reader, docIds, fNames)
-    fNames.foreach(fName => {
-      val file = new File(valuesOutDir, "values_" + fName + ".txt")
-      for (output <- managed(new PrintWriter(new FileWriter(file)))) {
-        values.foreach(m => {
-          val line = m.getOrElse(fName, List.empty).mkString(valuesSep)
-          output.println(line)
-        })
-      }
-    })
+    if (fNames.nonEmpty) {
+      val dir = new File(valuesOutDir)
+      if (!dir.exists()) dir.mkdirs()
+      val values = fieldValues(reader, docIds, fNames)
+      fNames.foreach(fName => {
+        val file = new File(valuesOutDir, "values_" + fName + ".txt")
+        for (output <- managed(new PrintWriter(new FileWriter(file)))) {
+          values.foreach(m => {
+            val line = m.getOrElse(fName, List.empty).mkString(valuesSep)
+            output.println(line)
+          })
+        }
+      })
+    }
   }
 
   def makeLabelMap(reader: RawReader, labelField: String, labelFile: String, labelFileSep: String): Map[String, Int] = {
@@ -166,10 +168,10 @@ object LabeledPointAdapter extends Adapter {
     }
   }
 
-  def dumpLabeledPoints(labels: Vector[Int], vectors: List[Vector[AnyVal]], out: String): Unit = {
+  def dumpLabeledPoints(labels: Vector[Int], vectors: Stream[Seq[AnyVal]], out: String): Unit = {
     val file: File = new File(out)
     for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
-      labels.zip(vectors).foreach{case(label: Int, vector: Vector[AnyVal]) => {
+      labels.zip(vectors).foreach{case(label: Int, vector: Seq[AnyVal]) => {
         // output label
         output.write(label.toString)
         output.write(" ")

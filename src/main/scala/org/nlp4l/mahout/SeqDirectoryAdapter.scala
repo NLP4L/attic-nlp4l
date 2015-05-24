@@ -90,7 +90,7 @@ object SeqDirectoryAdapter {
     val docIds = reader.universalset().toList
     val (features, vectors) = TFIDF.tfVectors(reader, field, docIds, words2)
     var labelMap = Map[String, Int]()
-    docIds.zip(vectors).foreach{case(docId: Int, vec: Vector[Long]) => {
+    docIds.zip(vectors).foreach{case(docId: Int, vec: Seq[Long]) => {
       reader.document(docId) match {
         case Some(doc) => {
           doc.getValue(labelField) match {
@@ -103,10 +103,12 @@ object SeqDirectoryAdapter {
               val file = new File(labelDir, fileNum.toString + ".txt")
               for (out <- managed(new BufferedWriter(new FileWriter(file)))) {
                 features.zip(vec).foreach{case(word: String, count: Long) => {
-                  for (i <- 0 to count.toInt) {
-                    out.write("%s ".format(word))
+                  if (count > 0) {
+                    for (i <- 0 until count.toInt) {
+                      out.write("%s ".format(word))
+                    }
+                    out.newLine()
                   }
-                  out.newLine()
                 }}
               }
             }
