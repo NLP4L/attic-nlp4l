@@ -78,7 +78,7 @@ object LabeledPointAdapter extends Adapter {
     val out = options.getOrElse('data, "data.txt")
     val wordsOut = options.getOrElse('words, "words.txt")
     val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
-    val fNames = options.getOrElse('values, "").split(",").toList
+    val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
     val valuesOutDir = options.getOrElse('valuesDir, "values")
     val valuesSep = options.getOrElse('valuesSep, ",")
 

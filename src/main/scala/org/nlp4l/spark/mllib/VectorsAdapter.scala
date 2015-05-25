@@ -68,8 +68,8 @@ object VectorsAdapter extends Adapter {
     val out = options.getOrElse('data, "data.txt")
     val wordsOut = options.getOrElse('words, "words.txt")
     val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
-    val fNames = options.getOrElse('values, "").split(",").toList
-    val valuesOutDir = options.getOrElse('valuesDir, ".")
+    val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
+    val valuesOutDir = options.getOrElse('valuesDir, "values")
     val valuesSep = options.getOrElse('valuesSep, ",")
 
     println("Index directory: " + idxDir)
@@ -106,19 +106,20 @@ object VectorsAdapter extends Adapter {
 
     // output additional values
     // a file is created for each field
-    val dir = new File(valuesOutDir)
-    if (!dir.exists()) dir.mkdirs()
-    val values = fieldValues(reader, docIds, fNames)
-    fNames.foreach(fName => {
-      val file = new File(valuesOutDir, "values_" + fName + ".txt")
-      for (output <- managed(new PrintWriter(new FileWriter(file)))) {
-        values.foreach(m => {
-          val line = m.getOrElse(fName, List.empty).mkString(valuesSep)
-          output.println(line)
-        })
-      }
-    })
-
+    if (fNames.nonEmpty) {
+      val dir = new File(valuesOutDir)
+      if (!dir.exists()) dir.mkdirs()
+      val values = fieldValues(reader, docIds, fNames)
+      fNames.foreach(fName => {
+        val file = new File(valuesOutDir, "values_" + fName + ".txt")
+        for (output <- managed(new PrintWriter(new FileWriter(file)))) {
+          values.foreach(m => {
+            val line = m.getOrElse(fName, List.empty).mkString(valuesSep)
+            output.println(line)
+          })
+        }
+      })
+    }
   }
 
   def dumpVectors(vectors: => Stream[Seq[Any]], out: String = "data.txt"): Unit = {
