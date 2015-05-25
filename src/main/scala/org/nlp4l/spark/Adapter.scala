@@ -28,7 +28,7 @@ trait Adapter {
     case "--smthterm" :: value :: tail => parseCommonOption(parsed + ('smthterm -> value), tail)
     case "--idfmode" :: value :: tail => parseCommonOption(parsed + ('idfmode -> value), tail)
     case "-d" :: value :: tail => parseCommonOption(parsed + ('data -> value), tail)
-    case "-w" :: value :: tail => parseCommonOption(parsed + ('words -> value), list)
+    case "-w" :: value :: tail => parseCommonOption(parsed + ('words -> value), tail)
     case "--features" :: value :: tail => parseCommonOption(parsed + ('features -> value), tail)
     case "--values" :: value :: tail => parseCommonOption(parsed + ('values -> value), tail)
     case "--valuesDir" :: value :: tail => parseCommonOption(parsed + ('valuesDir -> value), tail)
