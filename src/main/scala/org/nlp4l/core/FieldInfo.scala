@@ -52,7 +52,7 @@ class FieldInfo(info: LuceneFieldInfo, luceneTerms: LuceneTerms, liveDocs: Bits,
    * Returns terms and associated docs information this field contains
    * @return the Iterable for [[TermDocs]]
    */
-  def terms = termStream.toIterable
+  def terms = termStream
 
   /**
    * Returns the field name

@@ -34,7 +34,7 @@ c.filter{ e =>
   val s = e.name
   val c = s.charAt(s.length - 1)
   c >= '0' && c <= '9'
-}.take(50).foreach{ f =>            // TODO: remove take(50) (it is inserted to avoid OOME)
+}.foreach{ f =>
   val source = Source.fromFile(f.path, "UTF-8")
   source.getLines().map(_.trim).filter(_.length > 0).foreach { g =>
     val pairs = g.split("\\s+")
