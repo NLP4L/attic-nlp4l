@@ -336,7 +336,7 @@ total: Long = 1899819
 次は異なり語数です。異なり語数とは、単語の種類数です。転置インデックスは異なり語をキーとする構造を持っているので転置インデックスのサイズが異なり語数となります。当然Luceneでは簡単に調べることができ、そのScalaラッパーは次のようになります。
 
 ```shell
-nlp4l> val count = reader.terms("body").get.size
+nlp4l> val count = reader.field("body").get.terms.size
 count: Int = 64625
 ```
 
