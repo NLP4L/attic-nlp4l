@@ -35,7 +35,7 @@ NLP4Lを使って自分自身のテキストファイルの分析を始める前
 
 ここで説明する練習用コーパスを使ってインデックスを作成しておくと、これ以降に書かれている解説も実際に試すことができるので理解も容易になるでしょう。
 
-なおここで紹介するコーパスは、livedoorニュースコーパスを除き、研究目的以外での利用が禁止されています。使用に際しては十分ご注意ください。
+なおここで紹介するコーパスは、livedoorニュースコーパスとWikipediaを除き、研究目的以外での利用が禁止されています。使用に際しては十分ご注意ください。
 
 ## NLP4Lの対話型シェル
 
@@ -254,6 +254,75 @@ nlp4l> :load examples/index_reuters.scala
 ```
 
 これまで同様プログラムを見れば、Luceneインデックスは/tmp/index-reutersに作られることがわかります。前の例と同じように、別のディレクトリに作成したいときは、書き換えて再度プログラムを実行してください。
+
+## Wikipediaデータの入手とインデックスの作成{#getCorpora_wiki}
+
+Wikipediaデータは今NLP研究のコーパスとしても最も人気の高いものの一つとなっています。ただWikipediaの記事テキストはWikipedia独特のルールに従って書かれているため、Luceneインデックスに取り込む前になるべくテキストデータだけを抽出する前処理をする必要があり、Wikipediaデータを使う際のハードルともなっています。
+
+ここでは[json-wikipedia](https://github.com/diegoceccarelli/json-wikipedia)を使って簡単にWikipediaデータをLuceneインデックスに取り込む方法をご紹介します。
+
+### json-wikipedia のダウンロードとビルド
+
+まず[json-wikipedia](https://github.com/diegoceccarelli/json-wikipedia)をダウンロードしますが、作業用としてworkというディレクトリを作成し、そこにjson-wikipediaをダウンロードします。
+
+```shell
+$ mkdir work
+$ cd work
+$ wget https://github.com/diegoceccarelli/json-wikipedia/archive/master.zip
+$ unzip master.zip
+```
+
+次に、ZIPを展開してできたディレクトリの下でjson-wikipediaをビルドします。
+
+```shell
+$ cd json-wikipedia-master
+$ mvn assembly:assembly
+```
+
+これによりtargetディレクトリ以下に作成されたJARファイルは、NLP4LからJSONに変換されたWikipediaデータをLuceneインデックスに登録する際に参照します。
+
+```shell
+$ ls target
+archive-tmp                                    json-wikipedia-1.0.0.jar
+classes                                        maven-archiver
+generated-sources                              surefire-reports
+generated-test-sources                         test-classes
+json-wikipedia-1.0.0-jar-with-dependencies.jar
+```
+
+### WikipediaデータのダウンロードとJSONへの変換
+
+[Wikipediaのダウンロードサイト](https://dumps.wikimedia.org/backup-index.html)から各国語のリンクをたどります（日本語ならjawiki、英語ならenwiki）。そしてXXwiki-YYYYMMDD-pages-articles.xml.bz2（XXは言語、YYYYMMDDは日付）という名前のファイルをダウンロードして展開します。
+
+```shell
+$ wget https://dumps.wikimedia.org/jawiki/20150512/jawiki-20150512-pages-articles.xml.bz2
+$ bunzip2 jawiki-20150512-pages-articles.xml.bz2
+```
+
+そしてjson-wikipediaを次のように実行してJSON形式に変換します。
+
+```shell
+$ ./scripts/convert-xml-dump-to-json.sh en jawiki-20150512-pages-articles.xml /tmp/jawiki.json
+```
+
+第1引数には言語を指定します。現在json-wikipediaがサポートする言語は英語（en）やイタリア語（it）など非常に限られており、日本語のサポートはありませんので、上の例では英語（en）を第1引数に指定しています（それでも問題なく動作するようです）。日本語WikipediaのJSON形式への変換はおよそ30分程度です。
+
+### Luceneインデックスへの作成
+
+最後にJSON形式のデータをNLP4LからLuceneインデックスに登録しますが、ビルドしてできたjson-wikipediaのJARファイルを、NLP4Lのクラスパスに含める必要があることに注意してください。
+
+```shell
+$ ./target/pack/bin/nlp4l -cp json-wikipedia-1.0.0-jar-with-dependencies.jar 
+nlp4l> 
+```
+
+あとは次のようにexamples/index_jawiki.scalaを実行するだけです。ただしこのサンプルプログラムは日本語Wikipedia用なので、英語など他の言語の場合はこのサンプルプログラムをコピーして他言語用のプログラムを作る必要があります。特に注意が必要なのは、プログラムから参照しているスキーマ設定ファイルです。examples/schema/jawiki.confは日本語を処理するのでJapaneseAnalyzerを指定していますが、英語などのスペースで分かち書きされている言語ではStandardAnalyzerにするのがよいでしょう。
+
+```shell
+nlp4l> :load examples/index_jawiki.scala
+```
+
+日本語Wikipediaの場合はおよそ30分程度でLuceneインデックスの作成が完了します。
 
 ## NLP4L のスキーマについて
 
