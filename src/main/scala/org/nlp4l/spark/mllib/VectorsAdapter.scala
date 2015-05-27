@@ -17,7 +17,7 @@
 package org.nlp4l.spark.mllib
 
 import java.io.{PrintWriter, FileWriter, BufferedWriter, File}
-import org.nlp4l.spark.Adapter
+import org.nlp4l.util.Adapter
 import resource._
 
 import org.nlp4l.core.{SchemaLoader, IReader}
