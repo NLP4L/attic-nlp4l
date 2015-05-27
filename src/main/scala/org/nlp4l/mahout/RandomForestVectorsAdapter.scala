@@ -20,36 +20,41 @@ import java.io.{PrintWriter, FileWriter, BufferedWriter, File}
 
 import org.nlp4l.core.{IReader, SchemaLoader}
 import org.nlp4l.stats.TFIDF
-import org.nlp4l.util.Adapter
+import org.nlp4l.util.{FeatureSelector, Adapter}
 import resource._
 
-object RandomForestVectorAdapter extends Adapter {
+object RandomForestVectorsAdapter extends Adapter with FeatureSelector {
 
   def main(args: Array[String]): Unit = {
     val usage =
       """
         |Usage:
-        |RondomForestVectorAdapter
+        |RondomForestVectorsAdapter
         |       -s <schema file>
         |       -f <feature field>
         |       [-t int|float]
         |       [--tfmode <TF mode>]
         |       [--smthterm <smoothing term>]
         |       [--idfmode <IDF mode>]
+        |       -l <label field>
         |       [-d <data output file>]
         |       [-w <words output file>]
         |       [--features <feature1>{,<feature2>}]
         |       [--values <field1>{,<field2>}] [--valuesDir <dir>] [--valuesSep <sep>]
+        |       [--maxDFPercent maxDFPercent]
+        |       [--minDF minDF]
         |       <index dir>
       """.stripMargin
 
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
       case Nil => parsed
       case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail)
+      case "--maxDFPercent" :: value :: tail => parseOption(parsed + ('maxDFPercent -> value), tail)
+      case "--minDF" :: value :: tail => parseOption(parsed + ('minDF -> value), tail)
       case value :: tail => parseOption(parsed, tail)
     }
 
-    val options = parseCommonOption(Map(), args.toList) ++ parseOption(Map(), args.toList)
+    val options = parseCommonOption(Map(), args.toList) ++ parseOption(Map(), args.toList) ++ parseCriteriaOption(Map(), args.toList)
 
     if (!List('index, 'schema, 'label, 'field).forall(options.contains)) {
       println(usage)
@@ -69,13 +74,15 @@ object RandomForestVectorAdapter extends Adapter {
     val idfMode = options.getOrElse('idfmode, "t")
     val labelField = options('label)
     val labelFile = options.getOrElse('labelfile, "label.txt")
-    val labelFileSep = options.getOrElse('labelfileSep, "\t")
     val out = options.getOrElse('data, "data.txt")
     val wordsOut = options.getOrElse('words, "words.txt")
     val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
     val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
     val valuesOutDir = options.getOrElse('valuesDir, "values")
     val valuesSep = options.getOrElse('valuesSep, ",")
+    val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
+    val minDF = if (options.contains('minDF)) options('minDF).toInt else 1
+    val maxFeatures = if (options.contains('maxFeatures)) options('maxFeatures).toInt else -1
 
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
@@ -88,6 +95,9 @@ object RandomForestVectorAdapter extends Adapter {
     println("Label Mapping File: " + labelFile)
     println("Output vectors to: " + out)
     println("Output words to: " + wordsOut)
+    println("Max DF Percent: " + maxDFPercent)
+    println("Min DF: " + minDF)
+    println("Max Number of Features: " + maxFeatures)
     println("(Optional) Features: " + words.mkString(","))
     println("(Optional) Additional values: " + fNames.mkString(","))
     println("(Optional) Additional values output to: " + valuesOutDir)
@@ -95,13 +105,20 @@ object RandomForestVectorAdapter extends Adapter {
 
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
+
+    // select features (if not specified)
+    val words2 =
+      if (words.isEmpty)
+        selectFeatures(reader, field, minDF, maxDFPercent, maxFeatures)
+      else words
+
     val docIds = reader.universalset().toList
     val labels = fieldValues(reader, docIds, Seq(labelField)).map(m => m(labelField).head).toVector
     val (features, vectors) =
       if (vtype == "int")
-        TFIDF.tfVectors(reader, field, docIds, words)
+        TFIDF.tfVectors(reader, field, docIds, words2)
       else
-        TFIDF.tfIdfVectors(reader, field, docIds, words, tfMode, smthterm, idfMode)
+        TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode)
 
     dumpLabeledVectors(labels, vectors, out)
 
