@@ -19,15 +19,16 @@ package org.nlp4l.spark.mllib
 import java.io._
 
 import org.nlp4l.core.{RawReader, IReader, SchemaLoader}
+import org.nlp4l.mahout.RandomForestVectorsAdapter._
 import org.nlp4l.stats.TFIDF
-import org.nlp4l.util.Adapter
+import org.nlp4l.util.{FeatureSelector, Adapter}
 import resource._
 
 /**
  * Main for dump LabeledPoints
  * Dumps feature vectors as LIBSVM format.
  */
-object LabeledPointAdapter extends Adapter {
+object LabeledPointAdapter extends Adapter with FeatureSelector {
   def main(args: Array[String]): Unit = {
     val usage =
       """
@@ -46,11 +47,14 @@ object LabeledPointAdapter extends Adapter {
         |       [-w <words output file>]
         |       [--features <feature1>{,<feature2>}]
         |       [--values <field1>{,<field2>}] [--valuesDir <dir>] [--valuesSep <sep>]
+        |       [--maxDFPercent maxDFPercent]
+        |       [--minDF minDF]
+        |       [--maxFeatures maxFeatures]
         |       <index dir>
       """.stripMargin
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
       case Nil => parsed
-      case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail)
+      case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail) ++ parseCriteriaOption(Map(), args.toList)
       case "--labelfile" :: value :: tail => parseOption(parsed + ('labelfile -> value), tail)
       case "--labelfileSep" :: value :: tail => parseOption(parsed + ('labelfileSep -> value), tail)
       case value :: tail => parseOption(parsed, tail)
@@ -81,6 +85,10 @@ object LabeledPointAdapter extends Adapter {
     val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
     val valuesOutDir = options.getOrElse('valuesDir, "values")
     val valuesSep = options.getOrElse('valuesSep, ",")
+    val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
+    val minDF = if (options.contains('minDF)) options('minDF).toInt else 1
+    val maxFeatures = if (options.contains('maxFeatures)) options('maxFeatures).toInt else -1
+
 
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
@@ -93,6 +101,9 @@ object LabeledPointAdapter extends Adapter {
     println("Label Mapping File: " + labelFile)
     println("Output vectors to: " + out)
     println("Output words to: " + wordsOut)
+    println("Max DF Percent: " + maxDFPercent)
+    println("Min DF: " + minDF)
+    println("Max Number of Features: " + maxFeatures)
     println("(Optional) Features: " + words.mkString(","))
     println("(Optional) Additional values: " + fNames.mkString(","))
     println("(Optional) Additional values output to: " + valuesOutDir)
@@ -100,14 +111,21 @@ object LabeledPointAdapter extends Adapter {
 
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
+
+    // select features (if not specified)
+    val words2 =
+      if (words.isEmpty)
+        selectFeatures(reader, field, minDF, maxDFPercent, maxFeatures)
+      else words
+
     val docIds = reader.universalset().toList
     val labelMap = makeLabelMap(reader, labelField, labelFile, labelFileSep)
     val labels = fieldValues(reader, docIds, Seq(labelField)).map(m => m(labelField).head).map(labelMap(_)).toVector
     val (features, vectors) =
       if (vtype == "int")
-        TFIDF.tfVectors(reader, field, docIds, words)
+        TFIDF.tfVectors(reader, field, docIds, words2)
       else
-        TFIDF.tfIdfVectors(reader, field, docIds, words, tfMode, smthterm, idfMode)
+        TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode)
     dumpLabeledPoints(labels, vectors, out)
 
     // output words

@@ -43,14 +43,13 @@ object RandomForestVectorsAdapter extends Adapter with FeatureSelector {
         |       [--values <field1>{,<field2>}] [--valuesDir <dir>] [--valuesSep <sep>]
         |       [--maxDFPercent maxDFPercent]
         |       [--minDF minDF]
+        |       [--maxFeatures maxFeatures]
         |       <index dir>
       """.stripMargin
 
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
       case Nil => parsed
       case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail)
-      case "--maxDFPercent" :: value :: tail => parseOption(parsed + ('maxDFPercent -> value), tail)
-      case "--minDF" :: value :: tail => parseOption(parsed + ('minDF -> value), tail)
       case value :: tail => parseOption(parsed, tail)
     }
 
