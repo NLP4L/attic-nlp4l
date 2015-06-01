@@ -20,10 +20,11 @@ import java.io.{BufferedWriter, FileWriter, File}
 
 import org.nlp4l.core.{IReader, SchemaLoader}
 import org.nlp4l.stats.{WordCounts, TFIDF}
+import org.nlp4l.util.FeatureSelector
 
 import resource._
 
-object SeqDirectoryAdapter {
+object SeqDirectoryAdapter extends FeatureSelector {
   def main(args: Array[String]): Unit = {
     val usage =
       """
@@ -36,6 +37,7 @@ object SeqDirectoryAdapter {
         |       [--features <feature1>{,<feature2>}]
         |       [--maxDFPercent maxDFPercent]
         |       [--minDF minDF]
+        |       [--maxFeatures maxFeatures]
         |       <index dir>
       """.stripMargin
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
@@ -45,11 +47,9 @@ object SeqDirectoryAdapter {
       case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail)
       case "-o" :: value :: tail => parseOption(parsed + ('outdir -> value), tail)
       case "--features" :: value :: tail => parseOption(parsed + ('features -> value), tail)
-      case "--maxDFPercent" :: value :: tail => parseOption(parsed + ('maxDFPercent -> value), tail)
-      case "--minDF" :: value :: tail => parseOption(parsed + ('minDF -> value), tail)
       case value :: tail => parseOption(parsed + ('index -> value), tail)
     }
-    val options = parseOption(Map(), args.toList)
+    val options = parseOption(Map(), args.toList) ++ parseCriteriaOption(Map(), args.toList)
     if (!List('index, 'schema, 'label, 'field).forall(options.contains)) {
       println(usage)
       System.exit(1)
@@ -63,6 +63,7 @@ object SeqDirectoryAdapter {
     val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
     val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
     val minDF = if (options.contains('minDF)) options('minDF).toInt else 1
+    val maxFeatures = if (options.contains('maxFeatures)) options('maxFeatures).toInt else -1
 
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
@@ -71,6 +72,7 @@ object SeqDirectoryAdapter {
     println("Output to: " + outdir)
     println("Max DF Percent: " + maxDFPercent)
     println("Min DF: " + minDF)
+    println("Max Number of Features: " + maxFeatures)
     println("(Optional) Features: " + words.mkString(","))
 
     // create output dir if not exist
@@ -81,11 +83,10 @@ object SeqDirectoryAdapter {
     val reader = IReader(idxDir, schema)
 
     // select features (if not specified)
-    val words2 = if (words.isEmpty) {
-      val docFreqs = WordCounts.countDF(reader, field, words)
-      val numDocs = reader.numDocs.toDouble
-      docFreqs.filter(_._2 >= minDF).filter(_._2 / numDocs <= maxDFPercent).map(_._1).toSet
-    } else words
+    val words2 =
+      if (words.isEmpty)
+        selectFeatures(reader, field, minDF, maxDFPercent, maxFeatures)
+      else words
 
     val docIds = reader.universalset().toList
     val (features, vectors) = TFIDF.tfVectors(reader, field, docIds, words2)
