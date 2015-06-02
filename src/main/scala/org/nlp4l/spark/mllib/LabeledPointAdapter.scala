@@ -36,7 +36,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
         |LabelPointAdapter
         |       -s <schema file>
         |       -f <feature field>
-        |       [-t int|float]
+        |       [--type int|float]
         |       [--tfmode <TF mode>]
         |       [--smthterm <smoothing term>]
         |       [--idfmode <IDF mode>]

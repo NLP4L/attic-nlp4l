@@ -39,7 +39,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
         |VectorsAdapter
         |       -s <schema file>
         |       -f <feature field>
-        |       [-t int|float]
+        |       [--type int|float]
         |       [--tfmode <TF mode>]
         |       [--smthterm <smoothing term>]
         |       [--idfmode <IDF mode>]

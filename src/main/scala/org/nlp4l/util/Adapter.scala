@@ -23,7 +23,7 @@ trait Adapter {
     case Nil => parsed
     case "-s" :: value :: tail => parseCommonOption(parsed + ('schema -> value), tail)
     case "-f" :: value :: tail => parseCommonOption(parsed + ('field -> value), tail)
-    case "-t" :: value :: tail => parseCommonOption(parsed + ('type -> value), tail)
+    case "--type" :: value :: tail => parseCommonOption(parsed + ('type -> value), tail)
     case "--tfmode" :: value :: tail => parseCommonOption(parsed + ('tfmode -> value), tail)
     case "--smthterm" :: value :: tail => parseCommonOption(parsed + ('smthterm -> value), tail)
     case "--idfmode" :: value :: tail => parseCommonOption(parsed + ('idfmode -> value), tail)

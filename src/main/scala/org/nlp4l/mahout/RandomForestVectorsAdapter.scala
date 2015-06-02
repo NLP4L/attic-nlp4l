@@ -32,7 +32,7 @@ object RandomForestVectorsAdapter extends Adapter with FeatureSelector {
         |RondomForestVectorsAdapter
         |       -s <schema file>
         |       -f <feature field>
-        |       [-t int|float]
+        |       [--type int|float]
         |       [--tfmode <TF mode>]
         |       [--smthterm <smoothing term>]
         |       [--idfmode <IDF mode>]
