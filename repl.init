@@ -1,5 +1,6 @@
 import org.nlp4l.core._
 import org.nlp4l.core.analysis._
+import org.nlp4l.lm._
 import org.nlp4l.stats._
 import org.nlp4l.gui._
 import org.nlp4l.repl.NLP4L
