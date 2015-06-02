@@ -35,6 +35,7 @@ trait Adapter {
     case "--outputSep" :: value :: tail => parseCommonOption(parsed + ('outputSep -> value), tail)
     case "--values" :: value :: tail => parseCommonOption(parsed + ('values -> value), tail)
     case "--valuesSep" :: value :: tail => parseCommonOption(parsed + ('valuesSep -> value), tail)
+    case "--boosts" :: value :: tail => parseCommonOption(parsed + ('boosts -> value), tail)
     case value :: tail => parseCommonOption(parsed + ('index -> value), tail)
   }
 
@@ -66,4 +67,23 @@ trait Adapter {
     builder.result()
   }
 
+  def readTermBoosts(boostFile: String): Map[String, Double] = {
+    val file = new File(boostFile)
+    // build term boosts map
+    val builder = Map.newBuilder[String, Double]
+    if (file.exists()) {
+      for (input <- managed(new BufferedReader(new FileReader(file)))) {
+        def read(): Unit = input.readLine() match {
+          case null => ()
+          case line => {
+            val cols = line.split(",")
+            builder += (cols(0).trim -> cols(1).trim.toDouble)
+            read()
+          }
+        }
+        read()
+      }
+    }
+    builder.result()
+  }
 }

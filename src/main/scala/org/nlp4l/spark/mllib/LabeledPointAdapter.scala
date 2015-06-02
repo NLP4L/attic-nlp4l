@@ -44,9 +44,10 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
         |       [-o <outdir>]
         |       [--features <feature1>{,<feature2>}]
         |       [--values <field1>{,<field2>}] [--valuesSep <sep>]
-        |       [--maxDFPercent maxDFPercent]
-        |       [--minDF minDF]
-        |       [--maxFeatures maxFeatures]
+        |       [--maxDFPercent <maxDFPercent>]
+        |       [--minDF <minDF>]
+        |       [--maxFeatures <maxFeatures>]
+        |       [--boosts <term boosts file>]
         |       <index dir>
       """.stripMargin
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
@@ -85,7 +86,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
     val minDF = if (options.contains('minDF)) options('minDF).toInt else 1
     val maxFeatures = if (options.contains('maxFeatures)) options('maxFeatures).toInt else -1
-
+    val termBoosts = if (options.contains('boosts)) readTermBoosts(options('boosts)) else Map.empty[String, Double]
 
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
@@ -102,6 +103,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     println("(Optional) Features: " + words.mkString(","))
     println("(Optional) Additional values: " + fNames.mkString(","))
     println("(Optional) Additional values separator: " + valuesSep)
+    println("(Optional) Term boosts file: " + options.getOrElse('boosts, ""))
 
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
@@ -120,9 +122,9 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     val labels = fieldValues(reader, docIds, Seq(labelField)).map(m => m(labelField).head).map(labelMap(_)).toVector
     val (features, vectors) =
       if (vtype == "int")
-        TFIDF.tfVectors(reader, field, docIds, words2, tfMode)
+        TFIDF.tfVectors(reader, field, docIds, words2, tfMode, termBoosts)
       else
-        TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode)
+        TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode, termBoosts)
     dumpLabeledPoints(labels, vectors, out)
 
     // output words

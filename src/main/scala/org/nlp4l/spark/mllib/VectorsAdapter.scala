@@ -48,9 +48,10 @@ object VectorsAdapter extends Adapter with FeatureSelector {
         |       [--features <feature1>{,<feature2>}]
         |       [--outputSep <sep>]
         |       [--values <field1>{,<field2>}] [--valuesSep <sep>]
-        |       [--maxDFPercent maxDFPercent]
-        |       [--minDF minDF]
-        |       [--maxFeatures maxFeatures]
+        |       [--maxDFPercent <maxDFPercent>]
+        |       [--minDF <minDF>]
+        |       [--maxFeatures <maxFeatures>]
+        |       [--boosts <term boosts file>]
         |       <index dir>
       """.stripMargin
 
@@ -91,6 +92,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
     val minDF = if (options.contains('minDF)) options('minDF).toInt else 1
     val maxFeatures = if (options.contains('maxFeatures)) options('maxFeatures).toInt else -1
+    val termBoosts = if (options.contains('boosts)) readTermBoosts(options('boosts)) else Map.empty[String, Double]
 
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
@@ -109,6 +111,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     println("(Optional) Features: " + options.getOrElse('features, ""))
     println("(Optional) Additional values: " + fNames.mkString(","))
     println("(Optional) Additional values separator: " + valuesSep)
+    println("(Optional) Term boosts file: " + options.getOrElse('boosts, ""))
 
 
     val schema = SchemaLoader.loadFile(schemaFile)
@@ -126,9 +129,9 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     val docIds = reader.universalset().toList
     val (features, vectors) =
       if (vtype == "int")
-        TFIDF.tfVectors(reader, field, docIds, words2, tfMode)
+        TFIDF.tfVectors(reader, field, docIds, words2, tfMode, termBoosts)
       else
-        TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode)
+        TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode, termBoosts)
     val idValues = if (idField.nonEmpty) fieldValues(reader, docIds, Seq(idField)).map(vals => vals(idField)(0)) else List.empty[String]
     dumpVectors(vectors, out, outputSep, idValues, words2.size, header)
 
