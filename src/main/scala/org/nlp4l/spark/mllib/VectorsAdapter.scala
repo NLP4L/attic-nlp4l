@@ -110,7 +110,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     val docIds = reader.universalset().toList
     val (features, vectors) =
       if (vtype == "int")
-        TFIDF.tfVectors(reader, field, docIds, words2)
+        TFIDF.tfVectors(reader, field, docIds, words2, tfMode)
       else
         TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode)
     dumpVectors(vectors, out)

@@ -33,8 +33,8 @@ object TFIDF {
    * @param words the set of words(terms) considered as feature. All words(terms) will be taken as features if empty set is given.
    * @return the Vector of words and the feature vector
    */
-  def tfVector(reader: IReader, field: String, docId: Int, words: Set[String] = Set.empty): (Seq[String], Seq[Long]) = {
-    val (features, vector) =  tfIdfVector(reader, field, docId, words, tfMode="n", idfMode="n")
+  def tfVector(reader: IReader, field: String, docId: Int, words: Set[String] = Set.empty, tfMode: String = "n"): (Seq[String], Seq[Long]) = {
+    val (features, vector) =  tfIdfVector(reader, field, docId, words, tfMode, idfMode="n")
     (features, vector.map(_.toLong))
   }
 
@@ -46,8 +46,8 @@ object TFIDF {
    * @param words the set of words(terms) considered as feature. All words(terms) will be taken as features if empty set is given.
    * @return the pair of words and the feature vectors
    */
-  def tfVectors(reader: IReader, field: String, docIds: List[Int], words: Set[String] = Set.empty): (Seq[String], Stream[Seq[Long]]) = {
-    val (features, vectors) = tfIdfVectors(reader, field, docIds, words, tfMode="n", idfMode="n")
+  def tfVectors(reader: IReader, field: String, docIds: List[Int], words: Set[String] = Set.empty, tfMode: String = "n"): (Seq[String], Stream[Seq[Long]]) = {
+    val (features, vectors) = tfIdfVectors(reader, field, docIds, words, tfMode, idfMode="n")
     (features, vectors.map(_.map(_.toLong)))
   }
 

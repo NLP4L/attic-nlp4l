@@ -116,7 +116,7 @@ object RandomForestVectorsAdapter extends Adapter with FeatureSelector {
     val labels = fieldValues(reader, docIds, Seq(labelField)).map(m => m(labelField).head).toVector
     val (features, vectors) =
       if (vtype == "int")
-        TFIDF.tfVectors(reader, field, docIds, words2)
+        TFIDF.tfVectors(reader, field, docIds, words2, tfMode)
       else
         TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode)
 
