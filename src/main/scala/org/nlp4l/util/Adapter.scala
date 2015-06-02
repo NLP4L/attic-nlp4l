@@ -16,7 +16,10 @@
 
 package org.nlp4l.util
 
+import java.io.{FileReader, BufferedReader, File}
+
 import org.nlp4l.core.RawReader
+import resource._
 
 trait Adapter {
   def parseCommonOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
@@ -42,6 +45,25 @@ trait Adapter {
       }
       case _ => Map.empty[String, List[String]]
     })
+  }
+
+  def readFeatures(featureFile: String): Set[String] = {
+    val file = new File(featureFile)
+    // build word set from feature file
+    val builder = Set.newBuilder[String]
+    if (file.exists()) {
+      for (input <- managed(new BufferedReader(new FileReader(file)))) {
+        def read(): Unit = input.readLine() match {
+          case null => ()
+          case line => {
+            builder += (line.trim)
+            read()
+          }
+        }
+        read()
+      }
+    }
+    builder.result()
   }
 
 }

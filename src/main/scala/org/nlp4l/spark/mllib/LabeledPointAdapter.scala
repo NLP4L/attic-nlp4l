@@ -19,7 +19,6 @@ package org.nlp4l.spark.mllib
 import java.io._
 
 import org.nlp4l.core.{RawReader, IReader, SchemaLoader}
-import org.nlp4l.mahout.RandomForestVectorsAdapter._
 import org.nlp4l.stats.TFIDF
 import org.nlp4l.util.{FeatureSelector, Adapter}
 import resource._
@@ -79,7 +78,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     val labelFileSep = options.getOrElse('labelfileSep, "\t")
     val out = outdir + File.separator + "data.txt"
     val wordsOut = outdir + File.separator + "words.txt"
-    val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
+    val words = if (options.contains('features)) readFeatures(options('features)) else Set.empty[String]
     val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
     val valuesOutDir = outdir + File.separator + "values"
     val valuesSep = options.getOrElse('valuesSep, ",")

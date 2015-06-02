@@ -16,8 +16,7 @@
 
 package org.nlp4l.spark.mllib
 
-import java.io.{PrintWriter, FileWriter, BufferedWriter, File}
-import org.nlp4l.mahout.RandomForestVectorsAdapter._
+import java.io._
 import org.nlp4l.util.{FeatureSelector, Adapter}
 import resource._
 
@@ -84,7 +83,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     val idfMode = options.getOrElse('idfmode, "t")
     val out = outdir + File.separator + "data.txt"
     val wordsOut = outdir + File.separator + "words.txt"
-    val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
+    val words = if (options.contains('features)) readFeatures(options('features)) else Set.empty[String]
     val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
     val outputSep = options.getOrElse('outputSep, " ")
     val valuesOutDir = outdir + File.separator + "values"
@@ -107,7 +106,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     println("Max DF Percent: " + maxDFPercent)
     println("Min DF: " + minDF)
     println("Max Number of Features: " + maxFeatures)
-    println("(Optional) Features: " + words.mkString(","))
+    println("(Optional) Features: " + options.getOrElse('features, ""))
     println("(Optional) Additional values: " + fNames.mkString(","))
     println("(Optional) Additional values separator: " + valuesSep)
 

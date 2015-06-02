@@ -75,7 +75,7 @@ object RandomForestVectorsAdapter extends Adapter with FeatureSelector {
     val labelFile = outdir + File.separator + options.getOrElse('labelfile, "label.txt")
     val out = outdir + File.separator + "data.txt"
     val wordsOut = outdir + File.separator + "words.txt"
-    val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
+    val words = if (options.contains('features)) readFeatures(options('features)) else Set.empty[String]
     val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
     val valuesOutDir = outdir + File.separator + "values"
     val valuesSep = options.getOrElse('valuesSep, ",")

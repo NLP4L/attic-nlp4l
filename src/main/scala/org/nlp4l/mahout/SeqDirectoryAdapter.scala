@@ -19,7 +19,7 @@ package org.nlp4l.mahout
 import java.io.{BufferedWriter, FileWriter, File}
 
 import org.nlp4l.core.{IReader, SchemaLoader}
-import org.nlp4l.stats.{WordCounts, TFIDF}
+import org.nlp4l.stats.TFIDF
 import org.nlp4l.util.FeatureSelector
 
 import resource._
@@ -60,7 +60,7 @@ object SeqDirectoryAdapter extends FeatureSelector {
     val field = options('field)
     val labelField = options('label)
     val outdir = options.getOrElse('outdir, "msd-out")
-    val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
+    val words = if (options.contains('features)) readFeatures(options('features)) else Set.empty[String]
     val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
     val minDF = if (options.contains('minDF)) options('minDF).toInt else 1
     val maxFeatures = if (options.contains('maxFeatures)) options('maxFeatures).toInt else -1
