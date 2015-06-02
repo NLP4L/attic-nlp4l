@@ -20,11 +20,11 @@ import java.io.{BufferedWriter, FileWriter, File}
 
 import org.nlp4l.core.{IReader, SchemaLoader}
 import org.nlp4l.stats.TFIDF
-import org.nlp4l.util.FeatureSelector
+import org.nlp4l.util.{Adapter, FeatureSelector}
 
 import resource._
 
-object SeqDirectoryAdapter extends FeatureSelector {
+object SeqDirectoryAdapter extends Adapter with  FeatureSelector {
   def main(args: Array[String]): Unit = {
     val usage =
       """
