@@ -36,17 +36,16 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     val usage =
       """
         |Usage:
-        |LabelPointAdapter
+        |VectorsAdapter
         |       -s <schema file>
         |       -f <feature field>
         |       [-t int|float]
         |       [--tfmode <TF mode>]
         |       [--smthterm <smoothing term>]
         |       [--idfmode <IDF mode>]
-        |       [-d <data output file>]
-        |       [-w <words output file>]
+        |       [-o <outdir>]
         |       [--features <feature1>{,<feature2>}]
-        |       [--values <field1>{,<field2>}] [--valuesDir <dir>] [--valuesSep <sep>]
+        |       [--values <field1>{,<field2>}] [--valuesSep <sep>]
         |       [--maxDFPercent maxDFPercent]
         |       [--minDF minDF]
         |       [--maxFeatures maxFeatures]
@@ -64,16 +63,17 @@ object VectorsAdapter extends Adapter with FeatureSelector {
 
     val idxDir = options('index)
     val schemaFile = options('schema)
+    val outdir = options.getOrElse('outdir, "vectors-out")
     val field = options('field)
     val vtype = options.getOrElse('type, "float").toLowerCase
     val tfMode = options.getOrElse('tfmode, "n")
     val smthterm = options.getOrElse('smthterm, "0.4").toDouble
     val idfMode = options.getOrElse('idfmode, "t")
-    val out = options.getOrElse('data, "data.txt")
-    val wordsOut = options.getOrElse('words, "words.txt")
+    val out = outdir + File.separator + "data.txt"
+    val wordsOut = outdir + File.separator + "words.txt"
     val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
     val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
-    val valuesOutDir = options.getOrElse('valuesDir, "values")
+    val valuesOutDir = outdir + File.separator + "values"
     val valuesSep = options.getOrElse('valuesSep, ",")
     val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
     val minDF = if (options.contains('minDF)) options('minDF).toInt else 1
@@ -86,19 +86,20 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     println("TF mode: " + tfMode)
     println("Smooth term (for TF mode = \"m\"): " + smthterm)
     println("IDF mode: " + idfMode)
-    println("Output vectors to: " + out)
-    println("Output words to: " + wordsOut)
+    println("Output directory: " + outdir)
     println("Max DF Percent: " + maxDFPercent)
     println("Min DF: " + minDF)
     println("Max Number of Features: " + maxFeatures)
     println("(Optional) Features: " + words.mkString(","))
     println("(Optional) Additional values: " + fNames.mkString(","))
-    println("(Optional) Additional values output to: " + valuesOutDir)
     println("(Optional) Additional values separator: " + valuesSep)
 
 
     val schema = SchemaLoader.loadFile(schemaFile)
     val reader = IReader(idxDir, schema)
+
+    val dir = new File(outdir)
+    if (!dir.exists()) dir.mkdirs()
 
     // select features (if not specified)
     val words2 =

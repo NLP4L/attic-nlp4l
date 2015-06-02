@@ -27,11 +27,9 @@ trait Adapter {
     case "--tfmode" :: value :: tail => parseCommonOption(parsed + ('tfmode -> value), tail)
     case "--smthterm" :: value :: tail => parseCommonOption(parsed + ('smthterm -> value), tail)
     case "--idfmode" :: value :: tail => parseCommonOption(parsed + ('idfmode -> value), tail)
-    case "-d" :: value :: tail => parseCommonOption(parsed + ('data -> value), tail)
-    case "-w" :: value :: tail => parseCommonOption(parsed + ('words -> value), tail)
+    case "-o" :: value :: tail => parseCommonOption(parsed + ('outdir -> value), tail)
     case "--features" :: value :: tail => parseCommonOption(parsed + ('features -> value), tail)
     case "--values" :: value :: tail => parseCommonOption(parsed + ('values -> value), tail)
-    case "--valuesDir" :: value :: tail => parseCommonOption(parsed + ('valuesDir -> value), tail)
     case "--valuesSep" :: value :: tail => parseCommonOption(parsed + ('valuesSep -> value), tail)
     case value :: tail => parseCommonOption(parsed + ('index -> value), tail)
   }
