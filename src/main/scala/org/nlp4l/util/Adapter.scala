@@ -29,6 +29,7 @@ trait Adapter {
     case "--idfmode" :: value :: tail => parseCommonOption(parsed + ('idfmode -> value), tail)
     case "-o" :: value :: tail => parseCommonOption(parsed + ('outdir -> value), tail)
     case "--features" :: value :: tail => parseCommonOption(parsed + ('features -> value), tail)
+    case "--outputSep" :: value :: tail => parseCommonOption(parsed + ('outputSep -> value), tail)
     case "--values" :: value :: tail => parseCommonOption(parsed + ('values -> value), tail)
     case "--valuesSep" :: value :: tail => parseCommonOption(parsed + ('valuesSep -> value), tail)
     case value :: tail => parseCommonOption(parsed + ('index -> value), tail)

@@ -125,7 +125,7 @@ object RandomForestVectorsAdapter extends Adapter with FeatureSelector {
     // output words
     val wordsFile = new File(wordsOut)
     for (output <- managed(new PrintWriter(new FileWriter(wordsFile)))) {
-      features.foreach(output.println)
+      features.zipWithIndex.foreach{case(word, id) => output.println(id + "," + word)}
     }
 
     // output additional values
@@ -152,8 +152,8 @@ object RandomForestVectorsAdapter extends Adapter with FeatureSelector {
     for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
       labels.zip(vectors).foreach{case(label: String, vector: Seq[AnyVal]) => {
         // output label
-        output.write(label.toString)
-        for (v <- vector) output.write("," + v.toString)
+        output.write(label.toString + ",")
+        output.write(vector.mkString(","))
         output.newLine()
       }}
       output.flush()

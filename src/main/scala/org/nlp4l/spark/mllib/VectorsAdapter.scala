@@ -39,19 +39,28 @@ object VectorsAdapter extends Adapter with FeatureSelector {
         |VectorsAdapter
         |       -s <schema file>
         |       -f <feature field>
+        |       [--id <id field>]
         |       [--type int|float]
         |       [--tfmode <TF mode>]
         |       [--smthterm <smoothing term>]
         |       [--idfmode <IDF mode>]
         |       [-o <outdir>]
         |       [--features <feature1>{,<feature2>}]
+        |       [--outputSep <sep>]
         |       [--values <field1>{,<field2>}] [--valuesSep <sep>]
         |       [--maxDFPercent maxDFPercent]
         |       [--minDF minDF]
         |       [--maxFeatures maxFeatures]
         |       <index dir>
       """.stripMargin
-    val options = parseCommonOption(Map(), args.toList) ++ parseCriteriaOption(Map(), args.toList)
+
+    def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
+      case Nil => parsed
+      case "--id" :: value :: tail => parseOption(parsed + ('idfield -> value), tail)
+      case value :: tail => parseOption(parsed, tail)
+    }
+
+    val options = parseCommonOption(Map(), args.toList) ++ parseCriteriaOption(Map(), args.toList) ++ parseOption(Map(), args.toList)
     if (!List('index, 'schema, 'field).forall(options.contains)) {
       println(usage)
       System.exit(1)
@@ -65,6 +74,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     val schemaFile = options('schema)
     val outdir = options.getOrElse('outdir, "vectors-out")
     val field = options('field)
+    val idField = options.getOrElse('idfield, "")
     val vtype = options.getOrElse('type, "float").toLowerCase
     val tfMode = options.getOrElse('tfmode, "n")
     val smthterm = options.getOrElse('smthterm, "0.4").toDouble
@@ -73,6 +83,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     val wordsOut = outdir + File.separator + "words.txt"
     val words = if (options.contains('features)) options('features).split(",").toSet else Set.empty[String]
     val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
+    val outputSep = options.getOrElse('outputSep, " ")
     val valuesOutDir = outdir + File.separator + "values"
     val valuesSep = options.getOrElse('valuesSep, ",")
     val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
@@ -82,11 +93,13 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
     println("Feature Field: " + field)
+    println("Id Field: " + idField)
     println("Value type for vectors: " + vtype)
     println("TF mode: " + tfMode)
     println("Smooth term (for TF mode = \"m\"): " + smthterm)
     println("IDF mode: " + idfMode)
     println("Output directory: " + outdir)
+    println("Output values separator: " + outputSep)
     println("Max DF Percent: " + maxDFPercent)
     println("Min DF: " + minDF)
     println("Max Number of Features: " + maxFeatures)
@@ -113,13 +126,14 @@ object VectorsAdapter extends Adapter with FeatureSelector {
         TFIDF.tfVectors(reader, field, docIds, words2, tfMode)
       else
         TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode)
-    dumpVectors(vectors, out)
+    val idValues = if (idField.nonEmpty) fieldValues(reader, docIds, Seq(idField)).map(vals => vals(idField)(0)) else List.empty[String]
+    dumpVectors(vectors, out, outputSep, idValues)
 
 
     // output words
     val wordsFile = new File(wordsOut)
     for (output <- managed(new PrintWriter(new FileWriter(wordsFile)))) {
-      features.foreach(output.println)
+      features.zipWithIndex.foreach{case(word, id) => output.println(id + "," + word)}
     }
 
     // output additional values
@@ -140,18 +154,27 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     }
   }
 
-  def dumpVectors(vectors: => Stream[Seq[Any]], out: String = "data.txt"): Unit = {
+  def dumpVectors(vectors: => Stream[Seq[Any]], out: String = "data.txt", outputSep: String, idValues: List[String]): Unit = {
     val file: File = new File(out)
     for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
       @tailrec def loop(xs: Stream[Seq[Any]]): Unit = xs match {
         case Stream.Empty => ()
         case vec #:: tail => {
-          for (v <- vec) output.write(v.toString + " ")
+          output.write(vec.mkString(outputSep))
           output.newLine()
           loop(tail)
         }
       }
-      loop(vectors)
+      if (idValues.isEmpty)
+        loop(vectors)
+      else {
+        idValues.zip(vectors).foreach{case (id, vec) => {
+          output.write(id + outputSep)
+          output.write(vec.mkString(outputSep))
+          output.newLine()
+        }}
+      }
+
       output.flush()
     }
   }
