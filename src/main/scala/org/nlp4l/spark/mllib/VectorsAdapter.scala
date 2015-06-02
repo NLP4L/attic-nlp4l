@@ -40,6 +40,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
         |       -s <schema file>
         |       -f <feature field>
         |       [--id <id field>]
+        |       [--header]
         |       [--type int|float]
         |       [--tfmode <TF mode>]
         |       [--smthterm <smoothing term>]
@@ -57,6 +58,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
       case Nil => parsed
       case "--id" :: value :: tail => parseOption(parsed + ('idfield -> value), tail)
+      case "--header" :: tail => parseOption(parsed + ('header -> "true"), tail)
       case value :: tail => parseOption(parsed, tail)
     }
 
@@ -75,6 +77,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     val outdir = options.getOrElse('outdir, "vectors-out")
     val field = options('field)
     val idField = options.getOrElse('idfield, "")
+    val header = if (options.contains('header)) true else false
     val vtype = options.getOrElse('type, "float").toLowerCase
     val tfMode = options.getOrElse('tfmode, "n")
     val smthterm = options.getOrElse('smthterm, "0.4").toDouble
@@ -94,6 +97,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     println("Schema file: " + schemaFile)
     println("Feature Field: " + field)
     println("Id Field: " + idField)
+    println("Header: " + header.toString)
     println("Value type for vectors: " + vtype)
     println("TF mode: " + tfMode)
     println("Smooth term (for TF mode = \"m\"): " + smthterm)
@@ -127,13 +131,13 @@ object VectorsAdapter extends Adapter with FeatureSelector {
       else
         TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode)
     val idValues = if (idField.nonEmpty) fieldValues(reader, docIds, Seq(idField)).map(vals => vals(idField)(0)) else List.empty[String]
-    dumpVectors(vectors, out, outputSep, idValues)
+    dumpVectors(vectors, out, outputSep, idValues, words2.size, header)
 
 
     // output words
     val wordsFile = new File(wordsOut)
     for (output <- managed(new PrintWriter(new FileWriter(wordsFile)))) {
-      features.zipWithIndex.foreach{case(word, id) => output.println(id + "," + word)}
+      features.zipWithIndex.foreach{case(word, id) => output.println((id + 1).toString + "," + word)}
     }
 
     // output additional values
@@ -154,7 +158,7 @@ object VectorsAdapter extends Adapter with FeatureSelector {
     }
   }
 
-  def dumpVectors(vectors: => Stream[Seq[Any]], out: String = "data.txt", outputSep: String, idValues: List[String]): Unit = {
+  def dumpVectors(vectors: => Stream[Seq[Any]], out: String = "data.txt", outputSep: String, idValues: List[String], featureSize: Int, header: Boolean = false): Unit = {
     val file: File = new File(out)
     for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
       @tailrec def loop(xs: Stream[Seq[Any]]): Unit = xs match {
@@ -165,9 +169,19 @@ object VectorsAdapter extends Adapter with FeatureSelector {
           loop(tail)
         }
       }
-      if (idValues.isEmpty)
+      if (idValues.isEmpty) {
+        if (header) {
+          output.write((1 to featureSize).mkString(outputSep))
+          output.newLine()
+        }
         loop(vectors)
+      }
       else {
+        if (header) {
+          output.write(outputSep)
+          output.write((1 to featureSize).mkString(outputSep))
+          output.newLine()
+        }
         idValues.zip(vectors).foreach{case (id, vec) => {
           output.write(id + outputSep)
           output.write(vec.mkString(outputSep))
