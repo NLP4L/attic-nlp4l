@@ -120,6 +120,24 @@ class TFIDFSuite extends FunSuite with BeforeAndAfterAll {
         1 * math.log(N/dfMap("my"))))(vector)
   }
 
+  test("generate a TF/IDF term vector from a document with term boosts") {
+    val reader = IReader(indexDir, schema)
+    val N = reader.numDocs
+    val dfMap = WordCounts.countDF(reader, "content", Set.empty)
+    val (words: Seq[String], vector: Seq[Double]) = TFIDF.tfIdfVector(reader, "content", 0, termBoosts=Map("fair" -> 1.5, "london" -> 2.0))
+    assert(words.size == vector.size)
+    assertResult(Vector("bridge", "down", "fair", "falling", "lady", "london", "my"))(words)
+    assertResult(
+      Vector(
+        2 * math.log(N/dfMap("bridge").toDouble),
+        4 * math.log(N/dfMap("down").toDouble),
+        1 * 1.5 * math.log(N/dfMap("fair").toDouble),
+        4 * math.log(N/dfMap("falling").toDouble),
+        1 * math.log(N/dfMap("lady").toDouble),
+        2 * 2.0 * math.log(N/dfMap("london").toDouble),
+        1 * math.log(N/dfMap("my"))))(vector)
+  }
+
   test("generate a TF/IDF term vector from a document with specified features") {
     val reader = IReader(indexDir, schema)
     val N = reader.numDocs
@@ -184,6 +202,69 @@ class TFIDFSuite extends FunSuite with BeforeAndAfterAll {
         0.0,
         0.0,
         1 * math.log(N/dfMap("fair")),
+        0.0,
+        2 * math.log(N/dfMap("gold")),
+        4 * math.log(N/dfMap("have")),
+        0.0,
+        4 * math.log(N/dfMap("i")),
+        1 * math.log(N/dfMap("lady")),
+        0.0,
+        1 * math.log(N/dfMap("my")),
+        4 * math.log(N/dfMap("none")),
+        2 * math.log(N/dfMap("silver")),
+        0.0,
+        0.0))(vectors(2))
+  }
+
+  test("generate TF/IDF term vectors from documents with term boosts") {
+    val reader = IReader(indexDir, schema)
+    val N = reader.numDocs
+    val dfMap = WordCounts.countDF(reader, "content", Set.empty)
+    val (words: Seq[String], vectors: Stream[Seq[Double]]) = TFIDF.tfIdfVectors(reader, "content", List(0,1,2), termBoosts=Map("fair" -> 1.5, "london" -> 2.0))
+    assert(vectors.forall(_.length == words.length))
+    assertResult(Vector("bridge", "build", "down", "fair", "falling", "gold", "have", "how", "i", "lady", "london", "my", "none", "silver", "up", "we"))(words)
+    assertResult(
+      Vector(
+        2  * math.log(N/dfMap("bridge").toDouble),
+        0.0,
+        4 * math.log(N/dfMap("down").toDouble),
+        1 * 1.5 * math.log(N/dfMap("fair").toDouble),
+        4 * math.log(N/dfMap("falling").toDouble),
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1 * math.log(N/dfMap("lady").toDouble),
+        2 * 2.0 * math.log(N/dfMap("london").toDouble),
+        1 * math.log(N/dfMap("my").toDouble),
+        0.0,
+        0.0,
+        0.0,
+        0.0))(vectors(0))
+    assertResult(
+      Vector(
+        0.0,
+        4 * math.log(N/dfMap("build").toDouble),
+        0.0,
+        1 * 1.5 * math.log(N/dfMap("fair").toDouble),
+        0.0,
+        0.0,
+        0.0,
+        2 * math.log(N/dfMap("how").toDouble),
+        0.0,
+        1 * math.log(N/dfMap("lady").toDouble),
+        0.0,
+        1 * math.log(N/dfMap("my").toDouble),
+        0.0,
+        0.0,
+        4 * math.log(N/dfMap("up").toDouble),
+        2 * math.log(N/dfMap("we").toDouble)))(vectors(1))
+    assertResult(
+      Vector(
+        0.0,
+        0.0,
+        0.0,
+        1 * 1.5 * math.log(N/dfMap("fair")),
         0.0,
         2 * math.log(N/dfMap("gold")),
         4 * math.log(N/dfMap("have")),
