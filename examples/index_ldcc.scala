@@ -59,7 +59,7 @@ writer.close
 
 // search
 val searcher = ISearcher(index)
-val results = searcher.search(query=new TermQuery(new Term("title", "旅行")), rows=10)
+val results = searcher.search(query=new TermQuery(new Term("title", "iphone")), rows=10)
 
 results.foreach(doc => {
   printf("[DocID] %d: %s\n", doc.docId, doc.get("title"))
