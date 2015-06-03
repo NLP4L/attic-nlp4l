@@ -36,6 +36,8 @@ def removePos(line: String): String = {
 
 def document(file: Path, catsmap: Map[String, String]): Document = {
   val ps: Array[String] = file.path.split(File.separator)
+  // for Windows
+  // val ps: Array[String] = file.path.split("\\\\")
   val fl = ps(3)
   val cat = catsmap.getOrElse(fl, "")
   val bodyPos = file.lines().filterNot(_.length()==0).toList

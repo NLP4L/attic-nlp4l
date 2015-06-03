@@ -53,6 +53,8 @@ def lines(fl: Path, encoding: String): List[String] = {
 
 def document(fl: Path, ja: Boolean): Document = {
   val ps: Array[String] = fl.path.split(File.separator)
+  // for Windows
+  // val ps: Array[String] = file.path.split("\\\\")
   val file = ps(3)
   val typ = ps(2)
   val cat = "all"
