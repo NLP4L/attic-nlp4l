@@ -52,11 +52,11 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
       """.stripMargin
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
       case Nil => parsed
-      case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail) ++ parseCriteriaOption(Map(), args.toList)
+      case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail)
       case "--labelfileSep" :: value :: tail => parseOption(parsed + ('labelfileSep -> value), tail)
       case value :: tail => parseOption(parsed, tail)
     }
-    val options = parseCommonOption(Map(), args.toList) ++ parseOption(Map(), args.toList)
+    val options = parseCommonOption(Map(), args.toList) ++ parseOption(Map(), args.toList) ++ parseCriteriaOption(Map(), args.toList)
     if (!List('index, 'schema, 'label, 'field).forall(options.contains)) {
       println(usage)
       System.exit(1)
