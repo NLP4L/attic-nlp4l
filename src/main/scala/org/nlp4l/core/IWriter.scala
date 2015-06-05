@@ -58,6 +58,13 @@ class IWriter(index: String, schema: Schema) {
   }
 
   /**
+   * Delete all documents in the index.
+   */
+  def deleteAll(): Unit = {
+    writer.deleteAll()
+  }
+
+  /**
    * Close the index.
    *
    * NOTE: Before closing, this calls IndexWriter.forceMerge(1)
