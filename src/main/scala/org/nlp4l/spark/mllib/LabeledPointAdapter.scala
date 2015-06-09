@@ -19,6 +19,7 @@ package org.nlp4l.spark.mllib
 import java.io._
 
 import org.nlp4l.core.{RawReader, IReader, SchemaLoader}
+import org.nlp4l.spark.mllib.VectorsAdapter._
 import org.nlp4l.stats.TFIDF
 import org.nlp4l.util.{FeatureSelector, Adapter}
 import resource._
@@ -35,6 +36,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
         |LabelPointAdapter
         |       -s <schema file>
         |       -f <feature field>
+        |       [--id <id field>]
         |       [--type int|float]
         |       [--tfmode <TF mode>]
         |       [--smthterm <smoothing term>]
@@ -43,6 +45,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
         |       [--labelfileSep <sep>]
         |       [-o <outdir>]
         |       [--features <feature1>{,<feature2>}]
+        |       [--outputSep <sep>]
         |       [--values <field1>{,<field2>}] [--valuesSep <sep>]
         |       [--maxDFPercent <maxDFPercent>]
         |       [--minDF <minDF>]
@@ -52,6 +55,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
       """.stripMargin
     def parseOption(parsed: Map[Symbol, String], list: List[String]): Map[Symbol, String] = list match {
       case Nil => parsed
+      case "--id" :: value :: tail => parseOption(parsed + ('idfield -> value), tail)
       case "-l" :: value :: tail => parseOption(parsed + ('label -> value), tail)
       case "--labelfileSep" :: value :: tail => parseOption(parsed + ('labelfileSep -> value), tail)
       case value :: tail => parseOption(parsed, tail)
@@ -70,6 +74,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     val schemaFile = options('schema)
     val outdir = options.getOrElse('outdir, "labeled-point-out")
     val field = options('field)
+    val idField = options.getOrElse('idfield, "")
     val vtype = options.getOrElse('type, "float").toLowerCase
     val tfMode = options.getOrElse('tfmode, "n")
     val smthterm = options.getOrElse('smthterm, "0.4").toDouble
@@ -81,6 +86,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     val wordsOut = outdir + File.separator + "words.txt"
     val words = if (options.contains('features)) readFeatures(options('features)) else Set.empty[String]
     val fNames = if (options.contains('values)) options('values).split(",").toList else List.empty[String]
+    val outputSep = options.getOrElse('outputSep, " ")
     val valuesOutDir = outdir + File.separator + "values"
     val valuesSep = options.getOrElse('valuesSep, ",")
     val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
@@ -91,12 +97,14 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     println("Index directory: " + idxDir)
     println("Schema file: " + schemaFile)
     println("Feature Field: " + field)
+    println("Id Field: " + idField)
     println("Value type for vectors: " + vtype)
     println("TF mode: " + tfMode)
     println("Smooth term (for TF mode = \"m\"): " + smthterm)
     println("IDF mode: " + idfMode)
     println("Label Field: " + labelField)
     println("Output directory: " + outdir)
+    println("Output values separator: " + outputSep)
     println("Max DF Percent: " + maxDFPercent)
     println("Min DF: " + minDF)
     println("Max Number of Features: " + maxFeatures)
@@ -125,7 +133,8 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
         TFIDF.tfVectors(reader, field, docIds, words2, tfMode, termBoosts)
       else
         TFIDF.tfIdfVectors(reader, field, docIds, words2, tfMode, smthterm, idfMode, termBoosts)
-    dumpLabeledPoints(labels, vectors, out)
+    val idValues = if (idField.nonEmpty) fieldValues(reader, docIds, Seq(idField)).map(vals => vals(idField)(0)) else List.empty[String]
+    dumpLabeledPoints(labels, vectors, out, outputSep, idValues)
 
     // output words
     val wordsFile = new File(wordsOut)
@@ -185,18 +194,30 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     }
   }
 
-  def dumpLabeledPoints(labels: Vector[Int], vectors: Stream[Seq[AnyVal]], out: String): Unit = {
+  def dumpLabeledPoints(labels: Vector[Int], vectors: Stream[Seq[AnyVal]], out: String, outputSep: String, idValues: List[String]): Unit = {
     val file: File = new File(out)
     for(output <- managed(new BufferedWriter(new FileWriter(file)))) {
-      labels.zip(vectors).foreach{case(label: Int, vector: Seq[AnyVal]) => {
-        // output label
-        output.write(label.toString)
-        output.write(" ")
-        // output index:value pairs for LIBSVM format. indices are one-based and in ascending order.
-        val vecWithIdx = vector.zipWithIndex.filter(_._1 != 0).map(t => (t._2 + 1).toString + ":" + t._1.toString)
-        output.write(vecWithIdx.mkString(" "))
-        output.newLine()
-      }}
+      if (idValues.isEmpty) {
+        labels.zip(vectors).foreach { case (label: Int, vector: Seq[AnyVal]) => {
+          // output label
+          output.write(label.toString + outputSep)
+          // output index:value pairs for LIBSVM format. indices are one-based and in ascending order.
+          val vecWithIdx = vector.zipWithIndex.filter(_._1 != 0).map(t => (t._2 + 1).toString + ":" + t._1.toString)
+          output.write(vecWithIdx.mkString(" "))
+          output.newLine()
+        }}
+      } else {
+        (idValues, labels, vectors).zipped.foreach {case (id, label, vector) => {
+          // output word id
+          output.write(id + outputSep)
+          // output label
+          output.write(label.toString + outputSep)
+          // output index:value pairs for LIBSVM format. indices are one-based and in ascending order.
+          val vecWithIdx = vector.zipWithIndex.filter(_._1 != 0).map(t => (t._2 + 1).toString + ":" + t._1.toString)
+          output.write(vecWithIdx.mkString(" "))
+          output.newLine()
+        }}
+      }
       output.flush()
     }
   }
