@@ -240,7 +240,7 @@ class Terms(terms: LuceneTerms, liveDocs: Bits, val field: FieldInfo) extends Se
   /**
    * Returns the sum of total term frequencies for all terms in this field, or -1 if this measure isn't stored by the codec (or if this fields omits term freq and positions)
    */
-  def sumTotalTermFreq = terms.getSumDocFreq
+  def sumTotalTermFreq = terms.getSumTotalTermFreq
 
   /**
    * Returns true if documents in this field store per-document term frequency
