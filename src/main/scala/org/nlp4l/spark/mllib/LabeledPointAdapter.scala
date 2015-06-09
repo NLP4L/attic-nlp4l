@@ -108,7 +108,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     println("Max DF Percent: " + maxDFPercent)
     println("Min DF: " + minDF)
     println("Max Number of Features: " + maxFeatures)
-    println("(Optional) Features: " + words.mkString(","))
+    println("(Optional) Features: " + options.getOrElse('features, ""))
     println("(Optional) Additional values: " + fNames.mkString(","))
     println("(Optional) Additional values separator: " + valuesSep)
     println("(Optional) Term boosts file: " + options.getOrElse('boosts, ""))
