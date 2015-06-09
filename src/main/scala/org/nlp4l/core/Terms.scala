@@ -34,7 +34,7 @@ import org.apache.lucene.util.{BytesRef, Bits}
  */
 class TermDocs(val text: String, terms: LuceneTerms, liveDocs: Bits, field: FieldInfo) extends Seq[Doc] {
 
-  val te = terms.iterator(null)
+  val te = terms.iterator()
   val found = te.seekExact(new BytesRef(text))
   val (docFreq, totalTermFreq) =
   if (found)
@@ -100,7 +100,7 @@ class Doc(val docId: Int, val freq: Int, text: String, dpe: DocsAndPositionsEnum
     if (tvTerm == null) Iterable.empty[PosAndOffset]
     else {
       val builder = Seq.newBuilder[PosAndOffset]
-      val te = tvTerm.iterator(null)
+      val te = tvTerm.iterator()
       if (te.seekExact(new BytesRef(text))) {
         val dpe = te.docsAndPositions(null, null)
         if (dpe != null) {
@@ -199,7 +199,7 @@ class Terms(terms: LuceneTerms, liveDocs: Bits, val field: FieldInfo) extends Se
       if (te.next() == null) first #:: Stream.empty
       else first #:: from(newTermDocs(te), te)
 
-    val te = terms.iterator(null)
+    val te = terms.iterator()
     if (te.next() == null) Stream.empty
     else from(newTermDocs(te), te)
   }

@@ -43,7 +43,7 @@ class FieldInfo(info: LuceneFieldInfo, luceneTerms: LuceneTerms, liveDocs: Bits,
       if (te.next() == null) first #:: Stream.empty
       else first #:: from(newTermDocs(te), te)
 
-    val te = luceneTerms.iterator(null)
+    val te = luceneTerms.iterator()
     if (te.next() == null) Stream.empty
     else from(newTermDocs(te), te)
   }

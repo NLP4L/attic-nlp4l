@@ -29,7 +29,7 @@ public class RawWordCounts {
   public static long countPrefix(IndexReader reader, String field, String prefix) throws IOException {
     long count = 0;
     Terms terms = MultiFields.getTerms(reader, field);
-    TermsEnum te = terms.iterator(null);
+    TermsEnum te = terms.iterator();
     final BytesRef text = new BytesRef(prefix);
     TermsEnum.SeekStatus status = te.seekCeil(text);
     if(status != TermsEnum.SeekStatus.END){

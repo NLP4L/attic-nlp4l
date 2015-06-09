@@ -29,7 +29,7 @@ class TermVector(tv: LuceneTerms) extends Map[String, Doc] {
 
   // enumerate all terms and docs with this term vector
   lazy val terms: Map[String, Doc] = {
-    val te = tv.iterator(null)
+    val te = tv.iterator()
     val builder = Map.newBuilder[String, Doc]
     var term = te.next()
     while (term != null) {
