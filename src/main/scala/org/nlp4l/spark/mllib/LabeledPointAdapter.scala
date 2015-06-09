@@ -130,7 +130,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
     // output words
     val wordsFile = new File(wordsOut)
     for (output <- managed(new PrintWriter(new FileWriter(wordsFile)))) {
-      features.zipWithIndex.foreach{case(word, id) => output.println(id + "," + word)}
+      features.zipWithIndex.foreach{case(word, id) => output.println((id + 1).toString + "," + word)}
     }
 
     // output additional values
