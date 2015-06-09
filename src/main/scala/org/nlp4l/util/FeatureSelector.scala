@@ -26,7 +26,7 @@ trait FeatureSelector {
     case "--maxDFPercent" :: value :: tail => parseCriteriaOption(parsed + ('maxDFPercent -> value), tail)
     case "--minDF" :: value :: tail => parseCriteriaOption(parsed + ('minDF -> value), tail)
     case "--maxFeatures" :: value :: tail => parseCriteriaOption(parsed + ('maxFeatures -> value), tail)
-    case value :: tail => parseCriteriaOption(parsed + ('index -> value), tail)
+    case value :: tail => parseCriteriaOption(parsed, tail)
   }
 
   def selectFeatures(reader: RawReader, field: String, minDF: Int = 1, maxDFPercent: Double = 1.0, maxNumTerms: Int = -1): Set[String] = {
