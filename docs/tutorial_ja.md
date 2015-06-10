@@ -1371,6 +1371,74 @@ Top 10 frequent terms for field title
 
 NLP4L でコーパスの特徴量を抽出し、 Spark MLlib への入力として与えることができます。
 
+### サポートベクトルマシンで文書分類{#useWithSpark_svm}
+
+Spark MLlib にはいくつかの分類器が提供されていますが、ここではサポートベクトルマシン（SVM）を用いてlivedoorニュースコーパス（ldcc）を文書分類する方法を紹介します。
+
+まだ実行していない場合は examples/index_ldcc.scala を実行して ldcc のコーパスをLuceneインデックスに用意します。次に examples/extract_ldcc.scala を使ってLuceneインデックスから2つのカテゴリー"dokujo-tsushin" と "sports-watch"を持つ記事だけを抽出し、/tmp/index-ldcc-partという名前の別のLuceneインデックスを作成します。
+
+```shell
+nlp4l> :load examples/extract_ldcc.scala
+```
+
+次にコマンドラインプログラム LabeledPointAdapter を次のように実行して、/tmp/index-ldcc-part から2クラスの全文書のベクトルデータを出力します。
+
+```shell
+$ java -Dfile.encoding=UTF-8 -cp "target/pack/lib/*" org.nlp4l.spark.mllib.LabeledPointAdapter -s examples/schema/ldcc.conf -f body -l cat /tmp/index-ldcc-part
+```
+
+ここで -s オプションにはスキーマ定義ファイル名を、-f オプションには特徴ベクトル抽出対象のフィールド名を、-l にはラベルが記録されているフィールド名を指定します。実行結果は labeled-point-out/ ディレクトリ以下に出力されます。labeled-point-out/data.txt ファイルは Spark MLlib への入力とすることができる libsvm 形式のファイルになっています。1カラム目が数値ラベル、2カラム目以降が特徴ベクトルです。数値ラベルと実際のラベル名の対応関係は labeled-point-out/label.txt ファイルに出力されます。
+
+```shell
+$ cat labeled-point-out/label.txt
+dokujo-tsushin	0
+sports-watch	1
+```
+
+ではSpark MLlib のSVMを実行してみましょう。spark-shell を起動して次のプログラムを実行します。
+
+```scala
+import org.apache.spark.SparkContext
+import org.apache.spark.mllib.classification.{SVMModel, SVMWithSGD}
+import org.apache.spark.mllib.evaluation.BinaryClassificationMetrics
+import org.apache.spark.mllib.regression.LabeledPoint
+import org.apache.spark.mllib.linalg.Vectors
+import org.apache.spark.mllib.util.MLUtils
+
+// Load training data in LIBSVM format.
+val data = MLUtils.loadLibSVMFile(sc, "labeled-point-out/data.txt")
+
+// Split data into training (70%) and test (30%).
+val splits = data.randomSplit(Array(0.7, 0.3), seed = 11L)
+val training = splits(0).cache()
+val test = splits(1)
+
+// Run training algorithm to build the model
+val numIterations = 100
+val model = SVMWithSGD.train(training, numIterations)
+
+// Clear the default threshold.
+model.clearThreshold()
+
+// Compute raw scores on the test set.
+val scoreAndLabels = test.map { point =>
+  val score = model.predict(point.features)
+  (score, point.label)
+}
+
+// Get evaluation metrics.
+val metrics = new BinaryClassificationMetrics(scoreAndLabels)
+val auROC = metrics.areaUnderROC()
+
+println("Area under ROC = " + auROC)
+```
+
+実行結果が次のように表示されます。Area under ROCが0.9989017178259646と表示されました。
+
+```scala
+Area under ROC = 0.9989017178259646
+```
+
 ### クラスタリング
 
 Spark MLlib にはいくつかのクラスタリングアルゴリズム(k-means, Gaussian mixture 等)が実装されていますが、ここでは LDA (Latent Dirichlet allocation) を利用する例を紹介します。なお、Spark MLlib に実装されているクラスタリングアルゴリズムの詳細は [公式リファレンス (v1.3.0)](http://spark.apache.org/docs/1.3.0/mllib-clustering.html) を参照してください。
