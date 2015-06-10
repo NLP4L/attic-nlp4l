@@ -32,9 +32,9 @@ object SeqDirectoryAdapter extends Adapter with  FeatureSelector {
         |SeqDirectoryAdapter
         |       -s <schema file>
         |       -f <feature field>
-        |       -l <label field>
+        |       [-l <label field>]
         |       [-o <output dir>]
-        |       [--features <feature1>{,<feature2>}]
+        |       [--features <feature file>]
         |       [--maxDFPercent maxDFPercent]
         |       [--minDF minDF]
         |       [--maxFeatures maxFeatures]
@@ -50,7 +50,7 @@ object SeqDirectoryAdapter extends Adapter with  FeatureSelector {
       case value :: tail => parseOption(parsed + ('index -> value), tail)
     }
     val options = parseOption(Map(), args.toList) ++ parseCriteriaOption(Map(), args.toList)
-    if (!List('index, 'schema, 'label, 'field).forall(options.contains)) {
+    if (!List('index, 'schema, 'field).forall(options.contains)) {
       println(usage)
       System.exit(1)
     }
@@ -58,7 +58,7 @@ object SeqDirectoryAdapter extends Adapter with  FeatureSelector {
     val idxDir = options('index)
     val schemaFile = options('schema)
     val field = options('field)
-    val labelField = options('label)
+    val labelField = options.getOrElse('label, "")
     val outdir = options.getOrElse('outdir, "msd-out")
     val words = if (options.contains('features)) readFeatures(options('features)) else Set.empty[String]
     val maxDFPercent = if (options.contains('maxDFPercent)) options('maxDFPercent).toDouble / 100.0 else 0.99
@@ -73,7 +73,7 @@ object SeqDirectoryAdapter extends Adapter with  FeatureSelector {
     println("Max DF Percent: " + maxDFPercent)
     println("Min DF: " + minDF)
     println("Max Number of Features: " + maxFeatures)
-    println("(Optional) Features: " + words.mkString(","))
+    println("(Optional) Features: " + options.getOrElse('features, ""))
 
     // create output dir if not exist
     val dir = new File(outdir)
@@ -94,26 +94,44 @@ object SeqDirectoryAdapter extends Adapter with  FeatureSelector {
     docIds.zip(vectors).foreach{case(docId: Int, vec: Seq[Long]) => {
       reader.document(docId) match {
         case Some(doc) => {
-          doc.getValue(labelField) match {
-            case Some(vals) => {
-              val label = vals(0)
-              val labelDir = new File(dir, label)
-              if (!labelDir.exists()) labelDir.mkdirs()
-              val fileNum = labelMap.getOrElse(label, 0) + 1
-              labelMap += (label -> fileNum)
-              val file = new File(labelDir, fileNum.toString + ".txt")
-              for (out <- managed(new BufferedWriter(new FileWriter(file)))) {
-                features.zip(vec).foreach{case(word: String, count: Long) => {
-                  if (count > 0) {
-                    for (i <- 0 until count.toInt) {
-                      out.write("%s ".format(word))
-                    }
-                    out.newLine()
+          if (labelField.isEmpty) {
+            val datadir = new File(dir, "data")
+            if (!datadir.exists()) datadir.mkdirs()
+            val fileNum = labelMap.getOrElse("dummy", 0) + 1
+            labelMap += ("dummy" -> fileNum)
+            val file = new File(datadir, fileNum.toString + ".txt")
+            for (out <- managed(new BufferedWriter(new FileWriter(file)))) {
+              features.zip(vec).foreach { case (word: String, count: Long) => {
+                if (count > 0) {
+                  for (i <- 0 until count.toInt) {
+                    out.write("%s ".format(word))
                   }
-                }}
-              }
+                  out.newLine()
+                }
+              }}
             }
-            case _ => ()
+          } else {
+            doc.getValue(labelField) match {
+              case Some(vals) => {
+                val label = vals(0)
+                val labelDir = new File(dir, label)
+                if (!labelDir.exists()) labelDir.mkdirs()
+                val fileNum = labelMap.getOrElse(label, 0) + 1
+                labelMap += (label -> fileNum)
+                val file = new File(labelDir, fileNum.toString + ".txt")
+                for (out <- managed(new BufferedWriter(new FileWriter(file)))) {
+                  features.zip(vec).foreach { case (word: String, count: Long) => {
+                    if (count > 0) {
+                      for (i <- 0 until count.toInt) {
+                        out.write("%s ".format(word))
+                      }
+                      out.newLine()
+                    }
+                  }}
+                }
+              }
+              case _ => ()
+            }
           }
         }
         case _ => ()
