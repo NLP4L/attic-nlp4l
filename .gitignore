@@ -3,6 +3,7 @@
 .project
 corpora
 target
+labeled-point-out
 docs/*.html
 .DS_Store
 /#*#
