@@ -44,7 +44,7 @@ object LabeledPointAdapter extends Adapter with FeatureSelector {
         |       -l <label field>
         |       [--labelfileSep <sep>]
         |       [-o <outdir>]
-        |       [--features <feature1>{,<feature2>}]
+        |       [--features <feature file>]
         |       [--outputSep <sep>]
         |       [--values <field1>{,<field2>}] [--valuesSep <sep>]
         |       [--maxDFPercent <maxDFPercent>]

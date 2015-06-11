@@ -38,7 +38,7 @@ object RandomForestVectorsAdapter extends Adapter with FeatureSelector {
         |       [--idfmode <IDF mode>]
         |       -l <label field>
         |       [-o <outdir>]
-        |       [--features <feature1>{,<feature2>}]
+        |       [--features <feature file>]
         |       [--values <field1>{,<field2>}] [--valuesSep <sep>]
         |       [--maxDFPercent <maxDFPercent>]
         |       [--minDF <minDF>]
