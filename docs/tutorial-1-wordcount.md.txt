@@ -1,0 +1,206 @@
+# NLPツールとしての利用{#useNLP}
+
+NLP4L を NLP ツールとして使う方法を紹介します。前述のLuceneインデックスに登録した練習用コーパスを使いますので、あらかじめ用意しておくとよいでしょう。
+
+## 単語の数を数える
+
+コーパス中に出現する単語の数を数えるのは NLP 処理の基本です。NLP4L はコーパスをLuceneのインデックスに登録してから処理を行いますが、検索エンジン（Lucene）では単語をキーにした転置インデックスというものを持っているので、単語の数を数える処理は大変得意としています。
+
+ここではロイターコーパスを使って単語出現頻度を調べる方法を説明します。準備として次のプログラムをコピー＆ペーストでnlp4lプロンプトに貼り付けて実行してください。なお、コピー＆ペースト操作がしやすいように、複数行のプログラムでは nlp4l プロンプト表示を省略しています。
+
+```scala
+// (1)
+import org.nlp4l.core._
+import org.nlp4l.core.analysis._
+import org.nlp4l.stats.WordCounts
+
+// (2)
+val index = "/tmp/index-reuters"
+
+// (3)
+val reader = RawReader(index)
+```
+
+(1)で必要なScalaプログラムのパッケージをインポートしています。このうち、単語の出現頻度はWordCountsオブジェクトを使います。(2)でロイターコーパスのLuceneインデックスディレクトリを指定しています。(3)でRawReaderに使用するLuceneインデックスディレクトリを指定してreaderを取得しています。RawReaderというのはNLP4Lでは比較的低レベルのReaderとなります。別にスキーマを管理する高レベルのIReaderというReaderもありますが、スキーマを渡す手間を省くため、ここではあえてRawReaderを使っています。
+
+取得したreaderを通じて以下で単語の出現頻度を数えていきます。なお、Luceneはフィールドごとに独立した転置インデックスを持っているため、単語数をカウントするなどの処理に際してはフィールド名を指定する必要があります。以下ではロイターの記事本文を登録しているbodyフィールドを指定することにします。
+
+### のべ語数と異なり語数
+
+最初はのべ語数です。Luceneにはもともとあるフィールドののべ語数を返す機能があるので、そのScalaラッパーであるsumTotalTermFreq()関数を使えば簡単に調べられます。
+
+```shell
+nlp4l> val total = reader.sumTotalTermFreq("body")
+total: Long = 1899819
+```
+
+次は異なり語数です。異なり語数とは、単語の種類数です。転置インデックスは異なり語をキーとする構造を持っているので転置インデックスのサイズが異なり語数となります。当然Luceneでは簡単に調べることができ、そのScalaラッパーは次のようになります。
+
+```shell
+nlp4l> val count = reader.field("body").get.terms.size
+count: Int = 64625
+```
+
+### 単語ごとに数える
+
+今度はもう少し細かく、単語ごとに数えてみましょう。WordCountsオブジェクトのcount()関数を使えば単語ごとに数えることができます。しかし、count()関数はいくつかの引数をとるため、少し準備が必要です。以下にプログラムを示します（nlp4lのプロンプトにコピー＆ペースとして実行できます）。
+
+```scala
+// (4)
+val allDS = reader.universalset()
+
+// (5)
+val analyzer = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
+
+// (6)
+val allMap = WordCounts.count(reader, "body", Set.empty, allDS, -1, analyzer)
+```
+
+(4)ではcount()関数で使うカウント対象となるLuceneの文書番号を取得しています。ここでは全文書を対象にするので、文書の全体集合を取得するuniversalset()関数を使っています。(5)ではLuceneの標準的なAnalyzerであるStandardAnalyzerを指定してScalaのAnalyzerを作成しています。StandardAnalyzerの引数に指定しているnullは、ストップワードを使用しないということを表しています（nullを指定しないとStandardAnalyzerのデフォルトのストップワードが使われます）。(6)のcount()関数で単語ごとの出現頻度を求めています。引数に指定しているSet.emptyは、「すべての単語」を対象にカウントを求めることを指定しています。-1の部分は出現頻度の多い単語上位N個を取得したいときにそのNを指定します。-1はすべての単語を対象に調べる場合に指定します。
+
+結果は表示されましたが、このままだと結果が見にくいので、表示数を絞ってみましょう。たとえばScalaのコレクション関数の機能を使って次のようにすると、"g"で始まる単語を10個選んで単語とその出現数を表示することができます。
+
+```shell
+nlp4l> allMap.filter(_._1.startsWith("g")).take(10).foreach(println(_))
+(generalize,1)
+(gress,1)
+(germans,18)
+(goiporia,2)
+(garcin,2)
+(granma,7)
+(gorbachev's,10)
+(gamble,9)
+(grains,110)
+(gienow,1)
+```
+
+allMapの結果のすべての数を足し合わせてみます（以下のプログラムはWordCountsのtotalCount()関数とやっていることは同じです）。
+
+```shell
+nlp4l> allMap.values.sum
+res2: Long = 1899819
+```
+
+これは最初に調べたのべ語数と確かに一致していることがわかります。また、allMapの大きさは異なり語数と一致しているはずです。やってみましょう。
+
+```shell
+nlp4l> allMap.size
+res3: Int = 64625
+```
+
+こちらも一致しました。
+
+上のcount()ではSet.emptyを渡して全単語を対象に出現頻度をカウントしていましたが、Set.emptyの代わりに特定の単語集合を与えることで、その単語集合だけを対象にカウントできます（特定の単語の数だけを数えたいこともNLPではよくあります）。やってみましょう。
+
+```scala
+val whWords = Set("when", "where", "who", "what", "which", "why")
+val whMap = WordCounts.count(reader, "body", whWords, allDS, -1, analyzer)
+whMap.foreach(println(_))
+```
+
+結果は次のようになります。
+
+```shell
+nlp4l> whMap.foreach(println(_))
+(why,125)
+(what,850)
+(who,1618)
+(which,7556)
+(where,507)
+(when,1986)
+```
+
+### カテゴリごとに数える
+
+では次に単語出現頻度をカテゴリごとに区別して求める方法を見てみましょう。たとえばNLPタスクのひとつ、文書分類ではカテゴリに分類するにあたってその学習データとしてカテゴリごとの単語出現頻度を使うことがあります。そのようなときに使えるテクニックです。
+
+ここの例ではロイターコーパスを使っていますが、placesフィールドをカテゴリの代わりに使ってみたいと思います。そのためにはまず、placesフィールドに入っている単語を次のようにして調べます。
+
+```scala
+// (7)
+reader.terms("places").get.map(_.text)
+
+// (8) 整形して表示したい場合
+reader.terms("places").get.map(_.text).foreach(println(_))
+```
+
+(7)または(8)を実行すると、placesフィールドに登録されているすべての単語一覧が表示されます。ここではusaとjapanに注目しましょう。(9)のように実行してそれぞれの文書部分集合を取得します。
+
+```scala
+// (9)
+val usDS = reader.subset(TermFilter("places", "usa"))
+val jpDS = reader.subset(TermFilter("places", "japan"))
+```
+
+最後にcount()関数に(9)で求めたそれぞれの部分集合を渡してusaのカウントとjapanのカウントを求めますが、ここでは簡単にwarとpeaceの2語だけのカウントを求めることにします(10)。
+
+```shell
+// (10)
+nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), usDS, -1, analyzer)
+res22: Map[String,Long] = Map(war -> 199, peace -> 14)
+
+nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), jpDS, -1, analyzer)
+res23: Map[String,Long] = Map(war -> 75, peace -> 2)
+```
+
+これでwarとpeaceの2語に対する、placesがusaの場合とjapanの場合でのカウントがそれぞれ求めることができました。めでたしめでたし・・・としていいでしょうか。
+
+実はplacesフィールドは、地名が複数入っている可能性があります。つまり、usaとjapanの記事が重なっている可能性があります。確かめてみましょう。usDSとjpDSはScalaのSetコレクションオブジェクトですから、&演算子（関数）を使って両者の積集合を簡単に求めることができます。
+
+```shell
+nlp4l> (usDS & jpDS).size
+res24: Int = 452
+```
+
+sizeを使って積集合の大きさを求めています。たしかに重複があるようです。この場合、(11)(12)のように、ScalaのSetの演算子（関数）の&\~を使って集合の差を使えば、重複のない部分に関して単語出現頻度を求めることができます（ただしそのままだとSortedSetには&\~演算子（関数）がないので、toSetを使ってSetに変換しています）。
+
+```shell
+nlp4l> // (11) placesにusaの値を持つがjapanの値を持たない記事を対象とする
+nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), usDS.toSet &~ jpDS.toSet, -1, analyzer)
+res25: Map[String,Long] = Map(war -> 140, peace -> 13)
+
+nlp4l> // (12) placesにjapanの値を持つがusaの値を持たない記事を対象とする
+nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), jpDS.toSet &~ usDS.toSet, -1, analyzer)
+res26: Map[String,Long] = Map(war -> 16, peace -> 1)
+```
+
+### 単語カウントの視覚化（experimental）
+
+これまでいくつかの視点で単語の数を数えてきました。では最後に、単語カウントデータを視覚化してみましょう。Excelなどを使えば視覚化できますが、NLP4Lでは試験的に簡単なチャート表示ツールを提供していますのでここではそれを使います。チャート表示ツールは現在 experimental です。改善のため将来は機能や使い方が変わる可能性があります。
+
+前述の単語カウント結果をあらためて実行し、変数に代入します。
+
+```scala
+val usMap = WordCounts.count(reader, "body", Set("war", "peace"), usDS, -1, analyzer)
+val jpMap = WordCounts.count(reader, "body", Set("war", "peace"), jpDS, -1, analyzer)
+```
+
+次に、チャート表示のためのパッケージをインポートし(11)、チャート表示のプレゼンテーションを取得します(12)。その際、上で取得したデータモデルをプレゼンテーションに渡しています。プレゼンテーションにデータモデルを渡す際は、凡例表示のためのラベルも必要です。
+
+```scala
+// (11)
+import org.nlp4l.gui._
+
+// (12)
+val presentation = BarChart(List(("US",usMap), ("Japan",jpMap)))
+
+// (13)
+val server = new SimpleHttpServer(presentation)
+server.service
+```
+
+チャート表示はWebサーバから配信されますので、(13)のようにプレゼンテーションを引数にして簡易Webサーバを作成して起動します。起動すると、次のメッセージがコンソールに表示されます。
+
+```shell
+nlp4l> server.service
+WARNING: This function is experimental and might change in incompatible ways in the future release.
+
+To see the chart, access this URL -> http://localhost:6574/chart
+To shutdown the server, access this URL -> http://localhost:6574/shutdown
+```
+
+表示されている[URL](http://localhost:6574/chart)にモダンなWebブラウザからアクセスすると、棒グラフが表示されます。簡易Webサーバを停止するには、[http://localhost:6574/shutdown](http://localhost:6574/shutdown)にアクセスします。
+
+![カテゴリごとの単語出現頻度](barchart_wc.png)
+
+以上のチャート表示のコードは examples/chart_experimental.scala として1つのスクリプトにまとめてあります。

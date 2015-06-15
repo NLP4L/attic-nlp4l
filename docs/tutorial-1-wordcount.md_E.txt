@@ -1,29 +1,10 @@
-### Contents
-
-* [Let's Get Started!](#gettingStarted)
-* [Installing NLP4L](#install)
-* [Obtaining Practice Corpus](#getCorpora)
-* [Using as NLP Tool](#useNLP)
-* [Using Index Browser](#indexBrowser)
-* [To Solr Users](#dearSolrUsers)
-* [To Elasticsearch Users](#dearESUsers)
-* [Working with Mahout](#useWithMahout)
-* [Working with Spark](#useWithSpark)
-* [Using Lucene](#useLucene)
-* [Developing and Executing NLP4L Programs](#develop)
-* [Attribution](#tm)
-
-# Let's Get Started!{#gettingStarted}
-# Installing NLP4L{#install}
-# Obtaining Practice Corpus{#getCorpora}
-
-# Using as NLP Tool{#useNLP}
+# Using as NLP Tool {#useNLP}
 
 We will discuss how to use NLP4L as an NLP tool. Please prepare at hand a practice corpus registered in the Lucene index discussed above so you can use it anytime.
 
 ## Counting the Number of Words
 
-Counting the number of words that appear in the corpus is one of NLP processing fundamentals. NLP4L registers corpus to a Lucene index before processing and is very good at counting the number of words as a search engine (Lucene) has something called an inverted index that uses words as keys.
+Counting the number of words that appear in the corpus is one of NLP processing fundamentals. NLP4L registers corpus to a Lucene index before processing and is very good at counting the number of words as a search engine (Lucene) has something called a transpose index that uses words as keys.
 
 Now we will discuss how to use a Reuters corpus to find out the frequency that words appear. As a starter, copy the following program, paste it to the nlp4l prompt and run it. Note that here we omitted the nlp4l prompt for a program that extends to more than one line so you can easily handle copy and paste.
 
@@ -44,7 +25,7 @@ val reader = RawReader(index)
 
 Using the obtained reader, we will count the word frequency in the following. As Lucene has independent inverted index in every field, you need to specify a field name to perform such processes as counting number of words. In the following, we will specify a body field that has the entire body of Reuters story.
 
-### Total Word Count and Unique Word Count 
+### Total Word Count and Unlike Word Count 
 
 We will first discuss the total word count. Lucene originally has a function to return the total word count of an unspecified field. You can, therefore, easily find out the number by using the sumTotalTermFreq() function that is the Scala wrapper of this function.
 
@@ -53,7 +34,7 @@ nlp4l> val total = reader.sumTotalTermFreq("body")
 total: Long = 1899819
 ```
 
-The next is a unique word count that is the number of word types. The unique word count equals to the size of inverted index as it has a structure that uses unique words as keys. Lucene, of course, can easily check it. Its Scala wrapper will be something like follows.
+The next is an unlike word count that is the number of word types. The unlike word count equals to the size of inverted index as it has a structure that uses unlike words as keys. Lucene, of course, can easily check it. Its Scala wrapper will be something like follows.
 
 ```shell
 nlp4l> val count = reader.field("body").get.terms.size
@@ -62,7 +43,7 @@ count: Int = 64625
 
 ### Counting by Words
 
-Next, we will be more specific and try counting by words. You can count by words using the count() function of WordCounts object. However, you need some preparation because the count() function takes more than one argument. Refer to the following program - you can copy and paste the program and run it at the nlp4l prompt.
+Next, we will be more specific and try counting by words. You can count by words  using the count() function of WordCounts object. However, you need some preparation because the count() function takes more than one argument. Refer to the following program - you can copy and paste the program and run it at the nlp4l prompt.
 
 ```scala
 // (4)
@@ -80,7 +61,7 @@ val allMap = WordCounts.count(reader, "body", Set.empty, allDS, -1, analyzer)
 Now the result is displayed but is hard to read in the way it is displayed now. We, therefore, limit the number of data that is displayed. For example, using Scala collection function to prepare the following will enable you to display 10 words that start with "g" and their frequency.
 
 ```shell
-nlp4l> allMap.filter(_._1.startsWith("g")).take(10).foreach(println(_))
+nlp4l> allMap.filter(_._1.ststate of thesWith("g")).take(10).foreach(println(_))
 (generalize,1)
 (gress,1)
 (germans,18)
@@ -100,7 +81,7 @@ nlp4l> allMap.values.sum
 res2: Long = 1899819
 ```
 
-This certainly matches the total word count that we first found out. Also, the size of allMap should match the unique word count. Let's find out.
+This certainly matches the total word count that we first found out. Also, the size of allMap should match the unlike word count. Let's find out.
 
 ```shell
 nlp4l> allMap.size
@@ -223,12 +204,3 @@ Accessing the displayed [URL](http://localhost:6574/chart) from a modern Web bro
 ![Word frequency by category](barchart_wc.png)
 
 The codes for displaying the above chart is put together into one script as examples/chart_experimental.scala.
-
-# Using Index Browser{#indexBrowser}
-# To Solr Users{#dearSolrUsers}
-# To Elasticsearch Users{#dearESUsers}
-# Working with Mahout{#useWithMahout}
-# Working with Spark{#useWithSpark}
-# Using Lucene{#useLucene}
-# Developing and Executing NLP4L Programs{#develop}
-# Attribution{#tm}
