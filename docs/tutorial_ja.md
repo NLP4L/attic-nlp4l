@@ -1445,30 +1445,16 @@ Spark MLlib にはいくつかのクラスタリングアルゴリズム(k-means
 
 注: LDA は Spark 1.3.0 から導入されました。
 
-サンプルプログラム examples/spark_mllib_lda.scala を実行すると、ブラウンコーパスの各ドキュメントを、TFベースの文書ベクトルに変換してファイルに出力します。
+コマンドラインから、プログラム VectorsAdapter を実行します。(事前に、examples/index_ldcc.scalaを実行して livedoor ニュースコーパスをインデックスしておいてください。)
 
-```shell
-nlp4l> :load examples/spark_mllib_lda.scala
+```
+$ java -Dfile.encoding=UTF-8 -cp "target/pack/lib/*" org.nlp4l.spark.mllib.VectorsAdapter -s examples/schema/ldcc.conf -f body --idfmode n --type int /tmp/index-ldcc
 ```
 
-実行すると、カレントディレクトリに以下のファイルが出力されます。どのフィールドや単語を特徴量とするかにより、3パターンの特徴ベクトルを出力しています。
+実行すると、vectors-out ディレクトリ以下に2つのファイルが生成されます。
 
-words\*.txt には1行1単語が出力されます。すなわち、行数が特徴空間の次元数となります。data\*.txt は1行が1ベクトルを表し、MLlibへの入力ファイルになります。ベクトル中の要素の順番は、words\*.txtと一致しています。
-
-1. body フィールド中の全単語を使って特徴量を抽出するパターン。単語数は 44677 です。
-
-  * words.txt
-  * data.txt
-
-2. body_pos_nn フィールド(名詞のみを抜き出したフィールド)中の全単語を使って特徴量を抽出するパターン。単語数は削減されて 13236 になります。
-
-  * words_noun.txt
-  * data_noun.txt
-
-3. body_pos_nn フィールドから、比較的少ない文書に出現する単語(IDF値の高い単語)に絞って特徴量を抽出するパターン。単語数はさらに削減されて 4958 となります。
-
-  * words_high_idf.txt
-  * data_noun_high_idf.txt
+* data.txt   // データファイル(カンマ区切りCSV形式)。一行目はヘッダ(単語ID)。各行の1カラム目は文書ID。
+* words.txt  // 単語IDと単語の一覧
 
 特徴量を抽出したら、Spark でLDAを実行します。spark-shell を起動し、以下のように入力してください。
 
@@ -1477,8 +1463,8 @@ $ spark-shell
 
 scala> import org.apache.spark.mllib.clustering.LDA
 scala> import org.apache.spark.mllib.linalg.Vectors
-// data*.txt を入力として与える
-scala> val data = sc.textFile("/path/to/data_noun_high_idf.txt")
+// data.txt を入力として与える
+scala> val data = sc.textFile("/path/to/vectors-out/data.txt")
 scala> val parsedData = data.map(s => Vectors.dense(s.trim.split(' ').map(_.toDouble)))
 scala> val corpus = parsedData.zipWithIndex.map(_.swap).cache()
 // K=5 を指定してモデルを作成する
