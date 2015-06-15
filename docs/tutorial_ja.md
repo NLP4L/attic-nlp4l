@@ -307,7 +307,7 @@ $ ./scripts/convert-xml-dump-to-json.sh en jawiki-20150512-pages-articles.xml /t
 
 第1引数には言語を指定します。現在json-wikipediaがサポートする言語は英語（en）やイタリア語（it）など非常に限られており、日本語のサポートはありませんので、上の例では英語（en）を第1引数に指定しています（それでも問題なく動作するようです）。日本語WikipediaのJSON形式への変換はおよそ30分程度です。
 
-### Luceneインデックスへの作成
+### Luceneインデックスの作成
 
 最後にJSON形式のデータをNLP4LからLuceneインデックスに登録しますが、ビルドしてできたjson-wikipediaのJARファイルを、NLP4Lのクラスパスに含める必要があることに注意してください。
 
