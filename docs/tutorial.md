@@ -16,7 +16,214 @@
 # Let's Get Started!{#gettingStarted}
 # Installing NLP4L{#install}
 # Obtaining Practice Corpus{#getCorpora}
+
 # Using as NLP Tool{#useNLP}
+
+We will discuss how to use NLP4L as an NLP tool. Please prepare at hand a practice corpus registered in the Lucene index discussed above so you can use it anytime.
+
+## Counting the Number of Words
+
+Counting the number of words that appear in the corpus is one of NLP processing fundamentals. NLP4L registers corpus to a Lucene index before processing and is very good at counting the number of words as a search engine (Lucene) has something called an inverted index that uses words as keys.
+
+Now we will discuss how to use a Reuters corpus to find out the frequency that words appear. As a starter, copy the following program, paste it to the nlp4l prompt and run it. Note that here we omitted the nlp4l prompt for a program that extends to more than one line so you can easily handle copy and paste.
+
+```scala
+// (1)
+import org.nlp4l.core._
+import org.nlp4l.core.analysis._
+import org.nlp4l.stats.WordCounts
+
+// (2)
+val index = "/tmp/index-reuters"
+
+// (3)
+val reader = RawReader(index)
+```
+
+(1) imports necessary Scala program packages where the WordCounts object is used for the word frequency . (2) specifies the Lucene index directory of Reuters corpus while (3) specifies the Lucene index directory to be used for RawReader in order to obtain reader. RawReader, in NLP4L, is a comparatively low level Reader. There also is a high level Reader called IReader that manages schema. We, however, will specifically use RawReader in order to avoid the trouble of passing a schema.
+
+Using the obtained reader, we will count the word frequency in the following. As Lucene has independent inverted index in every field, you need to specify a field name to perform such processes as counting number of words. In the following, we will specify a body field that has the entire body of Reuters story.
+
+### Total Word Count and Unlike Word Count 
+
+We will first discuss the total word count. Lucene originally has a function to return the total word count of an unspecified field. You can, therefore, easily find out the number by using the sumTotalTermFreq() function that is the Scala wrapper of this function.
+
+```shell
+nlp4l> val total = reader.sumTotalTermFreq("body")
+total: Long = 1899819
+```
+
+The next is an unlike word count that is the number of word types. The unlike word count equals to the size of inverted index as it has a structure that uses unlike words as keys. Lucene, of course, can easily check it. Its Scala wrapper will be something like follows.
+
+```shell
+nlp4l> val count = reader.field("body").get.terms.size
+count: Int = 64625
+```
+
+### Counting by Words
+
+Next, we will be more specific and try counting by words. You can count by words using the count() function of WordCounts object. However, you need some preparation because the count() function takes more than one argument. Refer to the following program - you can copy and paste the program and run it at the nlp4l prompt.
+
+```scala
+// (4)
+val allDS = reader.universalset()
+
+// (5)
+val analyzer = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
+
+// (6)
+val allMap = WordCounts.count(reader, "body", Set.empty, allDS, -1, analyzer)
+```
+
+(4) obtains a target Lucene document number that is used by the count() function. We use the universalset() function, which obtains the total set of a document, as we target the all documents here. (5) then specifies StandardAnalyzer, a standard Analyzer for Lucene, to create the Scala Analyzer. The null, which is specified as an argument for StandardAnalyzer, specifies that you do not use any stop words (the default stop words for StandardAnalyzer will be used when null is not specified). The count() function in (6) calculates word frequency for every word. Set.empty that is specified as an argument specifies that "the all words" will be the target of count. "-1" specifies the number of words with most frequency from the top to "-1". Specifying -1 means that the target will be the all words.
+
+Now the result is displayed but is hard to read in the way it is displayed now. We, therefore, limit the number of data that is displayed. For example, using Scala collection function to prepare the following will enable you to display 10 words that start with "g" and their frequency.
+
+```shell
+nlp4l> allMap.filter(_._1.startsWith("g")).take(10).foreach(println(_))
+(generalize,1)
+(gress,1)
+(germans,18)
+(goiporia,2)
+(garcin,2)
+(granma,7)
+(gorbachev's,10)
+(gamble,9)
+(grains,110)
+(gienow,1)
+```
+
+Add the all numbers resulting from allMap - the following program basically performs the same function as the totalCount() function.
+
+```shell
+nlp4l> allMap.values.sum
+res2: Long = 1899819
+```
+
+This certainly matches the total word count that we first found out. Also, the size of allMap should match the unlike word count. Let's find out.
+
+```shell
+nlp4l> allMap.size
+res3: Int = 64625
+```
+
+Here we have another match. 
+
+The above count() passed Set.empty to target the all words in order to count the advent of frequency. You can also pass a specific word set instead of Set.empty to count only this word set - in NLP, you often want to count only the specific words. Let's find out.
+
+```scala
+val whWords = Set("when", "where", "who", "what", "which", "why")
+val whMap = WordCounts.count(reader, "body", whWords, allDS, -1, analyzer)
+whMap.foreach(println(_))
+```
+
+The result will be as follows.
+
+```shell
+nlp4l> whMap.foreach(println(_))
+(why,125)
+(what,850)
+(who,1618)
+(which,7556)
+(where,507)
+(when,1986)
+```
+
+### Counting by Category
+
+Next, let's look at how to find out the word frequency by category. For example, document classification, one of an NLP tasks, sometimes uses word frequency by category as its learning data in order to classify by category. This is the technique that you can use in such cases.
+
+Here we use a sample Reuters corpus but will try the places field instead of category. To do so, we first find the words in the places field as follows.
+
+```scala
+// (7)
+reader.terms("places").get.map(_.text)
+
+// (8) When you want to fomat before displaying.
+reader.terms("places").get.map(_.text).foreach(println(_))
+```
+
+Running (7) or (8) will display the list of all words registered in the places field. Let's focus on usa and japan here. Run the program as shown in (9) to obtain respective document subsets.
+
+```scala
+// (9)
+val usDS = reader.subset(TermFilter("places", "usa"))
+val jpDS = reader.subset(TermFilter("places", "japan"))
+```
+
+Finally, pass the respective subsets obtained in (9) to the count() function to obtain the usa count and the japan count. In (10), however, we will quickly obtain the counts for two words: war and peace.
+
+```shell
+// (10)
+nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), usDS, -1, analyzer)
+res22: Map[String,Long] = Map(war -> 199, peace -> 14)
+
+nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), jpDS, -1, analyzer)
+res23: Map[String,Long] = Map(war -> 75, peace -> 2)
+```
+
+Now we obtained counts for 2 words, war and peace, with place one for usa and the other for japan. Good! Or is it?
+
+The fact is that the places field may have more than one name of place. In sum, an article of usa and that of japan may have some redundancy. Let's find out. As usDS and jpDS are Set collection objects of Scala, you can use the & operator (function) to easily obtain product sets for the both.
+
+```shell
+nlp4l> (usDS & jpDS).size
+res24: Int = 452
+```
+
+Here we use size to obtain the size of product set. Now we can see there is a redundancy. In this case, you can use &\~ of Scala Set operator (function) as specified in (11) and (12) to get difference of sets to obtain word frequency for the portion that has no redundancy. Note that toSet is used here to do a conversion to Set because SortedSet does not have &\~ operator (function).
+
+```shell
+nlp4l> // (11) Articles where places has a value usa but does not have a value japan will be the target.
+nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), usDS.toSet &~ jpDS.toSet, -1, analyzer)
+res25: Map[String,Long] = Map(war -> 140, peace -> 13)
+
+nlp4l> // (12) Articles where places has a value japan but does not have a value usa will be the target. 
+nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), jpDS.toSet &~ usDS.toSet, -1, analyzer)
+res26: Map[String,Long] = Map(war -> 16, peace -> 1)
+```
+
+### Visualizing Word Counts (experimental) 
+
+We have been counting words from several standpoints. Now, let's visualize word count data. Applications, such as Excel, enable visualization but we will use NLP4L here as it provides easy chart display tool on a trial basis. The chart display tool right now is experimental. Its functions and usage may change in the future to improve the feature.
+
+Rerun the result of above word count and assign it in a variable. 
+
+```scala
+val usMap = WordCounts.count(reader, "body", Set("war", "peace"), usDS, -1, analyzer)
+val jpMap = WordCounts.count(reader, "body", Set("war", "peace"), jpDS, -1, analyzer)
+```
+
+Next, import a package for displaying charts (11) and obtain a presentation for chart display (12). Here, a data model obtained above is being passed to a presentation. Labels for explanatory notes are required as well when you need to pass a data model.
+
+```scala
+// (11)
+import org.nlp4l.gui._
+
+// (12)
+val presentation = BarChart(List(("US",usMap), ("Japan",jpMap)))
+
+// (13)
+val server = new SimpleHttpServer(presentation)
+server.service
+```
+
+As a Web server provides a chart display, you need to create and start a simple Web server using a presentation as an argument as specified in (13). The following message is displayed on the console when it boots up.
+
+```shell
+nlp4l> server.service
+WARNING: This function is experimental and might change in incompatible ways in the future release.
+
+To see the chart, access this Uniform Resource Locators -> http://localhost:6574/chart
+To shutdown the server, access this Uniform Resource Locators -> http://localhost:6574/shutdown
+```
+
+Accessing the displayed [URL](http://localhost:6574/chart) from a modern Web browser will display a bar chart. Access [http://localhost:6574/shutdown](http://localhost:6574/shutdown) to shut down the simple Web server.
+
+![Word frequency by category](barchart_wc.png)
+
+The codes for displaying the above chart is put together into one script as examples/chart_experimental.scala.
+
 # Using Index Browser{#indexBrowser}
 # To Solr Users{#dearSolrUsers}
 # To Elasticsearch Users{#dearESUsers}
