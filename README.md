@@ -17,7 +17,7 @@ Refer to the following documents for more details.
 
 # Architecture
 
-![Architecture](nlp4l-architecture-20150505.png)
+![Architecture](nlp4l-architecture-20150619.png)
 
 # Basic Usage
 

@@ -17,7 +17,7 @@ NLP4L は Lucene インデックスに登録されている文書データを処
 
 # アーキテクチャ
 
-![アーキテクチャ](nlp4l-architecture-20150505.png)
+![アーキテクチャ](nlp4l-architecture-20150619.png)
 
 # 簡単な使い方
 
