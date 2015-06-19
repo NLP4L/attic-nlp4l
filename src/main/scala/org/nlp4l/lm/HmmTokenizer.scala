@@ -28,6 +28,8 @@ class HmmTokenizer(model: HmmModel) extends HmmTracer {
   def tokens(str: String): Seq[Token] = {
     nodesTableByEnd.clear()
     val node = parseForward(str)
+    // for debug
+    //nodesTableByEnd.keys.foreach(k => println("%d = %s".format(k, nodesTableByEnd.getOrElse(k, "XXX"))))
     backTrace(str, node.backLink)
   }
 
@@ -89,5 +91,9 @@ class HmmTokenizer(model: HmmModel) extends HmmTracer {
     def apply(cls: Int, cost: Int, spos: Int, epos: Int, tcost: Int = Int.MaxValue) = new Node(cls, cost, spos, epos, tcost)
   }
 
-  class Node(cls: Int, cost: Int, val spos: Int, val epos: Int, tcost: Int = Int.MaxValue) extends AbstractNode(cls, cost, tcost)
+  class Node(cls: Int, cost: Int, val spos: Int, val epos: Int, tcost: Int = Int.MaxValue) extends AbstractNode(cls, cost, tcost){
+    override def toString(): String = {
+      "cls=%d, cost=%d, spos=%d, epos=%d, tcost=%d".format(cls, cost, spos, epos, tcost)
+    }
+  }
 }

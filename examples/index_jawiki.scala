@@ -33,7 +33,7 @@ def addDocument(id: Int, title: String, body: String, cat: List[String]): Unit =
   writer.write(Document(Set(
     Field("id", id.toString),
     Field("title", title), Field("title_ja", title),
-    Field("body", body), 
+    Field("body", body), Field("ka_pair", body),
     Field("cat", cat), Field("cat_ja", cat)
   )))
 }

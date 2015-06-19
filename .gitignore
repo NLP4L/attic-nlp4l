@@ -4,6 +4,7 @@
 corpora
 target
 labeled-point-out
+loanwords*.txt
 docs/*.html
 .DS_Store
 /#*#

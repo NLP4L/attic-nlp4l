@@ -53,7 +53,12 @@ class SimpleFST(generateUnknownWords: Boolean) {
   }
 
   private def leftMostSubstring(str: String, pos: Int, index: Int, pendingOutput: Long, result: List[(Int, Long)]): Seq[(Int, Long)] = {
-    if(str.length <= pos + index) result
+    if(str.length <= pos + index){
+      if(result.size > 0 || !generateUnknownWords) result
+      else{
+        unknownWords(str, pos, 1, result)  // result is empty
+      }
+    }
     else{
       val codePoint = str.codePointAt(pos + index)
       if(fst.findTargetArc(codePoint, scratchArc, scratchArc, fstReader) == null){
