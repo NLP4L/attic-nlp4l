@@ -21,6 +21,7 @@ object NLP4LBuild extends Build {
             "org.apache.lucene" % "lucene-codecs" % "5.2.0",
             "org.apache.lucene" % "lucene-backward-codecs" % "5.2.0",
             "org.apache.lucene" % "lucene-misc" % "5.2.0",
+            "org.apache.commons" % "commons-csv" % "1.1",
             "org.apache.httpcomponents" % "httpclient" % "4.4",
             "com.github.scala-incubator.io" % "scala-io-core_2.11" % "0.4.3",
             "com.github.scala-incubator.io" % "scala-io-file_2.11" % "0.4.3",

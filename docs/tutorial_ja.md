@@ -39,6 +39,18 @@ NLP4Lを使って自分自身のテキストファイルの分析を始める前
 
 ## NLP4Lの対話型シェル
 
+NLP4LにはコマンドやScalaコードを実行するのに便利な対話型シェルが付属しています。NLP4Lをビルドしたら次のように対話型シェル（REPL）を起動してください。
+
+```shell
+$ ./target/pack/bin/nlp4l
+Welcome to NLP4L!
+Type in expressions to have them evaluated.
+Type :help for more information
+Type :? for information about NLP4L utilities
+
+nlp4l> 
+```
+
 ## インデックスとは？
 
 NLP4Lでは自然言語処理を行うテキストファイルをLuceneの転置インデックスに保存します。転置インデックスは単語をキーにしてその単語を含むドキュメント番号のリストを得られるように整理されたファイル構造です。転置インデックスを本書では単にインデックスと呼ぶことにします。
@@ -365,6 +377,70 @@ The/at Fulton/np-tl County/nn-tl Grand/jj-tl Jury/nn-tl said/vbd Friday/nr an/at
 ```
 
 この文章がそのまま格納されているのが body_pos フィールドで、同じ内容だが品詞タグが取り除かれているのが body フィールドとなっています。
+
+## CSV ファイルのインポート
+
+練習用コーパスを使ってLuceneインデックスを作成してきましたが、最後に独自のCSVファイルをLuceneインデックスにインポートする方法を見てみましょう。
+
+例として次のようなCSVファイルがあるとします。
+
+```shell
+$ cat << EOF > /tmp/data.csv
+1, NLP4L, "NLP4L is a natural language processing tool for Apache Lucene written in Scala."
+2, NLP4L, "The main purpose of NLP4L is to use the NLP technology to improve Lucene users' search experience."
+3, LUCENE, "Apache Lucene is a high-performance, full-featured text search engine library written entirely in Java."
+4, SOLR, "Solr is highly reliable, scalable and fault tolerant, providing distributed indexing, replication and load-balanced querying, automated failover and recovery, centralized configuration and more."
+5, SOLR, "Solr powers the search and navigation features of many of the world's largest internet sites."
+EOF
+```
+
+またスキーマファイルは次のようになっているとします。
+
+```shell
+$ cat << EOF > /tmp/schema.conf
+schema {
+  defAnalyzer {
+    class : org.apache.lucene.analysis.standard.StandardAnalyzer
+  }
+  fields　= [
+    {
+      name : id
+      indexed : true
+      stored : true
+    }
+    {
+      name : cat
+      indexed : true
+      stored : true
+    }
+    {
+      name : body
+      analyzer : {
+        tokenizer {
+          factory : standard
+        }
+        filters = [
+          {
+            factory : lowercase
+          }
+        ]
+      }
+      indexed : true
+      stored : true
+      termVector : true
+      positions : true
+      offsets : true
+    }
+  ]
+}
+EOF
+```
+
+このとき、CSVファイルをインポートするコマンドは次のように実行します。
+
+```shell
+$ java -cp "target/pack/lib/*" org.nlp4l.core.CSVImporter --index /tmp/index-tmp --schema /tmp/schema.conf --fields id,cat,body /tmp/data.csv
+```
 
 # NLPツールとしての利用{#useNLP}
 
