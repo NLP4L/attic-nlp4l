@@ -86,7 +86,7 @@ class Document(val fields: Set[Field], val docId: Int = -1){
    * @param fName the field name
    * @return the field values or None if the requested field does not exist.
    */
-  def getValue(fName: String): Option[List[String]] = get(fName) match {
+  def getValue(fName: String): Option[Seq[String]] = get(fName) match {
     case Some(field) => Option(field.values)
     case _ => None
   }

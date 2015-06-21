@@ -39,12 +39,12 @@ trait Adapter {
     case value :: tail => parseCommonOption(parsed + ('index -> value), tail)
   }
 
-  def fieldValues(reader: RawReader, docIds: List[Int], fields: Seq[String]): List[Map[String, List[String]]] = {
+  def fieldValues(reader: RawReader, docIds: List[Int], fields: Seq[String]): List[Map[String, Seq[String]]] = {
     docIds.map(id => reader.document(id) match {
       case Some(doc) => {
         fields.map(f => (f, doc.getValue(f).getOrElse(List.empty))).toMap
       }
-      case _ => Map.empty[String, List[String]]
+      case _ => Map.empty[String, Seq[String]]
     })
   }
 

@@ -18,10 +18,11 @@ package org.nlp4l.core
 
 import java.io.{InputStreamReader, File}
 import org.apache.commons.csv._
+import org.nlp4l.nee.OpenNLPExtractor
 
 import scala.collection.JavaConversions._
 import scala.util.matching.Regex
-import scalax.io.{Codec, Resource}
+import scalax.io.Resource
 
 object CSVImporter {
 
@@ -31,9 +32,11 @@ object CSVImporter {
       |CSVImporter
       |        --index <index dir>
       |        --schema <schema file>
-      |        --fields <field names>      e.g. id,title,body
-      |        [--enc <encode>]            default is UTF-8
-      |        [--format <csv format>]     choose one of standard(default), rfc4180, excel, mysql, or tdf
+      |        --fields <field names>        e.g. id,title,body
+      |        [--enc <encode>]              default is UTF-8
+      |        [--format <csv format>]       choose one of standard(default), rfc4180, excel, mysql, or tdf
+      |        [--neeModels <model files>]   e.g. en-sent.bin,en-token.bin,en-ner-person.bin
+      |        [--neeField <target field>]   name of the target field to be extracted
       |        file1 [file2 ...]
     """.stripMargin
 
@@ -61,6 +64,8 @@ object CSVImporter {
       case "--fields" :: value :: tail => parseOption(opts + ('fields -> value), files, tail)
       case "--enc" :: value :: tail => parseOption(opts + ('enc -> value), files, tail)
       case "--format" :: value :: tail => parseOption(opts + ('format -> value), files, tail)
+      case "--neeModels" :: value :: tail => parseOption(opts + ('neeModels -> value), files, tail)
+      case "--neeField" :: value :: tail => parseOption(opts + ('neeField -> value), files, tail)
       case value :: tail => parseOption(opts, value :: files, tail)
     }
 
@@ -71,6 +76,8 @@ object CSVImporter {
     val fields: Array[String] = required(opts, 'fields).split(",")
     val enc = opts.getOrElse('enc, "UTF-8")
     val format = opts.getOrElse('format, "standard")
+    val neeModels = opts.getOrElse('neeModels, null)
+    val neeField = opts.getOrElse('neeField, null)
 
     if (args.isEmpty){
       println("No files are passed.")
@@ -83,11 +90,30 @@ object CSVImporter {
       if (!file.exists()) throw new IllegalArgumentException("File not found: " + f)
     })
 
+    if((neeModels != null && neeField == null) || (neeModels == null && neeField != null)){
+      println("both neeModels and neeField must be specified when using NEE option")
+      sys.exit()
+    }
+    val extractor =
+      if(neeField != null){
+        val models = neeModels.split(",")
+        if(models.size != 3){
+          println("specify three models sentence,token,name for OpenNLP")
+          sys.exit()
+        }
+        OpenNLPExtractor(models(0), models(1), models(2))
+      }
+      else null
+
     println("Index directory: " + index)
     println("Schema file: " + schemaFile)
     println("Fields: " + fields)
     println("Encoding: " + enc)
     println("CSV format: " + format)
+    if(neeField != null){
+      println("NEE target field: " + neeField)
+      println("NEE model files: " + neeModels)
+    }
     println("Files: " + files.mkString(","))
 
     val csvf: CSVFormat = format.toLowerCase match {
@@ -106,7 +132,7 @@ object CSVImporter {
     val writer = IWriter(index, schema)
     try{
       writer.deleteAll()
-      files.foreach(f => importCsv(writer, enc, f, csvf, fields: _*))
+      files.foreach(f => importCsv(writer, enc, f, neeField, extractor, csvf, fields: _*))
     }
     finally{
       writer.close()
@@ -118,14 +144,15 @@ object CSVImporter {
     reader.close
   }
 
-  def importCsv(writer: IWriter, enc: String, file: String, csvf: CSVFormat, fields: String*): Unit = {
+  def importCsv(writer: IWriter, enc: String, file: String, neeField: String, extractor: OpenNLPExtractor,
+                csvf: CSVFormat, fields: String*): Unit = {
     val is: java.io.InputStream = Resource.fromFile(file).inputStream.open().get
     val reader: java.io.Reader = new InputStreamReader(is, enc)
     try{
       val parse: CSVParser = csvf.withHeader(fields: _*).parse(reader)
       val records = parse.getRecords()
       records.foreach{ record =>
-        writer.write(document(record, fields))
+        writer.write(document(neeField, extractor, record, fields))
       }
     }
     finally{
@@ -134,7 +161,26 @@ object CSVImporter {
     }
   }
 
-  def document(record: CSVRecord, fields: Seq[String]): Document = {
-    Document(fields.map(f => Field(f, record.get(f))).toSet)
+  def document(neeField: String, extractor: OpenNLPExtractor, record: CSVRecord, fields: Seq[String]): Document = {
+    val flds = fields.map(f => Field(f, record.get(f))).toSet
+    if(neeField == null) Document(flds)
+    else{
+      val entities = extractor.extractNamedEntities(record.get(neeField))
+      if(entities.size > 0){
+        val map = scala.collection.mutable.Map[String, String]()
+        entities.foreach{ entity =>
+          val ex = map.getOrElse(entity._2, null)
+          if(ex != null){
+            map.put(entity._2, ex + "," + entity._1)
+          }
+          else{
+            map.put(entity._2, entity._1)
+          }
+        }
+        val entFields = map.keys.map(k => Field("%s_%s".format(neeField, k), map.get(k).get.split(",")))
+        Document(flds ++ entFields)
+      }
+      else Document(flds)
+    }
   }
 }

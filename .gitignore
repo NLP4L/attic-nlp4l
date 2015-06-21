@@ -5,6 +5,7 @@ corpora
 target
 labeled-point-out
 loanwords*.txt
+models
 docs/*.html
 .DS_Store
 /#*#

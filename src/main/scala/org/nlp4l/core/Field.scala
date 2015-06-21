@@ -30,7 +30,7 @@ object Field {
    * @param values the field values
    * @return a new Field instance
    */
-  def apply(name: String, values: List[String]) = new Field(name, values)
+  def apply(name: String, values: Seq[String]) = new Field(name, values)
 
   /**
    * Create a new Field instance with given name and a value.
@@ -49,7 +49,7 @@ object Field {
  * @param name the field name
  * @param values the field values
  */
-class Field(val name: String, val values: List[String]){
+class Field(val name: String, val values: Seq[String]){
 
   override def toString = "Field(name=%s,values=%s)".format(name, values)
 
@@ -59,7 +59,7 @@ class Field(val name: String, val values: List[String]){
    * @param name the field value
    * @return the list of lucene fields
    */
-  def luceneFields(fieldType: FieldType, name: String): List[IndexableField] =
+  def luceneFields(fieldType: FieldType, name: String): Seq[IndexableField] =
     values.map(v => new LuceneField(name, v, type2luceneType(fieldType)))
 
   private def type2luceneType(fieldType: FieldType) = {
