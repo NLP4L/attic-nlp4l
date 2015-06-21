@@ -901,9 +901,11 @@ EOF
 
 ```shell
 $ mkdir models
+$ cd models
 $ wget http://opennlp.sourceforge.net/models-1.5/en-sent.bin
 $ wget http://opennlp.sourceforge.net/models-1.5/en-token.bin
 $ wget http://opennlp.sourceforge.net/models-1.5/en-ner-person.bin
+$ cd ..
 ```
 
 そしてCSVImporter を次のように--neeModelsと--neeFieldオプション付きで実行します。
