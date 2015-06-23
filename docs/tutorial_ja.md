@@ -159,7 +159,7 @@ total 67432
 ISBN978-4-87424-498-2
 ```
 
-corpora/CEEAUS 以下に「言語研究のための統計入門」付属CD-ROMのデータの"INDIVIDUAL WRITERS"以下のフォルダー（"INDIVIDUAL WRITERS"は含まない）を、また、"PLAIN"以下のフォルダー（"PLAIN"を含む）をコピーしてください。コピー後、次のようになっていることを確認してください。
+corpora/CEEAUS 以下に「言語研究のための統計入門」付属CD-ROMのデータの"INDIVIDUAL WRITERS"以下のフォルダー（"INDIVIDUAL WRITERS"は含まない）と、"PLAIN"以下のフォルダー（"PLAIN"を含む）をコピーしてください。コピー後、次のようになっていることを確認してください。
 
 ```shell
 # ディレクトリの作成
@@ -362,7 +362,7 @@ Luceneのインデックスは基本的にスキーマレスですが、NLP4Lで
 
 ### ldcc のスキーマ
 
-title にはニュース記事のタイトルが、body には記事本文か格納されています。2つのフィールドとも、Lucene の JapaneseAnalyzer によって単語分割が行われます。
+title にはニュース記事のタイトルが、body には記事本文が格納されています。2つのフィールドとも、Lucene の JapaneseAnalyzer によって単語分割が行われます。
 
 ### CEEAUS のスキーマ
 
