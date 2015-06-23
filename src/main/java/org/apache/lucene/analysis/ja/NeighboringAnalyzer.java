@@ -30,7 +30,7 @@ public final class NeighboringAnalyzer extends Analyzer {
   private final CharArraySet charArraySet = new CharArraySet(1, true);
 
   public NeighboringAnalyzer(){
-    this(4, "KATAKANA", "ALPHABET");
+    this(3, "KATAKANA", "ALPHABET");
   }
 
   public NeighboringAnalyzer(int within, String... letterTypes){

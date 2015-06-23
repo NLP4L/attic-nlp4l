@@ -4,7 +4,7 @@
 corpora
 target
 labeled-point-out
-loanwords*.txt
+loanwords*.txt*
 models
 docs/*.html
 .DS_Store
