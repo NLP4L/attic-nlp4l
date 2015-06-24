@@ -82,10 +82,11 @@ val reader = IReader(index, schema)
 val pattern: Regex = """([a-z]+) ([\u30A0-\u30FF]+)""".r
 val lld = new LuceneLevenshteinDistance()
 
-val THRESHOLD = 0.75
+val THRESHOLD = 0.8
+val MIN_DOCFREQ = 3
 
 reader.field("ka_pair").get.terms.foreach{ t =>
-  if(t.docFreq > 1){
+  if(t.docFreq >= MIN_DOCFREQ){
     t.text match {
       case pattern(a, b) => {
         val predWord = predict(b)
