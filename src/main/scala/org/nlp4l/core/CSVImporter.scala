@@ -79,7 +79,7 @@ object CSVImporter {
     val neeModels = opts.getOrElse('neeModels, null)
     val neeField = opts.getOrElse('neeField, null)
 
-    if (args.isEmpty){
+    if (files.isEmpty){
       println("No files are passed.")
       println(usage)
       sys.exit()

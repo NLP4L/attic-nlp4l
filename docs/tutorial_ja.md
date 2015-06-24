@@ -841,6 +841,24 @@ res39: Seq[org.nlp4l.lm.Token] = List(Token(コ,co), Token(ミュ,mmu), Token(�
 res40: Seq[org.nlp4l.lm.Token] = List(Token(エ,e), Token(ン,n), Token(ト,t), Token(リー,ree))
 ```
 
+### 日本語Wikipediaからカタカナ語と英単語のペアを抽出する
+
+前述のプログラム examples/trans_katakana_alpha.scala はカタカナ語から英単語を出力するプログラムですが、出力された英単語はあくまでも推定なので、あっているかもしれませんし、間違っているかもしれません。そのため、そのままでは Lucene/Solr の類義語辞書には使えません。しかし、大量の文書からお互いに近い距離に出現するカタカナ語とアルファベット文字列のペアを拾い、両者が同じ意味を持つかどうかを調べるために推定値を使うことはできます。拾ったカタカナ語から英単語を推定して拾ったアルファベット文字列と似ていれば拾ったカタカナ語とアルファベット文字列は互いに同じ意味を持つとして類義語辞書のエントリとして使えると考えてよいでしょう。
+
+[Wikipediaデータの入手とインデックスの作成](#getCorpora_wiki)で日本語Wikipediaから作成したLuceneインデックス /tmp/index-jawiki にはka_pairというフィールドが定義されており、そのフィールドには互いに近い距離で出現したカタカナ語とアルファベット文字列が登録されています。このフィールドを対象にプログラム LoanWordsExtractor を実行すればカタカナ語とその語源であるアルファベット文字列のペアを抽出できます。
+
+```shell
+$ java -Dfile.encoding=UTF-8 -cp "target/pack/lib/*" org.nlp4l.syn.LoanWordsExtractor --index /tmp/index-jawiki --field ka_pair loanwords.txt
+```
+
+このプログラムを実行しただけだと重複する行がある恐れがあるので、次のように SynonymRecordsUnifier を実行します。
+
+```shell
+$ java -Dfile.encoding=UTF-8 -cp "target/pack/lib/*" org.nlp4l.syn.SynonymRecordsUnifier loanwords.txt
+```
+
+最終的に得られたファイル loanwords.txt_checked は Lucene/Solr の類義語辞書として適用できます。
+
 ## 連語分析モデル{#useNLP_collocanalysis}
 
 NLP4Lでは、コーパス中に発生するある単語に注目したとき、その単語の前後に発生する単語を発生頻度付きで分析することができます。この分析を行うデータモデルをNLP4Lでは連語分析モデル（CollocationalAnalysisModel）と名付けました。連語分析モデルを使うと、ある動詞と共起しやすい前置詞などがわかります。たとえば英語学習者が英語コーパスを連語分析モデルを使って調べることで、よく使われる言い回しを得ることができるでしょう。
