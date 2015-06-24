@@ -3,7 +3,17 @@
 * [Let's Get Started!](#gettingStarted)
 * [Installing NLP4L](#install)
 * [Obtaining Practice Corpus](#getCorpora)
+    * [NLP4L Interactive Shell](#getCorpora_repl)
+    * [What is Index?](#getCorpora_index)
+    * [Obtaining livedoor News Corpus and Creating Index](#getCorpora_ldcc)
+    * [Creating Index with Data in the Companion CD-ROM that Accompanies the book "言語研究のための統計入門" (ISBN978-4-87424-498-2)](#getCorpora_book)
+    * [Obtaining Brown Corpus and Creating an Index](#getCorpora_brown)
+    * [Obtaining Reuters Corpus and Creating an Index](#getCorpora_reuters)
+    * [Obtaining Wikipedia Data and Creating an Index](#getCorpora_wiki)
+    * [NLP4L Schema](#getCorpora_schema)
+    * [Importing a CSV File](#getCorpora_csv)
 * [Using as NLP Tool](#useNLP)
+    * [Counting the Number of Words](#useNLP_wordcounts)
 * [Using Index Browser](#indexBrowser)
 * [To Solr Users](#dearSolrUsers)
 * [To Elasticsearch Users](#dearESUsers)
@@ -23,7 +33,7 @@ You will be able to actually try the followings and understand them easier if yo
 
 Note that the corpora introduced here, except for the livedoor news corpus and wikipedia, are for research purpose only. Please be very careful using them.
 
-## NLP4L Interactive Shell 
+## NLP4L Interactive Shell{#getCorpora_repl}
 
 NLP4L has an interactive shell that comes in handy for running commands and Scala codes. Start an interactive shell (REPL) as follows when NLP4L has been built.
 
@@ -36,7 +46,7 @@ Type :? for information about NLP4L utilities
 nlp4l>
 ```
 
-## What is Index?
+## What is Index?{#getCorpora_index}
 
 NLP4L saves text files, which are put into the natural language process, in the inverted index for Lucene. An inverted index is a file structure that is organized so that you can use a word as the key to obtain a list of document numbers. We will refer to the inverted index simply as "index" in this document.
 
@@ -44,7 +54,7 @@ You can use an NLP4L function to create an index from a text file or otherwise m
 
 The followings will discuss how to obtain a practice corpus (text file) and create an index from scratch.
 
-## Obtaining livedoor News Corpus and Creating Index
+## Obtaining livedoor News Corpus and Creating Index{#getCorpora_ldcc}
 
 Execute the following to download and expand a livedoor news corpus from the RONDHUIT site.
 
@@ -133,7 +143,7 @@ total 67432
 -rw-r--r-- 1 koji wheel 0 2 24 13:40 write.lock
 ```
 
-## Creating Index with Data in the Companion CD-ROM that Accompanies the book "言語研究のための統計入門" (ISBN978-4-87424-498-2)
+## Creating Index with Data in the Companion CD-ROM that Accompanies the book "言語研究のための統計入門" (ISBN978-4-87424-498-2){#getCorpora_book}
 
 If you have the following book [1], you can use the data in CD-ROM that accompanies this book as your corpus. Otherwise, please proceed to the next section.
 
@@ -188,7 +198,7 @@ nlp4l> :load examples/index_ceeaus_all.scala
 
 As you can see by looking at the beginning of each program, each Lucene indexes are created in /tmp/index-ceeaus and /tmp/index-ceeaus-all respectively. As in the previous example, you need to rewrite the lines and execute the program again if you want to create them in other directories.
 
-## Obtaining Brown Corpus and Creating an Index
+## Obtaining Brown Corpus and Creating an Index{#getCorpora_brown}
 
 Download the Brown corpus to corpora/brown and expand it as follows.
 
@@ -220,7 +230,7 @@ nlp4l> :load examples/index_brown.scala
 As you can see by looking at the beginning of each program, the Lucene index is created in /tmp/index-brown. As in the previous example, you need to rewrite the lines and execute the program again if you want to create it in other directories.
 
 
-## Obtaining Reuters Corpus and Creating an Index
+## Obtaining Reuters Corpus and Creating an Index{#getCorpora_reuters}
 
 You can obtain the Reuters corpus by [applying to](http://trec.nist.gov/data/reuters/reuters.html) NIST (National Institute of Standards and Technology). Here we will use an archive that you can download from [Dr. David D. Lewis's site](http://www.daviddlewis.com/resources/testcollections/rcv1/) introduced in the NIST site in order to show you how to create indexes for your reference.
 
@@ -254,7 +264,7 @@ nlp4l> :load examples/index_reuters.scala
 
 Looking at the program in the same manner as before, you can see that Lucene index is created in /tmp/index-reuters. As in the previous example, you need to rewrite the lines and execute the program again if you want to create it in other directories.
 
-## Obtaining Wikipedia Data and Creating an Index {#getCorpora_wiki}
+## Obtaining Wikipedia Data and Creating an Index{#getCorpora_wiki}
 
 Wikipedia data is one of the most highly favored corpora for NLP study. However, as Wikipedia articles are written by the rule unique to Wikipedia, you need to make an effort to run preprocess to extract only the text data before loading it to an Lucene index. This additional effort might be a hurdle that you have to overcome when it comes to using Wikipedia data.
 
@@ -323,7 +333,7 @@ nlp4l> :load examples/index_jawiki.scala
 
 The Lucene index will be created in about 30 minutes for the Japanese Wikipedia.
 
-## NLP4L Schema
+## NLP4L Schema{#getCorpora_schema}
 
 The Lucene index is basically schemaless but NLP4L can set up a schema. Among the practice corpora, now let's look at schemas that are defined by the livedoor news corpus (ldcc) , CEEAUS, or the Brown corpus (brown).
 
@@ -367,7 +377,7 @@ The body_pos field holds this text as it is while the body field holds the same 
 
 
 
-##  Importing a CSV File
+## Importing a CSV File{#getCorpora_csv}
 
 We have been using practice corpus to create Lucene indexes. Now, let's look at how to import an original CSV file to a Lucene index.
 
@@ -435,7 +445,7 @@ $ java -cp "target/pack/lib/*" org.nlp4l.core.CSVImporter --index /tmp/index-tmp
 
 We will discuss how to use NLP4L as an NLP tool. Please prepare at hand a practice corpus registered in the Lucene index discussed above so you can use it anytime.
 
-## Counting the Number of Words
+## Counting the Number of Words{#useNLP_wordcounts}
 
 Counting the number of words that appear in the corpus is one of NLP processing fundamentals. NLP4L registers corpus to a Lucene index before processing and is very good at counting the number of words as a search engine (Lucene) has something called an inverted index that uses words as keys.
 

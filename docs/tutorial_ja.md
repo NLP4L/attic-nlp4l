@@ -3,14 +3,46 @@
 * [はじめよう！](#gettingStarted)
 * [インストール](#install)
 * [練習用コーパスの入手](#getCorpora)
+    * [NLP4Lの対話型シェル](#getCorpora_repl)
+    * [インデックスとは？](#getCorpora_index)
+    * [livedoorニュースコーパスの入手とインデックスの作成](#getCorpora_ldcc)
+    * [書籍「言語研究のための統計入門」付属CD-ROMデータを使ったインデックスの作成](#getCorpora_book)
+    * [ブラウンコーパスの入手とインデックスの作成](#getCorpora_brown)
+    * [ロイターコーパスの入手とインデックスの作成](#getCorpora_reuters)
+    * [Wikipediaデータの入手とインデックスの作成](#getCorpora_wiki)
+    * [NLP4L のスキーマについて](#getCorpora_schema)
+    * [CSV ファイルのインポート](#getCorpora_csv)
 * [NLPツールとしての利用](#useNLP)
+    * [単語の数を数える](#useNLP_wordcounts)
+    * [隠れマルコフモデル](#useNLP_hmm)
+    * [連語分析モデル](#useNLP_collocanalysis)
+    * [固有表現抽出](#useNLP_nee)
+    * [ジップの法則を確認する](#useNLP_zipfslaw)
+    * [仮説検定](#useNLP_hypothesistesting)
+    * [相関分析](#useNLP_correlationanalysis)
 * [インデックスブラウザを使う](#indexBrowser)
+    * [フィールド、単語のブラウジング](#indexBrowser_fields)
+    * [ドキュメントの閲覧](#indexBrowser_docs)
+    * [Position / Offsets](#indexBrowser_posoff)
+    * [出現頻度の高い Top N 単語の抽出](#indexBrowser_topn)
 * [Solrユーザの皆様](#dearSolrUsers)
 * [Elasticsearchユーザの皆様](#dearESUsers)
 * [Mahoutと連携する](#useWithMahout)
 * [Sparkと連携する](#useWithSpark)
+    * [MLLibと連携する](#useWithSpark_mllib)
 * [Luceneを使う](#useLucene)
+    * [NLP4Lが提供するLuceneの機能](#useLucene_functions)
+    * [Analyzer](#useLucene_analyzer)
+    * [既存インデックスを検索する](#useLucene_search)
+    * [簡単ファセット](#useLucene_facet)
+    * [Term Vector から TF/IDF 値を求める](#useLucene_tfidf)
+    * [文書類似度を計算する](#useLucene_similarity)
+    * [More Like This](#useLucene_mlt)
+    * [独自インデックスの作成](#useLucene_index)
+    * [FST を単語辞書として使う](#useLucene_fst)
 * [NLP4Lプログラムを開発して実行する](#develop)
+    * [REPLから実行する](#develop_repl)
+    * [コンパイルして実行する](#develop_exec)
 * [帰属](#tm)
 
 # はじめよう！{#gettingStarted}
@@ -37,7 +69,7 @@ NLP4Lを使って自分自身のテキストファイルの分析を始める前
 
 なおここで紹介するコーパスは、livedoorニュースコーパスとWikipediaを除き、研究目的以外での利用が禁止されています。使用に際しては十分ご注意ください。
 
-## NLP4Lの対話型シェル
+## NLP4Lの対話型シェル{#getCorpora_repl}
 
 NLP4LにはコマンドやScalaコードを実行するのに便利な対話型シェルが付属しています。NLP4Lをビルドしたら次のように対話型シェル（REPL）を起動してください。
 
@@ -51,7 +83,7 @@ Type :? for information about NLP4L utilities
 nlp4l> 
 ```
 
-## インデックスとは？
+## インデックスとは？{#getCorpora_index}
 
 NLP4Lでは自然言語処理を行うテキストファイルをLuceneの転置インデックスに保存します。転置インデックスは単語をキーにしてその単語を含むドキュメント番号のリストを得られるように整理されたファイル構造です。転置インデックスを本書では単にインデックスと呼ぶことにします。
 
@@ -59,7 +91,7 @@ NLP4Lでは自然言語処理を行うテキストファイルをLuceneの転置
 
 以降では練習用のコーパス（テキストファイル）を入手して新規にインデックスを作る方法を説明します。
 
-## livedoorニュースコーパスの入手とインデックスの作成
+## livedoorニュースコーパスの入手とインデックスの作成{#getCorpora_ldcc}
 
 次のように実行してロンウイットのサイトから livedoorニュースコーパスをダウンロードして展開します。
 
@@ -148,7 +180,7 @@ total 67432
 -rw-r--r--  1 koji  wheel         0  2 24 13:40 write.lock
 ```
 
-## 書籍「言語研究のための統計入門」付属CD-ROMデータを使ったインデックスの作成
+## 書籍「言語研究のための統計入門」付属CD-ROMデータを使ったインデックスの作成{#getCorpora_book}
 
 以下の書籍[1]をお持ちの方は、付属CD-ROMのデータをコーパスとして使えます。この書籍をお持ちでない方は次の節へお進みください。
 
@@ -203,7 +235,7 @@ nlp4l> :load examples/index_ceeaus_all.scala
 
 それぞれのプログラムの冒頭を見ていただければわかりますが、Luceneインデックスはそれぞれ、/tmp/index-ceeausと/tmp/index-ceeaus-allに作られます。前の例と同じように、別のディレクトリに作成したいときは、書き換えて再度プログラムを実行してください。
 
-## ブラウンコーパスの入手とインデックスの作成
+## ブラウンコーパスの入手とインデックスの作成{#getCorpora_brown}
 
 corpora/brown 以下に次のようにしてブラウンコーパスをダウンロードし、展開します。
 
@@ -234,7 +266,7 @@ nlp4l> :load examples/index_brown.scala
 
 プログラムの冒頭を見ていただければわかりますが、Luceneインデックスは/tmp/index-brownに作られます。前の例と同じように、別のディレクトリに作成したいときは、書き換えて再度プログラムを実行してください。
 
-## ロイターコーパスの入手とインデックスの作成
+## ロイターコーパスの入手とインデックスの作成{#getCorpora_reuters}
 
 ロイターコーパスはアメリカ国立標準技術研究所（NIST）に[申し込む](http://trec.nist.gov/data/reuters/reuters.html)ことで入手できます。ここでは同サイトに紹介されている[David D. Lewis博士のサイト](http://www.daviddlewis.com/resources/testcollections/rcv1/)からダウンロードできるアーカイブを使ってインデックスを作成する方法を参考までにご紹介します。
 
@@ -336,7 +368,7 @@ nlp4l> :load examples/index_jawiki.scala
 
 日本語Wikipediaの場合はおよそ30分程度でLuceneインデックスの作成が完了します。
 
-## NLP4L のスキーマについて
+## NLP4L のスキーマについて{#getCorpora_schema}
 
 Luceneのインデックスは基本的にスキーマレスですが、NLP4Lではスキーマを設定できます。ここで練習用コーパスのうち、livedoorニュースコーパス（ldcc）、CEEAUS、ブラウンコーパス（brown）で定義されているスキーマを概観しましょう。
 
@@ -378,7 +410,7 @@ The/at Fulton/np-tl County/nn-tl Grand/jj-tl Jury/nn-tl said/vbd Friday/nr an/at
 
 この文章がそのまま格納されているのが body_pos フィールドで、同じ内容だが品詞タグが取り除かれているのが body フィールドとなっています。
 
-## CSV ファイルのインポート
+## CSV ファイルのインポート{#getCorpora_csv}
 
 練習用コーパスを使ってLuceneインデックスを作成してきましたが、最後に独自のCSVファイルをLuceneインデックスにインポートする方法を見てみましょう。
 
@@ -446,7 +478,7 @@ $ java -cp "target/pack/lib/*" org.nlp4l.core.CSVImporter --index /tmp/index-tmp
 
 NLP4L を NLP ツールとして使う方法を紹介します。前述のLuceneインデックスに登録した練習用コーパスを使いますので、あらかじめ用意しておくとよいでしょう。
 
-## 単語の数を数える
+## 単語の数を数える{#useNLP_wordcounts}
 
 コーパス中に出現する単語の数を数えるのは NLP 処理の基本です。NLP4L はコーパスをLuceneのインデックスに登録してから処理を行いますが、検索エンジン（Lucene）では単語をキーにした転置インデックスというものを持っているので、単語の数を数える処理は大変得意としています。
 
@@ -649,7 +681,7 @@ To shutdown the server, access this URL -> http://localhost:6574/shutdown
 
 以上のチャート表示のコードは examples/chart_experimental.scala として1つのスクリプトにまとめてあります。
 
-## 隠れマルコフモデル
+## 隠れマルコフモデル{#useNLP_hmm}
 
 NLP4L では、ラベルつき訓練データから隠れマルコフモデルを学習することができる HmmModel クラスが提供されています。HmmModel と HmmModelIndexer はともに次の HmmModelSchema で定義されている Luceneインデックスのスキーマを参照しています。
 
@@ -809,7 +841,7 @@ res39: Seq[org.nlp4l.lm.Token] = List(Token(コ,co), Token(ミュ,mmu), Token(�
 res40: Seq[org.nlp4l.lm.Token] = List(Token(エ,e), Token(ン,n), Token(ト,t), Token(リー,ree))
 ```
 
-## 連語分析モデル
+## 連語分析モデル{#useNLP_collocanalysis}
 
 NLP4Lでは、コーパス中に発生するある単語に注目したとき、その単語の前後に発生する単語を発生頻度付きで分析することができます。この分析を行うデータモデルをNLP4Lでは連語分析モデル（CollocationalAnalysisModel）と名付けました。連語分析モデルを使うと、ある動詞と共起しやすい前置詞などがわかります。たとえば英語学習者が英語コーパスを連語分析モデルを使って調べることで、よく使われる言い回しを得ることができるでしょう。
 
@@ -830,7 +862,7 @@ examples/colloc_analysis_brown.scala はブラウンコーパスを分析して�
 
 "found in" というフレーズが多く発生していることがわかります。また、注目している単語 "found" の前の単語もわかるので、"be found" や "to be found", "can be found" といったフレーズも発生している可能性がうかがえます。
 
-## 固有表現抽出{#nee}
+## 固有表現抽出{#useNLP_nee}
 
 NLP4Lは他のNLPツールの固有表現抽出機能と連携するためのクラスを提供しています。これを使うと、Luceneインデックス作成時にあるフィールドの文章から固有表現を抽出して他のフィールドにコピーすることができます。これにより、検索のための新しい絞り込み軸を提供することができます。
 
@@ -952,9 +984,9 @@ Mitch Lively (DF=1, Total TF=1)
 
 結果は上のようになり、確かに人名が抽出されています。
 
-## ジップの法則を確認する
+## ジップの法則を確認する{#useNLP_zipfslaw}
 
-## 仮説検定
+## 仮説検定{#useNLP_hypothesistesting}
 
 先行研究では非母語話者の書いた英語にはIやyouが多用されがちで、書き手・読み手の可視性が母語話者以上に顕著であるとされます（[1]の3章、[2]）。
 
@@ -1077,7 +1109,7 @@ nlp4l> :load examples/chisquare_test_brown.scala
 
 どちらも自由度=1、αb=.025の限界値5.02389を超えているので有意差があるといえます。プログラムは前掲のものとほとんど同じなので解説は省略します。
 
-## 相関分析
+## 相関分析{#useNLP_correlationanalysis}
 
 接続副詞は文内要素の論理的な結束性を担う重要な役割を果たしています（[1]の4章）。ここではCEEAUSのCEEJUS（日本人英語学習者）、CEECUS（中国人英語学習者）、CEENAS（英語母語話者）のサブコーパス間で接続副詞の使用頻度を比較し、どの程度の関係性が存在するのか見てみましょう。仮にどのような書き手であっても接続表現の使用パターンが安定しているのであれば、書き手間に高い相関関係が見えるでしょうし、逆に母語話者かどうかで使用頻度が変わるのであれば、相関係数は低くなるでしょう。
 
@@ -1360,7 +1392,7 @@ Return : index reader
 nlp4l> open("/tmp/myindex")
 ```
 
-## フィールド、単語のブラウジング
+## フィールド、単語のブラウジング{#indexBrowser_fields}
 
 open() 関数にインデックスディレクトリのパスを渡すことでインデックスをオープンします。
 
@@ -1490,7 +1522,7 @@ Doc(id=1203, freq=1, positions=List(pos=5))
 
 1ページに表示されるドキュメント数はデフォルトで20件ですが、browseTermDocs("title","iphone",100)のように第３引数でページサイズを指定することもできます。
 
-## ドキュメントの閲覧
+## ドキュメントの閲覧{#indexBrowser_docs}
 
 より詳しくドキュメントの内容を見たい場合は、showDoc() 関数にドキュメントIDを渡すことでフィールド値を表示させることができます。
 
@@ -1505,7 +1537,7 @@ Doc #1195
 ...
 ```
 
-## Position / Offsets
+## Position / Offsets{#indexBrowser_posoff}
 
 Position / Offsets はインデックスに付加的に保存できる情報で、各単語のドキュメント中の出現箇所を示します。
 
@@ -1530,7 +1562,7 @@ Doc(id=199, freq=2, positions=List((pos=126,offset={247-250}), (pos=129,offset={
 ...
 ```
 
-## 出現頻度の高い Top N 単語の抽出
+## 出現頻度の高い Top N 単語の抽出{#indexBrowser_topn}
 
 browseTerms() でフィールドを指定した後、topTerms() 関数でそのフィールドでドキュメント出現頻度(DF)の高い上位N件の単語とその頻度を取得できます。
 
@@ -1565,7 +1597,7 @@ Top 10 frequent terms for field title
 
 この節では、事前に Spark 1.3.0 以上がインストールされていることが必要です。(1.3.0 以前の Spark をお使いの場合は、適宜読み替えてください。)
 
-## MLLibと連携する
+## MLLibと連携する{#useWithSpark_mllib}
 
 NLP4L でコーパスの特徴量を抽出し、 Spark MLlib への入力として与えることができます。
 
@@ -1689,21 +1721,21 @@ scala> topics.take(5).foreach(println)
 
 # Luceneを使う{#useLucene}
 
-## NLP4Lが提供するLuceneの機能
+## NLP4Lが提供するLuceneの機能{#useLucene_functions}
 
-## Analyzer
+## Analyzer{#useLucene_analyzer}
 
-## 既存インデックスを検索する
+## 既存インデックスを検索する{#useLucene_search}
 
-## 簡単ファセット
+## 簡単ファセット{#useLucene_facet}
 
-## Term Vector から TF/IDF 値を求める
+## Term Vector から TF/IDF 値を求める{#useLucene_tfidf}
 
-## 文書類似度を計算する
+## 文書類似度を計算する{#useLucene_similarity}
 
-## More Like This
+## More Like This{#useLucene_mlt}
 
-## 独自インデックスの作成
+## 独自インデックスの作成{#useLucene_index}
 
 ### Schemaの定義
 
@@ -1713,7 +1745,7 @@ NLP4LをNLPツールとして使う場合、IntやLongなどの数値型のフ�
 
 ### 文書の登録
 
-## FST を単語辞書として使う
+## FST を単語辞書として使う{#useLucene_fst}
 
 NLP4LはLuceneのFSTを簡単な単語辞書として使えるようにシンプルにラップしたSimpleFSTを提供しています。FSTを単語辞書として使うと、対象文字列の最左部分文字列（左端から始まるすべての接頭辞）が1回の走査で探索できるため、Luceneプロジェクトでは日本語形態素解析器やシノニム検索で利用されています。
 
@@ -1794,9 +1826,9 @@ SimpleFSTにはleftMostSubstring()以外にも、メモリ上に作成した単�
 
 # NLP4Lプログラムを開発して実行する{#develop}
 
-## REPLから実行する
+## REPLから実行する{#develop_repl}
 
-## コンパイルして実行する
+## コンパイルして実行する{#develop_exec}
 
 # 帰属{#tm}
 Apache Lucene, Solr and their logos are trademarks of the Apache Software Foundation.
