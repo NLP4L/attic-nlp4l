@@ -40,6 +40,7 @@
     * [More Like This](#useLucene_mlt)
     * [独自インデックスの作成](#useLucene_index)
     * [FST を単語辞書として使う](#useLucene_fst)
+* [Apache Zeppelin から NLP4L を使う](#withZeppelin)
 * [NLP4Lプログラムを開発して実行する](#develop)
     * [REPLから実行する](#develop_repl)
     * [コンパイルして実行する](#develop_exec)
@@ -51,10 +52,10 @@
 
 ## インストール後のディレクトリ構造
 
-インストール後のディレクトリ構造は以下のようになっています。${nlp4l} は、NLP4L のインストールディレクトリを指しています。
+インストール後のディレクトリ構造は以下のようになっています。$NLP4L_HOME は、NLP4L のインストールディレクトリを指しています。
 
 ```shell
-${nlp4l}/
+$NLP4L_HOME/
     bin/
     docs/
     examples/
@@ -96,8 +97,8 @@ NLP4Lでは自然言語処理を行うテキストファイルをLuceneの転置
 次のように実行してロンウイットのサイトから livedoorニュースコーパスをダウンロードして展開します。
 
 ```shell
-$ mkdir -p ${nlp4l}/corpora/ldcc
-$ cd ${nlp4l}/corpora/ldcc
+$ mkdir -p $NLP4L_HOME/corpora/ldcc
+$ cd $NLP4L_HOME/corpora/ldcc
 $ wget http://www.rondhuit.com/download/ldcc-20140209.tar.gz
 $ tar xvzf ldcc-20140209.tar.gz
 ```
@@ -240,8 +241,8 @@ nlp4l> :load examples/index_ceeaus_all.scala
 corpora/brown 以下に次のようにしてブラウンコーパスをダウンロードし、展開します。
 
 ```shell
-$ mkdir ${nlp4l}/corpora/brown
-$ cd ${nlp4l}/corpora/brown
+$ mkdir $NLP4L_HOME/corpora/brown
+$ cd $NLP4L_HOME/corpora/brown
 $ wget https://ia600503.us.archive.org/21/items/BrownCorpus/brown.zip
 $ unzip brown.zip
 ```
@@ -273,8 +274,8 @@ nlp4l> :load examples/index_brown.scala
 corpora/reuters 以下に次のようにしてロイターコーパスをダウンロードし、展開します。
 
 ```shell
-$ mkdir ${nlp4l}/corpora/reuters
-$ cd ${nlp4l}/corpora/reuters
+$ mkdir $NLP4L_HOME/corpora/reuters
+$ cd $NLP4L_HOME/corpora/reuters
 $ wget http://www.daviddlewis.com/resources/testcollections/reuters21578/reuters21578.tar.gz
 $ tar xvzf reuters21578.tar.gz
 ```
@@ -1841,6 +1842,110 @@ i => 5164
 ```
 
 SimpleFSTにはleftMostSubstring()以外にも、メモリ上に作成した単語辞書をディスクに保存するsave()や、保存した単語辞書を読み込むためのload()という関数もありますので、いろいろ活用してください。
+
+# Apache Zeppelin から NLP4L を使う{#withZeppelin}
+
+Apache Zeppelin から NLP4L を使う方法について説明します。
+
+## Apache Zeppelin のインストール
+
+以下の手順にしたがい、Apache Zeppelin をインストールします。インストール場所はどこでもかまいませんが、ここでは ~/work-zeppelin ディレクトリにインストールすることとします。
+
+```shell
+$ mkdir ~/work-zeppelin
+$ cd ~/work-zeppelin
+$ git clone https://github.com/apache/incubator-zeppelin.git
+$ cd incubator-zeppelin
+$ mvn install -DskipTests
+$ cd conf
+$ cp zeppelin-site.xml.template zeppelin-site.xml
+```
+
+上記最後のコマンドで用意したファイル zeppelin-site.xml をエディタで開き、プロパティ zeppelin.interpreters の value の最後に次のように org.nlp4l.zeppelin.NLP4LInterpreter を加えます。
+
+```xml
+<property>
+  <name>zeppelin.interpreters</name>
+  <value>org.apache.zeppelin.spark.SparkInterpreter,org.apache.zeppelin.spark.PySparkInterpreter,org.apache.zeppelin.spark.SparkSqlInterpreter,org.apache.zeppelin.spark.DepInterpreter,org.apache.zeppelin.markdown.Markdown,org.apache.zeppelin.angular.AngularInterpreter,org.apache.zeppelin.shell.ShellInterpreter,org.apache.zeppelin.hive.HiveInterpreter,org.apache.zeppelin.tajo.TajoInterpreter,org.apache.zeppelin.flink.FlinkInterpreter,org.apache.zeppelin.lens.LensInterpreter,org.apache.zeppelin.ignite.IgniteInterpreter,org.apache.zeppelin.ignite.IgniteSqlInterpreter,org.nlp4l.zeppelin.NLP4LInterpreter</value>
+  <description>Comma separated interpreter configurations. First interpreter become a default</description>
+</property>
+```
+
+また同じファイルにプロパティ zeppelin.notebook.autoInterpreterBinding を false に設定する次の項目を新規追加します。
+
+```xml
+<property>
+  <name>zeppelin.notebook.autoInterpreterBinding</name>
+  <value>false</value>
+  <description></description>
+</property>
+```
+
+## NLP4L ライブラリの Apache Zeppelin へのデプロイ
+
+$NLP4L_HOME/target/pack/lib/ 以下の zeppelin-interpreter-XXX.jar ファイルを除く JAR ファイルを、~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l/ 以下にコピーします。
+
+```shell
+$ mkdir ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l
+$ cd $NLP4L_HOME
+$ cp target/pack/lib/*.jar ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l
+$ rm ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l/zeppelin-interpreter-*.jar
+```
+
+## Apache Zeppelin の起動
+
+次のようにして Apache Zeppelin を起動します。
+
+```shell
+$ cd ~/work-zeppelin/incubator-zeppelin
+$ bin/zeppelin-daemon.sh start
+```
+
+なお、停止は次のように stop で行います。
+
+```shell
+$ bin/zeppelin-daemon.sh stop
+```
+
+ここでは停止せずに次に進みます。
+
+## ノートの作成と NLP4LInterpreter の保存
+
+Web ブラウザから [http://localhost:8080/](http://localhost:8080/) にアクセスします。そして、Notebook メニューの Create new note をクリックして新しいノートを作成します。すると次のような画面が現れますので、Save ボタンをクリックして NLP4LInterpreter を保存します。
+
+![Zeppelin Note 初期画面](zeppelin-note-nlp4l-save.png)
+
+## NLP4L のコマンドやプログラムの実行
+
+以降は、Apache Zeppelin のノートのプロンプトから NLP4L のコマンドやプログラムが実行できます。NLP4LInterpreter を呼び出すには、%nlp4l ディレクティブを使います。以下は status コマンドまで入れたところで、Zeppelin 画面のプレイボタン（三角形のボタン）をクリックして実行した様子です。
+
+```shell
+%nlp4l
+open("/tmp/index-ldcc")
+status
+Index /tmp/index-ldcc was opened.
+res0: org.nlp4l.core.RawReader = IndexReader(path='/tmp/index-ldcc',closed=false)
+
+========================================
+Index Path       : /tmp/index-ldcc
+Closed           : false
+Num of Fields    : 5
+Num of Docs      : 7367
+Num of Max Docs  : 7367
+Has Deletions    : false
+========================================
+        
+Fields Info:
+========================================
+  # | Name  | Num Terms 
+----------------------------------------
+  0 | body  |      64543
+  1 | url   |       7367
+  2 | date  |       6753
+  3 | title |      14205
+  4 | cat   |          9
+========================================
+```
 
 # NLP4Lプログラムを開発して実行する{#develop}
 
