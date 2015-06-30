@@ -21,6 +21,12 @@
 * [Working with Spark](#useWithSpark)
 * [Using Lucene](#useLucene)
 * [Using NLP4L from Apache Zeppelin](#withZeppelin)
+    * [Installing Apache Zeppelin](#withZeppelin_install)
+    * [Deploying libraries of NLP4L to Apache Zeppelin](#withZeppelin_deploy)
+    * [Starting Apache Zeppelin](#withZeppelin_start)
+    * [Creating a note and saving NLP4LInterpreter](#withZeppelin_save)
+    * [Executing commands or programs of NLP4L](#withZeppelin_exec)
+    * [Visualising word counts](#withZeppelin_visualize)
 * [Developing and Executing NLP4L Programs](#develop)
 * [Attribution](#tm)
 
@@ -615,5 +621,146 @@ res26: Map[String,Long] = Map(war -> 16, peace -> 1)
 # Working with Spark{#useWithSpark}
 # Using Lucene{#useLucene}
 # Using NLP4L from Apache Zeppelin{#withZeppelin}
+
+We will discuss how to use NLP4L from Apache Zeppelin.
+
+## Installing Apache Zeppelin{#withZeppelin_install}
+
+In accordance with the following procedure, install Apache Zeppelin. You can install it anywhere you want, we install Zeppelin in ~/work-zeppelin directory.
+
+```shell
+$ mkdir ~/work-zeppelin
+$ cd ~/work-zeppelin
+$ git clone https://github.com/apache/incubator-zeppelin.git
+$ cd incubator-zeppelin
+$ mvn install -DskipTests
+$ cd conf
+$ cp zeppelin-site.xml.template zeppelin-site.xml
+```
+
+Using an editor, open the file zeppelin-site.xml which has been copied from zeppelin-site.xml.template, add org.nlp4l.zeppelin.NLP4LInterpreter at the end of the value of the property zeppelin.interpreters as follows.
+
+```xml
+<property>
+  <name>zeppelin.interpreters</name>
+  <value>org.apache.zeppelin.spark.SparkInterpreter,org.apache.zeppelin.spark.PySparkInterpreter,org.apache.zeppelin.spark.SparkSqlInterpreter,org.apache.zeppelin.spark.DepInterpreter,org.apache.zeppelin.markdown.Markdown,org.apache.zeppelin.angular.AngularInterpreter,org.apache.zeppelin.shell.ShellInterpreter,org.apache.zeppelin.hive.HiveInterpreter,org.apache.zeppelin.tajo.TajoInterpreter,org.apache.zeppelin.flink.FlinkInterpreter,org.apache.zeppelin.lens.LensInterpreter,org.apache.zeppelin.ignite.IgniteInterpreter,org.apache.zeppelin.ignite.IgniteSqlInterpreter,org.nlp4l.zeppelin.NLP4LInterpreter</value>
+  <description>Comma separated interpreter configurations. First interpreter become a default</description>
+</property>
+```
+
+In addition, add and set false to the property zeppelin.notebook.autoInterpreterBinding in the same file.
+
+```xml
+<property>
+  <name>zeppelin.notebook.autoInterpreterBinding</name>
+  <value>false</value>
+  <description></description>
+</property>
+```
+
+## Deploying libraries of NLP4L to Apache Zeppelin{#withZeppelin_deploy}
+
+Copy all JAR files but except zeppelin-interpreter-XXX.jar in the directory $NLP4L_HOME/target/pack/lib/ to the directory ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l/ .
+
+```shell
+$ mkdir ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l
+$ cd $NLP4L_HOME
+$ cp target/pack/lib/*.jar ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l
+$ rm ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l/zeppelin-interpreter-*.jar
+```
+
+## Starting Apache Zeppelin{#withZeppelin_start}
+
+Start Apache Zeppelin as follows.
+
+```shell
+$ cd ~/work-zeppelin/incubator-zeppelin
+$ bin/zeppelin-daemon.sh start
+```
+
+It can be stopped as follows.
+
+```shell
+$ bin/zeppelin-daemon.sh stop
+```
+
+However, let's go to the next step without stopping it now.
+
+## Creating a note and saving NLP4LInterpreter{#withZeppelin_save}
+
+You can access to [http://localhost:8080/](http://localhost:8080/) from web browser. Click "Create new note" in Notebook menu to create a new note. You'll see the following on your screen, click Save button to save NLP4LInterpreter.
+
+![Initial screen of Zeppelin Note](zeppelin-note-nlp4l-save.png)
+
+## Executing commands or programs of NLP4L{#withZeppelin_exec}
+
+After saving the environment, you can execute commands and programs of NLP4L in a prompt of the Apache Zeppelin Notebook. To use NLP4LInterpreter, use %nlp4l directive. Click a play button (triangle button) to execute statements you entered.
+
+```shell
+%nlp4l
+open("/tmp/index-ldcc")
+status
+Index /tmp/index-ldcc was opened.
+res0: org.nlp4l.core.RawReader = IndexReader(path='/tmp/index-ldcc',closed=false)
+
+========================================
+Index Path       : /tmp/index-ldcc
+Closed           : false
+Num of Fields    : 5
+Num of Docs      : 7367
+Num of Max Docs  : 7367
+Has Deletions    : false
+========================================
+        
+Fields Info:
+========================================
+  # | Name  | Num Terms 
+----------------------------------------
+  0 | body  |      64543
+  1 | url   |       7367
+  2 | date  |       6753
+  3 | title |      14205
+  4 | cat   |          9
+========================================
+```
+
+## Visualising word counts{#withZeppelin_visualize}
+
+Using Zeppelin, let's visualize the result of word counts which we've got in [Counting the Number of Words](#useNLP_wordcounts). It's really simple because what you should do is to apply table() function.
+
+The following program will show you any 10 words which start with letter "g" and their counts in the articles of reuters corpus.
+
+```scala
+%nlp4l
+
+import org.nlp4l.core._
+import org.nlp4l.core.analysis._
+import org.nlp4l.stats.WordCounts
+
+val index = "/tmp/index-reuters"
+
+val reader = RawReader(index)
+
+val allDS = reader.universalset()
+val analyzer = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
+val allMap = WordCounts.count(reader, "body", Set.empty, allDS, -1, analyzer)
+table(allMap.filter(_._1.startsWith("g")).take(10), "word", "count")
+```
+
+The bar chart looks like below (To see the bar chart, click the bar chart icon).
+
+![words and their counts start with letter "g"](zeppelin-wordcounts.png)
+
+You can use either topTermsByDocFreq() or topTermsByTotalTermFreq() of RawReader class to visualize top terms in the specific field. Note that toArray should be added at the end of these functions as the type of the first argument of the function table() Array.
+
+```scala
+%nlp4l
+table(reader.topTermsByTotalTermFreq("body",5).toArray,"word","docFreq","termFreq")
+```
+
+The result you will get looks like the following (The appearance can be modified via SETTINGS menu.
+
+![top terms](zeppelin-topterms.png)
+
 # Developing and Executing NLP4L Programs{#develop}
 # Attribution{#tm}
