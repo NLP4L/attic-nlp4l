@@ -20,6 +20,7 @@
 * [Working with Mahout](#useWithMahout)
 * [Working with Spark](#useWithSpark)
 * [Using Lucene](#useLucene)
+* [Using NLP4L from Apache Zeppelin](#withZeppelin)
 * [Developing and Executing NLP4L Programs](#develop)
 * [Attribution](#tm)
 
@@ -607,52 +608,12 @@ nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), jpDS.toSet &~ usDS.
 res26: Map[String,Long] = Map(war -> 16, peace -> 1)
 ```
 
-### Visualizing Word Counts (experimental) 
-
-We have been counting words from several standpoints. Now, let's visualize word count data. Applications, such as Excel, enable visualization but we will use NLP4L here as it provides easy chart display tool on a trial basis. The chart display tool right now is experimental. Its functions and usage may change in the future to improve the feature.
-
-Rerun the result of above word count and assign it in a variable. 
-
-```scala
-val usMap = WordCounts.count(reader, "body", Set("war", "peace"), usDS, -1, analyzer)
-val jpMap = WordCounts.count(reader, "body", Set("war", "peace"), jpDS, -1, analyzer)
-```
-
-Next, import a package for displaying charts (11) and obtain a presentation for chart display (12). Here, a data model obtained above is being passed to a presentation. Labels for explanatory notes are required as well when you need to pass a data model.
-
-```scala
-// (11)
-import org.nlp4l.gui._
-
-// (12)
-val presentation = BarChart(List(("US",usMap), ("Japan",jpMap)))
-
-// (13)
-val server = new SimpleHttpServer(presentation)
-server.service
-```
-
-As a Web server provides a chart display, you need to create and start a simple Web server using a presentation as an argument as specified in (13). The following message is displayed on the console when it boots up.
-
-```shell
-nlp4l> server.service
-WARNING: This function is experimental and might change in incompatible ways in the future release.
-
-To see the chart, access this Uniform Resource Locators -> http://localhost:6574/chart
-To shutdown the server, access this Uniform Resource Locators -> http://localhost:6574/shutdown
-```
-
-Accessing the displayed [URL](http://localhost:6574/chart) from a modern Web browser will display a bar chart. Access [http://localhost:6574/shutdown](http://localhost:6574/shutdown) to shut down the simple Web server.
-
-![Word frequency by category](barchart_wc.png)
-
-The codes for displaying the above chart is put together into one script as examples/chart_experimental.scala.
-
 # Using Index Browser{#indexBrowser}
 # To Solr Users{#dearSolrUsers}
 # To Elasticsearch Users{#dearESUsers}
 # Working with Mahout{#useWithMahout}
 # Working with Spark{#useWithSpark}
 # Using Lucene{#useLucene}
+# Using NLP4L from Apache Zeppelin{#withZeppelin}
 # Developing and Executing NLP4L Programs{#develop}
 # Attribution{#tm}

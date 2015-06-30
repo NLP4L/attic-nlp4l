@@ -104,6 +104,8 @@ public class NLP4LInterpreter extends Interpreter {
     intp.interpret("import org.nlp4l.repl.NLP4L._");
     intp.interpret("import org.nlp4l.repl.Corpora");
     intp.interpret("import org.nlp4l.repl.Corpora._");
+    intp.interpret("import org.nlp4l.repl.ZeppelinVisualizer");
+    intp.interpret("import org.nlp4l.repl.ZeppelinVisualizer._");
   }
 
   private List<File> currentClassPath() {
@@ -143,10 +145,6 @@ public class NLP4LInterpreter extends Interpreter {
 
   @Override
   public InterpreterResult interpret(String line, InterpreterContext context) {
-    //logger.info("*** interpret() has been called");
-    //String msg = "%table sex\ttall\n" + "male\t190\n" + "female\t165";
-    //String msg = String.format("こんにちは、%s", s);
-    //return new InterpreterResult(InterpreterResult.Code.SUCCESS, msg);
     if (line == null || line.trim().length() == 0) {
       return new InterpreterResult(InterpreterResult.Code.SUCCESS);
     }
@@ -196,7 +194,10 @@ public class NLP4LInterpreter extends Interpreter {
     if (r == InterpreterResult.Code.INCOMPLETE) {
       return new InterpreterResult(r, "Incomplete expression");
     } else {
-      return new InterpreterResult(r, out.toString());
+      // hack for Zeppelin table
+      String outstr = out.toString();
+      int start = outstr.indexOf("%table ");
+      return new InterpreterResult(r, start >= 0 ? outstr.substring(start) : outstr);
     }
   }
 

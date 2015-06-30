@@ -41,6 +41,12 @@
     * [独自インデックスの作成](#useLucene_index)
     * [FST を単語辞書として使う](#useLucene_fst)
 * [Apache Zeppelin から NLP4L を使う](#withZeppelin)
+    * [Apache Zeppelin のインストール](#withZeppelin_install)
+    * [NLP4L ライブラリの Apache Zeppelin へのデプロイ](#withZeppelin_deploy)
+    * [Apache Zeppelin の起動](#withZeppelin_start)
+    * [ノートの作成と NLP4LInterpreter の保存](#withZeppelin_save)
+    * [NLP4L のコマンドやプログラムの実行](#withZeppelin_exec)
+    * [単語カウントの視覚化](#withZeppelin_visualize)
 * [NLP4Lプログラムを開発して実行する](#develop)
     * [REPLから実行する](#develop_repl)
     * [コンパイルして実行する](#develop_exec)
@@ -640,47 +646,6 @@ nlp4l> // (12) placesにjapanの値を持つがusaの値を持たない記事を
 nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), jpDS.toSet &~ usDS.toSet, -1, analyzer)
 res26: Map[String,Long] = Map(war -> 16, peace -> 1)
 ```
-
-### 単語カウントの視覚化（experimental）
-
-これまでいくつかの視点で単語の数を数えてきました。では最後に、単語カウントデータを視覚化してみましょう。Excelなどを使えば視覚化できますが、NLP4Lでは試験的に簡単なチャート表示ツールを提供していますのでここではそれを使います。チャート表示ツールは現在 experimental です。改善のため将来は機能や使い方が変わる可能性があります。
-
-前述の単語カウント結果をあらためて実行し、変数に代入します。
-
-```scala
-val usMap = WordCounts.count(reader, "body", Set("war", "peace"), usDS, -1, analyzer)
-val jpMap = WordCounts.count(reader, "body", Set("war", "peace"), jpDS, -1, analyzer)
-```
-
-次に、チャート表示のためのパッケージをインポートし(11)、チャート表示のプレゼンテーションを取得します(12)。その際、上で取得したデータモデルをプレゼンテーションに渡しています。プレゼンテーションにデータモデルを渡す際は、凡例表示のためのラベルも必要です。
-
-```scala
-// (11)
-import org.nlp4l.gui._
-
-// (12)
-val presentation = BarChart(List(("US",usMap), ("Japan",jpMap)))
-
-// (13)
-val server = new SimpleHttpServer(presentation)
-server.service
-```
-
-チャート表示はWebサーバから配信されますので、(13)のようにプレゼンテーションを引数にして簡易Webサーバを作成して起動します。起動すると、次のメッセージがコンソールに表示されます。
-
-```shell
-nlp4l> server.service
-WARNING: This function is experimental and might change in incompatible ways in the future release.
-
-To see the chart, access this URL -> http://localhost:6574/chart
-To shutdown the server, access this URL -> http://localhost:6574/shutdown
-```
-
-表示されている[URL](http://localhost:6574/chart)にモダンなWebブラウザからアクセスすると、棒グラフが表示されます。簡易Webサーバを停止するには、[http://localhost:6574/shutdown](http://localhost:6574/shutdown)にアクセスします。
-
-![カテゴリごとの単語出現頻度](barchart_wc.png)
-
-以上のチャート表示のコードは examples/chart_experimental.scala として1つのスクリプトにまとめてあります。
 
 ## 隠れマルコフモデル{#useNLP_hmm}
 
@@ -1847,7 +1812,7 @@ SimpleFSTにはleftMostSubstring()以外にも、メモリ上に作成した単�
 
 Apache Zeppelin から NLP4L を使う方法について説明します。
 
-## Apache Zeppelin のインストール
+## Apache Zeppelin のインストール{#withZeppelin_install}
 
 以下の手順にしたがい、Apache Zeppelin をインストールします。インストール場所はどこでもかまいませんが、ここでは ~/work-zeppelin ディレクトリにインストールすることとします。
 
@@ -1881,7 +1846,7 @@ $ cp zeppelin-site.xml.template zeppelin-site.xml
 </property>
 ```
 
-## NLP4L ライブラリの Apache Zeppelin へのデプロイ
+## NLP4L ライブラリの Apache Zeppelin へのデプロイ{#withZeppelin_deploy}
 
 $NLP4L_HOME/target/pack/lib/ 以下の zeppelin-interpreter-XXX.jar ファイルを除く JAR ファイルを、~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l/ 以下にコピーします。
 
@@ -1892,7 +1857,7 @@ $ cp target/pack/lib/*.jar ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l
 $ rm ~/work-zeppelin/incubator-zeppelin/interpreter/nlp4l/zeppelin-interpreter-*.jar
 ```
 
-## Apache Zeppelin の起動
+## Apache Zeppelin の起動{#withZeppelin_start}
 
 次のようにして Apache Zeppelin を起動します。
 
@@ -1909,13 +1874,13 @@ $ bin/zeppelin-daemon.sh stop
 
 ここでは停止せずに次に進みます。
 
-## ノートの作成と NLP4LInterpreter の保存
+## ノートの作成と NLP4LInterpreter の保存{#withZeppelin_save}
 
 Web ブラウザから [http://localhost:8080/](http://localhost:8080/) にアクセスします。そして、Notebook メニューの Create new note をクリックして新しいノートを作成します。すると次のような画面が現れますので、Save ボタンをクリックして NLP4LInterpreter を保存します。
 
 ![Zeppelin Note 初期画面](zeppelin-note-nlp4l-save.png)
 
-## NLP4L のコマンドやプログラムの実行
+## NLP4L のコマンドやプログラムの実行{#withZeppelin_exec}
 
 以降は、Apache Zeppelin のノートのプロンプトから NLP4L のコマンドやプログラムが実行できます。NLP4LInterpreter を呼び出すには、%nlp4l ディレクティブを使います。以下は status コマンドまで入れたところで、Zeppelin 画面のプレイボタン（三角形のボタン）をクリックして実行した様子です。
 
@@ -1946,6 +1911,44 @@ Fields Info:
   4 | cat   |          9
 ========================================
 ```
+
+## 単語カウントの視覚化{#withZeppelin_visualize}
+
+Zeppelin は数値テーブルをチャート表示してくれる視覚化機能がありますので、[単語の数を数える](#useNLP_wordcounts)で実行した結果をチャート表示してみましょう。方法は簡単で、表示したいところで table() という関数を適用するだけです。
+
+以下はロイターコーパスの記事（Luceneのbodyフィールド）において、"g"で始まる単語から10個を選んで捧持するプログラムです。
+
+```scala
+%nlp4l
+
+import org.nlp4l.core._
+import org.nlp4l.core.analysis._
+import org.nlp4l.stats.WordCounts
+
+val index = "/tmp/index-reuters"
+
+val reader = RawReader(index)
+
+val allDS = reader.universalset()
+val analyzer = Analyzer(new org.apache.lucene.analysis.standard.StandardAnalyzer(null.asInstanceOf[org.apache.lucene.analysis.util.CharArraySet]))
+val allMap = WordCounts.count(reader, "body", Set.empty, allDS, -1, analyzer)
+table(allMap.filter(_._1.startsWith("g")).take(10), "word", "count")
+```
+
+棒グラフは次のようになります（Zeppelinの棒グラフアイコンをクリックして棒グラフ表示に切り替えます）。
+
+!["g"で始まる単語の出現頻度](zeppelin-wordcounts.png)
+
+また、RawReader の topTermsByDocFreq() や topTermsByTotalTermFreq() を使って出現頻度の大きい単語の出現数を視覚化できます。なお、table() 関数の第1引数はArrayでなければならないので、これらの関数を使うときはうしろに toArray をつける必要があります。
+
+```scala
+%nlp4l
+table(reader.topTermsByTotalTermFreq("body",5).toArray,"word","docFreq","termFreq")
+```
+
+結果は次のようになります（SETTINGS の設定を変更して表示を変えられます）。
+
+![出現頻度の大きい単語](zeppelin-topterms.png)
 
 # NLP4Lプログラムを開発して実行する{#develop}
 
