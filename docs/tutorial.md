@@ -27,6 +27,7 @@
     * [Creating a note and saving NLP4LInterpreter](#withZeppelin_save)
     * [Executing commands or programs of NLP4L](#withZeppelin_exec)
     * [Visualising word counts](#withZeppelin_visualize)
+    * [Visualizing Zipf's Law](#withZeppelin_zipfslaw)
 * [Developing and Executing NLP4L Programs](#develop)
 * [Attribution](#tm)
 
@@ -761,6 +762,27 @@ table(reader.topTermsByTotalTermFreq("body",5).toArray,"word","docFreq","termFre
 The result you will get looks like the following (The appearance can be modified via SETTINGS menu.
 
 ![top terms](zeppelin-topterms.png)
+
+## Visualizing Zipf's Law{#withZeppelin_zipfslaw}
+
+Let's visualize Zipf's Law using topTermsByTotalTermFreq() . Zipf's Law says that:
+
+> If we count up how often each word (type) of a language occurs in a large corpus, and then list the words in order of their frequency of occurrence, we can explore the relationship between the frequency of a word f and its position in the list, known as its rank r. There is a constant k such that f * r = k
+
+The code snippet and the its chart are as follows.
+
+```scala
+%nlp4l
+val index = "/tmp/index-reuters"
+val reader = RawReader(index)
+
+val sum_words = reader.sumTotalTermFreq("body")
+val tttf = reader.topTermsByTotalTermFreq("body")
+val top = tttf(0)._3.toFloat
+table(tttf.map(a => (a._1,top/a._3.toFloat)).toArray,"word","N")
+```
+
+![Zipf's Law on Reuters Collection](zeppelin_zipfslaw.png)
 
 # Developing and Executing NLP4L Programs{#develop}
 # Attribution{#tm}

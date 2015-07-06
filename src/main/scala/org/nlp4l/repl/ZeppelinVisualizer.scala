@@ -24,11 +24,15 @@ object ZeppelinVisualizer {
     )
     args match {
       case a: Map[_, _] => {
-        val records = a.map(b => "%s\t%d".format(b._1, b._2)).mkString("\n")
+        val records = a.map(b => "%s\t%f".format(b._1, b._2.toString.toFloat)).mkString("\n")
         header + records
       }
       case a: Array[(_, _, _)] => {
-        val records = a.map(b => "%s\t%d\t%d".format(b._1, b._2, b._3)).mkString("\n")
+        val records = a.map(b => "%s\t%f\t%f".format(b._1, b._2.toString.toFloat, b._3.toString.toFloat)).mkString("\n")
+        header + records
+      }
+      case a: Array[(_, _)] => {
+        val records = a.map(b => "%s\t%f".format(b._1, b._2.toString.toFloat)).mkString("\n")
         header + records
       }
       case _ => { "not supported type %s".format(args) }

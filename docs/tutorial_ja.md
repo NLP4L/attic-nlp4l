@@ -17,7 +17,6 @@
     * [隠れマルコフモデル](#useNLP_hmm)
     * [連語分析モデル](#useNLP_collocanalysis)
     * [固有表現抽出](#useNLP_nee)
-    * [ジップの法則を確認する](#useNLP_zipfslaw)
     * [仮説検定](#useNLP_hypothesistesting)
     * [相関分析](#useNLP_correlationanalysis)
 * [インデックスブラウザを使う](#indexBrowser)
@@ -47,6 +46,7 @@
     * [ノートの作成と NLP4LInterpreter の保存](#withZeppelin_save)
     * [NLP4L のコマンドやプログラムの実行](#withZeppelin_exec)
     * [単語カウントの視覚化](#withZeppelin_visualize)
+    * [ジップの法則を確認する](#withZeppelin_zipfslaw)
 * [NLP4Lプログラムを開発して実行する](#develop)
     * [REPLから実行する](#develop_repl)
     * [コンパイルして実行する](#develop_exec)
@@ -967,8 +967,6 @@ Mitch Lively (DF=1, Total TF=1)
 ```
 
 結果は上のようになり、確かに人名が抽出されています。
-
-## ジップの法則を確認する{#useNLP_zipfslaw}
 
 ## 仮説検定{#useNLP_hypothesistesting}
 
@@ -1949,6 +1947,23 @@ table(reader.topTermsByTotalTermFreq("body",5).toArray,"word","docFreq","termFre
 結果は次のようになります（SETTINGS の設定を変更して表示を変えられます）。
 
 ![出現頻度の大きい単語](zeppelin-topterms.png)
+
+## ジップの法則を確認する{#withZeppelin_zipfslaw}
+
+topTermsByTotalTermFreq() を使ってジップの法則を確認してみましょう。ジップの法則は、出現頻度が第N位の単語の出現確率は第1位の出現確率のk/Nになるというものです（kは定数）。プログラムは次のようになり、Zeppelinで視覚化すると、おおよそ成り立っていることがうかがえます。
+
+```scala
+%nlp4l
+val index = "/tmp/index-reuters"
+val reader = RawReader(index)
+
+val sum_words = reader.sumTotalTermFreq("body")
+val tttf = reader.topTermsByTotalTermFreq("body")
+val top = tttf(0)._3.toFloat
+table(tttf.map(a => (a._1,top/a._3.toFloat)).toArray,"word","N")
+```
+
+![ロイターコレクションにおけるジップの法則](zeppelin_zipfslaw.png)
 
 # NLP4Lプログラムを開発して実行する{#develop}
 
