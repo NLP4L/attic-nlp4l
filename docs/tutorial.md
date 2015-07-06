@@ -15,6 +15,10 @@
 * [Using as NLP Tool](#useNLP)
     * [Counting the Number of Words](#useNLP_wordcounts)
 * [Using Index Browser](#indexBrowser)
+    * [Browsing fields and words](#indexBrowser_fields)
+    * [Browsing Documents](#indexBrowser_docs)
+    * [Position / Offsets](#indexBrowser_posoff)
+    * [Extracting the top N words with higher frequency](#indexBrowser_topn)
 * [To Solr Users](#dearSolrUsers)
 * [To Elasticsearch Users](#dearESUsers)
 * [Working with Mahout](#useWithMahout)
@@ -616,6 +620,231 @@ res26: Map[String,Long] = Map(war -> 16, peace -> 1)
 ```
 
 # Using Index Browser{#indexBrowser}
+
+The interactive shell of NLP4L includes the CUI Lucene index browser. Using this index browser enables you to quickly browse/debug the information on fields and words in the Lucene index without writing a Java program.
+
+Now, let's browse inside of Livedoor news corpus that we created in the preceding section.
+
+Note that you can list the index browser commands (methods) by typing ":?" at the nlp4l prompt.
+
+```shell
+nlp4l> :?
+```
+
+Also, adding a command after ":?" displays more detailed help contents.
+
+```shell
+nlp4l> :? open
+-- method signature --
+def open(idxDir: String): RawReader
+
+-- description --
+Open Lucene index in the directory. If an index already opened, that is closed before the new index will be opened.
+
+-- arguments --
+idxDir    Lucene index directory
+
+-- return value --
+Return : index reader
+
+-- usage --
+nlp4l> open("/tmp/myindex")
+```
+
+## Browsing fields and words {#indexBrowser_fields}
+
+Pass an index directory path to the open() function to open the index.
+
+```shell
+nlp4l> open("/tmp/index-ldcc")
+Index /tmp/index-ldcc was opened.
+res4: org.nlp4l.core.RawReader = IndexReader(path='/tmp/index-ldcc',closed=false)
+```
+
+The close command closes the currently open index.
+
+```shell
+nlp4l> close
+Index /tmp/index-ldcc was closed.
+```
+
+Typing status will display an overview of the currently open index including the number of documents and field information as well as unique word count of each field.
+
+```shell
+nlp4l> open("/tmp/index-ldcc")
+Index /tmp/index-ldcc was opened.
+res4: org.nlp4l.core.RawReader = IndexReader(path='/tmp/index-ldcc',closed=false)
+
+nlp4l> status
+
+========================================
+Index Path    : /tmp/index-ldcc
+Closed      : false
+Num of Fields  : 5
+Num of Docs   : 7367
+Num of Max Docs : 7367
+Has Deletions  : false
+========================================
+    
+Fields Info:
+========================================
+ # | Name | Num Terms 
+----------------------------------------
+ 0 | body |   64543
+ 1 | url  |    7367
+ 2 | date |    6753
+ 3 | title |   14205
+ 4 | cat  |     9
+========================================
+```
+
+In addition, passing a field name to the browseTerms() function enables you to use nextTerms and prevTerms functions to browse word information in the field.
+
+You can pass page numbers you want to skip to nextTerms() and prevTerms(). Also, nextTerms(1) and prevTerms(1) define shortcut functions pt and nt respectively.
+
+Now, let's browse words in the title field. The words are in the dictionary order. The beginning of each line is an indexed word, DF is the number of documents that includes the word (document frequency), and Total TF (term frequency) is the total occurrences of that word.
+
+```shell
+nlp4l> browseTerms("title")
+Browse terms for field 'title', page size 20
+Type "nextTerms(skip)" or "nt" to browse next terms.
+Type "prevTerms(skip)" or "pt" to browse prev terms.
+Type "topTerms(n)" to find top n frequent terms.
+
+// nt to go to the next page.
+nlp4l> nt
+Indexed terms for field 'title'
+0 (DF=152, Total TF=176)
+000 (DF=13, Total TF=13)
+003 (DF=3, Total TF=3)
+0048 (DF=1, Total TF=1)
+007 (DF=8, Total TF=8)
+...
+
+// Move a page a few times or use nextTerms(n) to skip a line or a few will show you words that start with an alphabet.
+nlp4l> nt
+Indexed terms for field 'title'
+cocorobo (DF=1, Total TF=1)
+code (DF=1, Total TF=1)
+coin (DF=1, Total TF=1)
+collection (DF=3, Total TF=3)
+...
+
+// pt to go back to the previous page.
+nlp4l> pt
+Indexed terms for field 'title'
+chat (DF=1, Total TF=1)
+check (DF=2, Total TF=2)
+chochokure (DF=1, Total TF=1)
+christian (DF=1, Total TF=1)
+...
+```
+
+By default, the number of words displayed per page is 20. You can also specify a page size in the second argument like browseTerms("title",100).
+
+In addition, passing a field name and a word to the browseTermDocs() function enables you to use the nextDocs and the prevDocs functions to browse information of documents that have the specified word in the specified field.
+
+You can pass the number of pages you want to skip to nextDocs() and prevDocs(). Also, nextDocs(1) and prevDocs(1) define shortcut functions nd and pd respectively.
+
+Let's browse documents that have a word "iphone" in the title field. The documents are sorted in the order of document ID that Lucene internally uses. id is a document ID whereas freq is a frequency of word (in this case, "iphone") found in the documents.
+
+If you save the position and the offset (information that specifies where the word is located in documents. Will be discussed later) when you index documents, these information will be displayed as well.
+
+```shell
+nlp4l> browseTermDocs("title", "iphone")
+Browse docs for term 'iphone' in field 'title', page size 20
+Type "nextDocs(skip)" or "nd" to browse next terms.
+Type "prevDocs(skip)" or "pd" to browse prev terms.
+
+// nd to go to the next page.
+nlp4l> nd
+Documents for term 'iphone' in field 'title'
+Doc(id=49, freq=1, positions=List(pos=5))
+Doc(id=270, freq=1, positions=List(pos=0))
+Doc(id=648, freq=1, positions=List(pos=0))
+Doc(id=653, freq=1, positions=List(pos=2))
+Doc(id=778, freq=1, positions=List(pos=2))
+Doc(id=780, freq=2, positions=List(pos=0, pos=15))
+...
+
+// pd to go back to the previous page.
+nlp4l> pd
+Documents for term 'iphone' in field 'title'
+Doc(id=1173, freq=1, positions=List(pos=1))
+Doc(id=1176, freq=1, positions=List(pos=0))
+Doc(id=1180, freq=1, positions=List(pos=2))
+Doc(id=1195, freq=1, positions=List(pos=5))
+Doc(id=1200, freq=1, positions=List(pos=11))
+Doc(id=1203, freq=1, positions=List(pos=5))
+...
+```
+
+By default, the number of documents displayed per page is 20. You can also specify a page size in the third argument like browseTermDocs("title","iphone",100)
+
+## Browsing Documents {#indexBrowser_docs}
+
+Pass a document ID to the showDoc() function to display field values if you need to read the documents in detail.
+
+Let's display the contents of document that corresponds to the document ID (id=1195 in this case) obtained by the browseTermDocs / nd / pd function in the last chapter. You can see that a word "iPhone" appear in the title field.
+
+```shell
+nlp4l> showDoc(1195)
+Doc #1195
+(Field) cat: [it-life-hack]
+(Field) url: [http://news.livedoor.com/article/detail/6608703/]
+(Field) title: [GoogleドライブのファイルをiPhoneからダイレクトに編集する【知っ得！虎の巻】]
+...
+```
+
+
+## Position / Offsets{#indexBrowser_posoff}
+
+Position / Offsets is an additional information you can save in the index that indicates the location of occurrence for each word in a document.
+
+For example, let's look at the following document that has the sample document ID=199 so that you will know:
+
+* There are 2 occurrence of "北海道" in the body field.
+* The first occurrence is at the 126th word (position=126) and the specific character position is 247-250.
+* The second occurrence is at the 129th word (position=129) and the specific character position is 255-258.
+
+```shell
+nlp4l> browseTermDocs("body","北海道")
+Browse docs for term body in field 北海道, page size 20
+Type "nextDocs(skip)" or "nd" to browse next terms.
+Type "prevDocs(skip)" or "pd" to browse prev terms.
+
+nlp4l> nd
+Documents for term '北海道' in field 'body'
+Doc(id=148, freq=1, positions=List((pos=491,offset={997-1000})))
+Doc(id=199, freq=2, positions=List((pos=126,offset={247-250}), (pos=129,offset={255-258})))
+...
+```
+
+## Extracting the top N words with higher frequency {#indexBrowser_topn}
+
+Once you specify a field with the browseTerms(), you can then use the topTerms() function to obtain the top N words with higher frequency (DF) and its number of occurrences in the field.
+
+```shell
+nlp4l> browseTerms("title")
+Browse terms for field title, page size 20
+Type "nextTerms(skip)" or "nt" to browse next terms.
+Type "prevTerms(skip)" or "pt" to browse prev terms.
+Type "topTerms(n)" to find top n frequent terms.
+
+nlp4l> topTerms(10)
+Top 10 frequent terms for field title
+ 1: 話題 (DF=587, Total TF=607)
+ 2: sports (DF=493, Total TF=493)
+ 3: watch (DF=493, Total TF=493)
+ 4: 映画 (DF=373, Total TF=402)
+ 5: 女 (DF=319, Total TF=356)
+ 6: 1 (DF=318, Total TF=342)
+ 7: android (DF=307, Total TF=322)
+ 8: 女子 (DF=301, Total TF=318)
+ 9: 3 (DF=299, Total TF=323)
+ 10: アプリ (DF=291, Total TF=337)
+```
+
 # To Solr Users{#dearSolrUsers}
 # To Elasticsearch Users{#dearESUsers}
 # Working with Mahout{#useWithMahout}
