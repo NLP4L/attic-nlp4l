@@ -16,14 +16,14 @@
 
 package org.nlp4l.core
 
-import org.apache.lucene.index.{TermsEnum, DocsAndPositionsEnum, DocsEnum, Terms => LuceneTerms}
+import org.apache.lucene.index.{Terms => LuceneTerms, PostingsEnum, TermsEnum}
 import org.apache.lucene.search.DocIdSetIterator.NO_MORE_DOCS
 import org.apache.lucene.util.{BytesRef, Bits}
 
 
 /**
  * Class representing sequence of document ids (and optionally, positions/offsets information) associated to given field and a term.
- * This is a sequence of [[Doc]] instances. This holds Lucene TermsEnum and DocsEnum (or DocsAndPositionsEnum) for the term internally.
+ * This is a sequence of [[Doc]] instances. This holds Lucene PostingsEnum for the term internally.
  *
  * @constructor Create a new TermDocs instance with given term.
  *
@@ -43,27 +43,26 @@ class TermDocs(val text: String, terms: LuceneTerms, liveDocs: Bits, field: Fiel
     (0, 0L)
 
   def docStream: Stream[Doc] = {
-    def newDoc(de: DocsEnum) = {
-      val dpe = if (de.isInstanceOf[DocsAndPositionsEnum]) de.asInstanceOf[DocsAndPositionsEnum] else null
+    def newDoc(pe: PostingsEnum) = {
       // TODO: better ways to get the term vector for this doc?
       val tvTerm = {
         if (field == null || field.reader == null || field.reader.ir == null) null
         else
-          field.reader.ir.getTermVector(de.docID(), field.name)
+          field.reader.ir.getTermVector(pe.docID(), field.name)
       }
-      new Doc(de.docID(), de.freq(), text, dpe, tvTerm)
+      new Doc(pe.docID(), pe.freq(), text, pe, tvTerm)
     }
 
-    def from(first: Doc, de: DocsEnum): Stream[Doc] =
-      if (de.nextDoc() == NO_MORE_DOCS) first #:: Stream.empty
-      else first #:: from(newDoc(de), de)
+    def from(first: Doc, pe: PostingsEnum): Stream[Doc] =
+      if (pe.nextDoc() == NO_MORE_DOCS) first #:: Stream.empty
+      else first #:: from(newDoc(pe), pe)
 
-    lazy val de =
-      if (found) if (te.docsAndPositions(liveDocs, null) != null) te.docsAndPositions(liveDocs, null) else te.docs(liveDocs, null)
+    lazy val pe =
+      if (found) te.postings(liveDocs, null)
       else null
 
-    if (de == null || de.nextDoc() == NO_MORE_DOCS) Stream.empty
-    else from(newDoc(de), de)
+    if (pe == null || pe.nextDoc() == NO_MORE_DOCS) Stream.empty
+    else from(newDoc(pe), pe)
   }
 
   /**
@@ -90,10 +89,10 @@ class TermDocs(val text: String, terms: LuceneTerms, liveDocs: Bits, field: Fiel
  * @param docId the document id
  * @param freq the term frequency in this doc
  * @param text the term text
- * @param dpe the Lucene's DocsAndPositionsEnum instance
+ * @param pe the Lucene's PostingsEnum instance
  * @param tvTerm the Lucene's Terms instance representing the term vector for this doc
  */
-class Doc(val docId: Int, val freq: Int, text: String, dpe: DocsAndPositionsEnum = null, tvTerm: LuceneTerms = null) {
+class Doc(val docId: Int, val freq: Int, text: String, pe: PostingsEnum = null, tvTerm: LuceneTerms = null) {
 
   // position & offsets info from term vector for this doc
   lazy val tvPosList: Iterable[PosAndOffset] =
@@ -102,13 +101,13 @@ class Doc(val docId: Int, val freq: Int, text: String, dpe: DocsAndPositionsEnum
       val builder = Seq.newBuilder[PosAndOffset]
       val te = tvTerm.iterator()
       if (te.seekExact(new BytesRef(text))) {
-        val dpe = te.docsAndPositions(null, null)
-        if (dpe != null) {
-          assert(dpe.nextDoc() != NO_MORE_DOCS)  // term vector has exactly one document
-          for (i <- 0 to dpe.freq() - 1) {
-            val pos = dpe.nextPosition()
-            val payload: String = if (dpe.getPayload == null) null else dpe.getPayload.utf8ToString()
-            builder += PosAndOffset(pos, dpe.startOffset(), dpe.endOffset(), payload)
+        val pe = te.postings(null, null)
+        if (pe != null) {
+          assert(pe.nextDoc() != NO_MORE_DOCS)  // term vector has exactly one document
+          for (i <- 0 to pe.freq() - 1) {
+            val pos = pe.nextPosition()
+            val payload: String = if (pe.getPayload == null) null else pe.getPayload.utf8ToString()
+            builder += PosAndOffset(pos, pe.startOffset(), pe.endOffset(), payload)
           }
         }
       }
@@ -117,20 +116,20 @@ class Doc(val docId: Int, val freq: Int, text: String, dpe: DocsAndPositionsEnum
 
   // populate position and offsets from index or term vector
   lazy val posAndOffsets: Seq[PosAndOffset] =
-    // get positions info from term vector or DocsAndPositionsEnum
+    // get positions info from term vector or PostingsEnum
     if (tvPosList.nonEmpty)
       tvPosList.toSeq
-    else if (dpe != null) {
+    else if (pe != null) {
       val builder = Seq.newBuilder[PosAndOffset]
-      for (i <- 0 to dpe.freq() - 1) {
+      for (i <- 0 to pe.freq() - 1) {
         // next position
-        val pos = dpe.nextPosition()
+        val pos = pe.nextPosition()
         // offsets
         val (sOffset: Int, eOffset: Int): (Int, Int) =
-          if (dpe.startOffset() >= 0 && dpe.endOffset() >= 0) (dpe.startOffset(), dpe.endOffset())
+          if (pe.startOffset() >= 0 && pe.endOffset() >= 0) (pe.startOffset(), pe.endOffset())
           else (-1, -1)
         // payload
-        val payload: String = if (dpe.getPayload == null) null else dpe.getPayload.utf8ToString()
+        val payload: String = if (pe.getPayload == null) null else pe.getPayload.utf8ToString()
 
         builder += PosAndOffset(pos, sOffset, eOffset, payload)
       }
