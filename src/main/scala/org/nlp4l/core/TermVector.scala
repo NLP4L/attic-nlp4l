@@ -36,9 +36,9 @@ class TermVector(tv: LuceneTerms) extends Map[String, Doc] {
       val text = term.utf8ToString()
       val de = te.docs(null, null)
       if (de != null) de.nextDoc()
-      val dpe = te.docsAndPositions(null, null)
-      if (dpe != null) dpe.nextDoc()
-      builder += (text -> new Doc(0, de.freq(), text, dpe))
+      val pe = te.postings(null, null)
+      if (pe != null) pe.nextDoc()
+      builder += (text -> new Doc(0, de.freq(), text, pe))
       term = te.next
     }
     builder.result()
