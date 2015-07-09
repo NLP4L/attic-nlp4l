@@ -17,6 +17,7 @@
     * [隠れマルコフモデル](#useNLP_hmm)
     * [連語分析モデル](#useNLP_collocanalysis)
     * [固有表現抽出](#useNLP_nee)
+    * [フレンドワード抽出](#useNLP_friend)
     * [仮説検定](#useNLP_hypothesistesting)
     * [相関分析](#useNLP_correlationanalysis)
 * [インデックスブラウザを使う](#indexBrowser)
@@ -967,6 +968,106 @@ Mitch Lively (DF=1, Total TF=1)
 ```
 
 結果は上のようになり、確かに人名が抽出されています。
+
+## フレンドワード抽出{#useNLP_friend}
+
+FriendWordsFinder を使うと、Lucene インデックス中のある単語と近くで共起する単語を抽出できます。便宜的に NLP4L ではそのような単語を「フレンドワード」と呼びます。基になったアイディは[LUCENE-474](https://issues.apache.org/jira/browse/LUCENE-474)です。
+
+```shell
+$ java -cp "target/pack/lib/*" org.nlp4l.colloc.FriendWordsFinder
+
+Usage:
+FriendWordsFinder
+       --index <index dir>
+       --field <field name>
+       [--srcField <source field name>]
+       [--text]                          specify this option when you want a text for output instead of index
+       [--maxDocsToAnalyze <num>]        default is 1000
+       [--slop <num>]                    default is 5
+       [--maxCoiTermsPerTerm <num>]      default is 20
+       [--maxBaseTermsPerDoc <num>]      default is 10000
+       out_index                         specify output index directory (or name of text file when you use --text)
+```
+
+最低限必要な設定は Lucene インデックスとフィールド名です。また、抽出結果は別の Lucene インデックス（デフォルト）またはテキストファイル（--text を指定した場合）に出力されます。
+
+たとえば、ブラウンコーパスの body フィールドにおけるフレンドワードを抽出して結果を out.txt ファイルに出力するには次のように実行します。
+
+```shell
+$ java -cp "target/pack/lib/*" org.nlp4l.colloc.FriendWordsFinder --index /tmp/index-brown --field body --text out.txt
+```
+
+出力結果は次のようになります。
+
+```shell
+$ head -n 30 out.txt 
+15th => 16th,poets
+16th => 15th,poets
+accustomed => artist,studying
+advances => quit
+adventure => sparkling,pair
+adventuring => masks,uncle
+ages => vaguely,wondered
+animal's => reconstruct,bone,artist
+ankle => bosom,calf,forgive,magnificent,artist,perfect
+antique => vieux,shops,orleans,impressed,uncle,store
+antiques => cavernous,cluttered,echoed,heels,depth
+appetite => tantalizing,calf,magnificent
+appraisingly => coldly,uncertain
+appreciates => joys,signs
+approached => cautiously,darkness
+arrangement => paint,quarter
+artist => animal's,ankle,accustomed,studying
+ashamed => smack,nephew
+aunt => subsequently,cheeks,mistaken,uncle,nearby,combination,december
+ball => masks,romance
+bear => encircled,crush
+bent => napped,kissed,pink
+bitch => timing,exclaimed,loyal,cheap
+blooming => everlastingly,plants,flowers
+bodied => sexy,wine,rare
+bolt => securely,slip
+bone => animal's,reconstruct,scientists
+bore => expectation,fun
+bosom => mind's,ankle,calf
+bride => indisposed,store
+```
+
+livedoor ニュースコーパスでは次のようになります。
+
+```shell
+$ head -n 30 out.txt 
+250 => synth,セール,ミュージック,for,カテゴリ,ipad,限定,期間
+303 => synth,mi,for
+app => synth,itunes,apple,for,id,com,ipad,http
+apple => synth,itunes,app,store,com,http
+com => synth,itunes,app,apple,for,store,http
+for => synth,隣る,303,mt,250,app,id,com,ipad,限定,期間
+http => itunes,app,apple,store,com,以降
+id => synth,mt,app,for,ipad
+inc => ミュージック,カテゴリ,条件,バージョン
+ios => 互換,条件,ipad,以降
+ipad => シンセサイザーアプリ,オシレータ,synth,シンセサイザ,プリセット,セール,統合,互換,mt,250,app,for,背景,ios,本格,ボディ,id,条件,バージョン,以降
+itunes => app,apple,store,com,以降,http
+mi => シンセサイザーアプリ,シンセサイザ,303
+mt => synth,for,id,ipad
+store => itunes,apple,com,以降,http
+synth => シーケンサ,隣る,303,mt,250,app,apple,for,id,com,ipad,期間
+いじる => 個性,色々,見つける
+さっそく => シンセサイザーアプリ,シンセサイザ
+じれる => カットオフ,芸,個別,細かい
+ちょっとした => シーケンサ,隣る,芸,パターン,細かい
+ならでは => 強み,音
+まだまだ => 使いこなせる
+もう少し => やんちゃ,フィルタ,効く
+やんちゃ => フィルタ,もう少し,効く
+アクセント => ゲート,凝る,個別,タイム
+エンベロープ => パラメータ,フィルタ,贅沢,上手い,並ぶ,各,以外
+オシレータ => 波形,オーソドックス,プリセット,フィルタ,ipad
+オーソドックス => オシレータ,飛び道具,波形,プリセット
+カットオフ => じれる,芸,個別
+カテゴリ => セール,ミュージック,250,inc,限定,期間
+```
 
 ## 仮説検定{#useNLP_hypothesistesting}
 
