@@ -14,6 +14,8 @@
     * [Importing a CSV File](#getCorpora_csv)
 * [Using as NLP Tool](#useNLP)
     * [Counting the Number of Words](#useNLP_wordcounts)
+    * [Hidden Markov Model](#useNLP_hmm)
+    * [Collocational Analysis Model](#useNLP_collocanalysis)
 * [Using Index Browser](#indexBrowser)
     * [Browsing fields and words](#indexBrowser_fields)
     * [Browsing Documents](#indexBrowser_docs)
@@ -618,6 +620,205 @@ nlp4l> // (12) Articles where places has a value japan but does not have a value
 nlp4l> WordCounts.count(reader, "body", Set("war", "peace"), jpDS.toSet &~ usDS.toSet, -1, analyzer)
 res26: Map[String,Long] = Map(war -> 16, peace -> 1)
 ```
+
+## Hidden Markov Model {#useNLP_hmm}
+
+NLP4L provides the HmmModel class that you can use to learn Hidden Markov model from labeled training data. The both HmmModel and HmmModelIndexer refer to a Lucene index schema that is defined by the next HmmModelSchema.
+
+```scala
+trait HmmModelSchema {
+ def schema(): Schema = {
+  val analyzer = Analyzer(new org.apache.lucene.analysis.core.WhitespaceAnalyzer)
+  val builder = AnalyzerBuilder()
+  builder.withTokenizer("whitespace")
+  builder.addTokenFilter("shingle", "minShingleSize", "2", "maxShingleSize", "2", "outputUnigrams", "false")
+  val analyzer2g = builder.build
+  val fieldTypes = Map(
+   "begin" -> FieldType(analyzer, true, true, true, true),
+   "class" -> FieldType(analyzer, true, true, true, true),
+   "class_2g" -> FieldType(analyzer2g, true, true, true, true),
+   "word_class" -> FieldType(analyzer, true, true, true, true),
+   "word" -> FieldType(analyzer, true, true, true, true)
+  )
+  val analyzerDefault = analyzer
+  Schema(analyzerDefault, fieldTypes)
+ }
+}
+```
+
+The Hidden Markov model uses the probability of transition from one status (class) to another and the probability of symbol (word) output at one status. NLP4L uses a Lucene index that has a schema defined by HmmModelSchema to obtain these probabilities. The status transition probability uses the class frequencies of the class and the class_2g fields. The class_2g is a field that uses ShingleFilter of Lucene to store the 2-gram class. The class field, on the other hand, is a field that simply stores classes. Let's consider using these 2 fields to calculate the probability P( vb | nn ): that is the probability of a part of speech vb appears after a part of speech nn. This actually is extremely easy to do as you can use the previously described totalTermFreq(), which calculates the number of words, to calculate as follows.
+
+```math
+P( vb | nn ) = "nn vb".totalTermFreq() / "nn".totalTermFreq()
+```
+
+A series of 2 classes such as "nn vb" refers to the class_2g field while "nn" refers to the class field. Similarly, the output probability of a word "program" in the class nn can be calculated as follows.
+
+```math
+P( program | nn ) = "program_nn".totalTermFreq() / "nn".totalTermFreq()
+```
+
+Here, "program_nn" is a character string added in the Lucene index when a word "program" and a clas nn are observed at the same time. This is stored in the word_class field.
+
+The first class in the Lucene documents is stored in the begin field. You can calculate the initial status probability distribution of each class if you use the totalTermFreq() of this field. 
+
+Let's look at specific examples of HmmModel usage.
+
+### Part of Speech Tagging
+
+One of the popular success examples of Hidden Markov model application is the part of speech tagging. Since the English sentences in the brown corpus are part of speech tagged, you can learn HmmModel from these and tag unknown English sentences with part of speeches. First, prepare brown corpus and run the sample script as follows.
+
+```shell
+nlp4l> :load examples/hmm_postagger.scala
+```
+
+The program, at the end, uses the Lucene index model, which has completed learning, to perform part of speech tagging on unknown English sentences. For example, performing part of speech tagging on an English sentence "i like to go to france ." will produce the following result.
+
+```scala
+res8: Seq[org.nlp4l.lm.Token] = List(Token(i,ppss), Token(like,vb), Token(to,to), Token(go,vb), Token(to,in), Token(france,np), Token(.,.))
+```
+
+Let's look at the learning portion at the begenning of sample program.
+
+```scala
+// (1)
+val index = "/tmp/index-brown-hmm"
+
+// (2)
+val c: PathSet[Path] = Path("corpora", "brown", "brown").children()
+
+// (3)
+val indexer = HmmModelIndexer(index)
+c.filter{ e =>
+ val s = e.name
+ val c = s.charAt(s.length - 1)
+ c >= '0' && c <= '9'
+}.foreach{ f =>
+ val source = Source.fromFile(f.path, "UTF-8")
+ source.getLines().map(_.trim).filter(_.length > 0).foreach { g =>
+  val pairs = g.split("\\s+")
+  val doc = pairs.map{h => h.split("/")}.filter{_.length==2}.map{i => (i(0).toLowerCase(), i(1))}
+  indexer.addDocument(doc)
+ }
+}
+
+// (4)
+indexer.close()
+
+// (5)
+val model = HmmModel(index)
+```
+
+The program first specifies the Lucene index that the brown corpus is stored at (1). (2) specifies the directory for the brown corpus. This is referred to at (3) in order to get a file one at a time. The program then creates HmmModelIndexer at (3) and considers a line in a brown corpus file as one of Lucene documents and adds it to HmmModelIndexer using addDocument(). The format of documents that will be added is a double sequence of word and part of speech.
+
+Once a Lucene index is created, the program closes it at (4). The Hidden Markov model is calculated when HmmModel reads Lucene index, which was created like the above, at (5).
+
+Apply a model to HmmTagger as follows and call tokens() of HmmTagger when you use a model for English part of speech tagging.
+
+```scala
+val tagger = HmmTagger(model)
+
+tagger.tokens("i like to go to france .")
+tagger.tokens("you executed lucene program .")
+tagger.tokens("nlp4l development members may be able to present better keywords .")
+```
+
+The result of execution will be returned as follows in the form of a Token object list that has word and class (part of speech) as its elements.
+
+```shell
+res23: Seq[org.nlp4l.lm.Token] = List(Token(i,ppss), Token(like,vb), Token(to,to), Token(go,vb), Token(to,in), Token(france,np), Token(.,.))
+res24: Seq[org.nlp4l.lm.Token] = List(Token(you,ppo-tl), Token(executed,vbn), Token(lucene,X), Token(program,nil), Token(.,.))
+res25: Seq[org.nlp4l.lm.Token] = List(Token(nlp4l,X), Token(development,nn), Token(members,nns), Token(may,md), Token(be,be), Token(able,jj), Token(to,to), Token(present,vb), Token(better,rbr), Token(keywords,X), Token(.,.-hl))
+```
+
+### Estimating English Words from Katakana Words
+
+NLP4L includes training data that has pairs of Katakana words and their originating English words with original alignments added (train_data/alpha_katakana_aligned.txt).
+
+```shell
+$ head train_data/alpha_katakana_aligned.txt 
+アaカcaデdeミーmy
+アaクcセceンnトt
+アaクcセceスss
+アaクcシciデdeンnトt
+アaクcロroバッbaトt
+アaクcショtioンn
+アaダdaプpターter
+アaフfリriカca
+エaアirバbuスs
+アaラlaスsカka
+```
+
+Let's think about learning Hidden Markov model, using this data and considering Katakana portion as words and alphabet portion as part of speeches. In this way, you will be able to predict English words from unknown Katakana words. This is implemented in examples/trans_katakana_alpha.scala. 
+
+```shell
+nlp4l> :load examples/trans_katakana_alpha.scala
+```
+
+If you are interested, please figure this code out as this is practically the same as the previous examples/hmm_postagger.scala. 
+
+The program at the end uses learned model to display the resulting English words that it estimated from unknown Katakana words.
+
+```scala
+val tokenizer = HmmTokenizer(model)
+
+tokenizer.tokens("アクション")
+tokenizer.tokens("プログラム")
+tokenizer.tokens("ポイント")
+tokenizer.tokens("テキスト")
+tokenizer.tokens("コミュニケーション")
+tokenizer.tokens("エントリー")
+```
+
+This result of execution will look like as follows.
+
+```shell
+res35: Seq[org.nlp4l.lm.Token] = List(Token(ア,a), Token(ク,c), Token(ショ,tio), Token(ン,n))
+res36: Seq[org.nlp4l.lm.Token] = List(Token(プ,p), Token(ロ,ro), Token(グ,g), Token(ラ,ra), Token(ム,m))
+res37: Seq[org.nlp4l.lm.Token] = List(Token(ポ,po), Token(イ,i), Token(ン,n), Token(ト,t))
+res38: Seq[org.nlp4l.lm.Token] = List(Token(テ,te), Token(キス,x), Token(ト,t))
+res39: Seq[org.nlp4l.lm.Token] = List(Token(コ,co), Token(ミュ,mmu), Token(ニ,ni), Token(ケー,ca), Token(ショ,tio), Token(ン,n))
+res40: Seq[org.nlp4l.lm.Token] = List(Token(エ,e), Token(ン,n), Token(ト,t), Token(リー,ree))
+```
+
+### Extracting Pairs of Katakana and English Words from Japanese wikipedia {#useNLP_hmm_lw}
+
+The preceding examples/trans_katakana_alpha.scala is a program that takes Katakana words and outputs English words. The output English words, however, may be correct or incorrect as they purely are results of estimation. Therefore, they cannot be used in the synonym dictionary for Lucene/Solr as they are. However, when you take a considerable number of documents and extract pairs of Katakana words and alphabet character strings that appear within close range, these estimates could be used to see if each pair has the same meaning. It would be safe to consider that if an English word estimated from an obtained Katakana word is similar to an alphabet character string, the obtained Katakana word and the alphabet character string have the same meaning and can be used as an entry in the synonym dictionary.
+
+A Lucene index /tmp/index-jawiki, which was created from Japanese wikipedia by [Obtaining wikipedia Data and Creating an Index](#getCorpora_wiki), has a field ka_pair defined and this field contains pairs of Katakana words and alphabet character strings that appeared within close range. You will be able to extract pairs of Katakana words and their words origin - alphabet character strings - if you run the program LoanWordsExtractor with this field as a target.
+
+```shell
+$ java -Dfile.encoding=UTF-8 -cp "target/pack/lib/*" org.nlp4l.syn.LoanWordsExtractor --index /tmp/index-jawiki --field ka_pair loanwords.txt
+```
+
+Also, run SynonymRecordsUnifier as follows because running this program only might result in some redundant lines.
+
+```shell
+$ java -Dfile.encoding=UTF-8 -cp "target/pack/lib/*" org.nlp4l.syn.SynonymRecordsUnifier loanwords.txt
+```
+
+The ultimately obtained file loanwords.txt_checked can be used as the synonym dictionary for Lucene/Solr.
+
+## Collocational Analysis Model {#useNLP_collocanalysis}
+
+NLP4L can look at a word in corpus and analyze the words before or after it with frequency of occurrence. NLP4L named this analysis data model "collocational analysis model" (CollocationalAnalysisModel). Using collocational analysis model will find out a verb and a preposition or other part of speeches that likely to appear with the verb. For example, English learners could obtain commonly used wordings if they use the collocational analysis model to check English corpus.
+
+Examples/colloc_analysis_brown.scala analyzes the brown corpus and displays words that likely to appear before or after word "found" in the order of appearance. The following is an easy-to-see table of examples/colloc_analysis_brown.scala output.
+
+| 3rd Prev. | 2nd Prev. | Previous | Watched  | Following | 2nd Fol. | 3rd Fol. |
+|:------------:|:------------:|:------------:|:--------:|:------------:|:------------:|:------------:|
+|    the(36)|    to(26)|    be(60)|   found|    in(77)|    the(46)|    the(28)|
+|    and(13)|    he(20)|    he(50)|     |     a(43)|    in(24)|    to(19)|
+|     a(12)|    the(17)|    was(32)|     |   that(42)|     a(13)|    in(15)|
+|    of(11)|    and(15)|    and(26)|     |    the(38)|    be(13)|    of(13)|
+|    is( 9)|   have(13)|   been(26)|     |    it(28)|    to(12)|    and( 9)|
+|    was( 8)|    can(10)|     i(26)|     |    to(28)|    and(11)|     a( 8)|
+|    he( 7)|     i(10)|    she(23)|     |  himself(13)|    of(11)|   with( 8)|
+|    in( 7)|    has( 9)|   have(22)|     |    out(12)|    he( 7)|    had( 7)|
+|   that( 7)|    of( 9)|    had(21)|     |    him( 9)|    at( 6)|    be( 6)|
+|    as( 5)|   could( 8)|   they(19)|     |  myself( 9)|    had( 5)|    men( 4)|
+
+You can see that there are a lot of phrases "found in" here. Also, as you can look at words before the closely watched word "found", you can see that there are possibilities that phrases "be found", "to be found", and "can be found" are appearing as well.
 
 # Using Index Browser{#indexBrowser}
 
