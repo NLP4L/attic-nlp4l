@@ -17,7 +17,7 @@
     * [隠れマルコフモデル](#useNLP_hmm)
     * [連語分析モデル](#useNLP_collocanalysis)
     * [固有表現抽出](#useNLP_nee)
-    * [フレンドワード抽出](#useNLP_friend)
+    * [バディワード抽出](#useNLP_buddy)
     * [仮説検定](#useNLP_hypothesistesting)
     * [相関分析](#useNLP_correlationanalysis)
 * [インデックスブラウザを使う](#indexBrowser)
@@ -969,15 +969,15 @@ Mitch Lively (DF=1, Total TF=1)
 
 結果は上のようになり、確かに人名が抽出されています。
 
-## フレンドワード抽出{#useNLP_friend}
+## フレンドワード抽出{#useNLP_buddy}
 
-FriendWordsFinder を使うと、Lucene インデックス中のある単語と近くで共起する単語を抽出できます。便宜的に NLP4L ではそのような単語を「フレンドワード」と呼びます。基になったアイディは[LUCENE-474](https://issues.apache.org/jira/browse/LUCENE-474)です。
+BuddyWordsFinder を使うと、Lucene インデックス中のある単語と近くで共起する単語を抽出できます。便宜的に NLP4L ではそのような単語を「フレンドワード」と呼びます。基になったアイディは[LUCENE-474](https://issues.apache.org/jira/browse/LUCENE-474)です。
 
 ```shell
-$ java -cp "target/pack/lib/*" org.nlp4l.colloc.FriendWordsFinder
+$ java -cp "target/pack/lib/*" org.nlp4l.colloc.BuddyWordsFinder
 
 Usage:
-FriendWordsFinder
+BuddyWordsFinder
        --index <index dir>
        --field <field name>
        [--srcField <source field name>]
@@ -994,7 +994,7 @@ FriendWordsFinder
 たとえば、ブラウンコーパスの body フィールドにおけるフレンドワードを抽出して結果を out.txt ファイルに出力するには次のように実行します。
 
 ```shell
-$ java -cp "target/pack/lib/*" org.nlp4l.colloc.FriendWordsFinder --index /tmp/index-brown --field body --text out.txt
+$ java -cp "target/pack/lib/*" org.nlp4l.colloc.BuddyWordsFinder --index /tmp/index-brown --field body --text out.txt
 ```
 
 出力結果は次のようになります。

@@ -23,7 +23,7 @@ import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
 
-public abstract class FriendWordsFinderTermFilter {
+public abstract class BuddyWordsFinderTermFilter {
   
   protected IndexReader reader;
   protected float numDocs;
@@ -32,7 +32,7 @@ public abstract class FriendWordsFinderTermFilter {
   protected TermsEnum currentTE;
   protected int currentTermDocFreq;
   
-  public FriendWordsFinderTermFilter(){
+  public BuddyWordsFinderTermFilter(){
     this.minTermPopularity = 0.0002F;
     this.maxTermPopularity = 0.1F;
     this.minTermLength = 2;

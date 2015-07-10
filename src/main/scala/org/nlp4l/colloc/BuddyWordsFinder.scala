@@ -22,12 +22,12 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer
 import org.apache.lucene.util.BytesRef
 import org.nlp4l.core._
 import org.nlp4l.core.analysis.Analyzer
-import org.nlp4l.lucene.FriendWordsFinderTermFilter
+import org.nlp4l.lucene.BuddyWordsFinderTermFilter
 
-class FriendWordsFinder(reader: RawReader, maxDocsToAnalyze: Int, slop: Int, maxCoiTermsPerTerm: Int, maxBaseTermsPerDoc: Int,
-                        baseTermFilter: FriendWordsFinderTermFilter, coiTermFilter: FriendWordsFinderTermFilter) {
+class BuddyWordsFinder(reader: RawReader, maxDocsToAnalyze: Int, slop: Int, maxCoiTermsPerTerm: Int, maxBaseTermsPerDoc: Int,
+                        baseTermFilter: BuddyWordsFinderTermFilter, coiTermFilter: BuddyWordsFinderTermFilter) {
 
-  val finder = new org.nlp4l.lucene.FriendWordsFinder(reader.ir, maxDocsToAnalyze, slop,
+  val finder = new org.nlp4l.lucene.BuddyWordsFinder(reader.ir, maxDocsToAnalyze, slop,
     maxCoiTermsPerTerm, maxBaseTermsPerDoc, baseTermFilter, coiTermFilter)
 
   def find(field: String, word: String): Array[(String, Float)] = {
@@ -39,7 +39,7 @@ class FriendWordsFinder(reader: RawReader, maxDocsToAnalyze: Int, slop: Int, max
   }
 }
 
-object FriendWordsFinder {
+object BuddyWordsFinder {
 
   val DEF_MAX_DOCS_TO_ANALYZE: Int = 1000
   val DEF_SLOP: Int = 5
@@ -51,13 +51,13 @@ object FriendWordsFinder {
             slop: Int = DEF_SLOP,
             maxCoiTermsPerTerm: Int = DEF_MAX_COI_TERMS_PER_TERM,
             maxBaseTermsPerDoc: Int = DEF_MAX_BASE_TERMS_PER_DOC,
-            termFilter: FriendWordsFinderTermFilter = FriendWordsNullStopFilter()) =
-    new FriendWordsFinder(reader, maxDocsToAnalyze, slop, maxCoiTermsPerTerm, maxBaseTermsPerDoc, termFilter, termFilter)
+            termFilter: BuddyWordsFinderTermFilter = BuddyWordsNullStopFilter()) =
+    new BuddyWordsFinder(reader, maxDocsToAnalyze, slop, maxCoiTermsPerTerm, maxBaseTermsPerDoc, termFilter, termFilter)
 
   val usage =
   """
     |Usage:
-    |FriendWordsFinder
+    |BuddyWordsFinder
     |       --index <index dir>
     |       --field <field name>
     |       [--srcField <source field name>]
@@ -128,7 +128,7 @@ object FriendWordsFinder {
       else new IWriter(out, schema())
     try{
       val terms = reader.field(srcField).get.terms
-      val finder = FriendWordsFinder(reader, maxDocsToAnalyze, slop, maxCoiTermsPerTerm, maxBaseTermPerDoc)
+      val finder = BuddyWordsFinder(reader, maxDocsToAnalyze, slop, maxCoiTermsPerTerm, maxBaseTermPerDoc)
       terms.foreach{ t =>
         val result = finder.find(field, t.text)
         if(result.size > 0){
@@ -137,8 +137,8 @@ object FriendWordsFinder {
           }
           else{
             val source = Field("source", List(t.text))
-            val friends = Field("friends", result.map(_._1))
-            writer.asInstanceOf[IWriter].write(Document(Set(source, friends)))
+            val buddies = Field("buddies", result.map(_._1))
+            writer.asInstanceOf[IWriter].write(Document(Set(source, buddies)))
           }
         }
       }
@@ -154,7 +154,7 @@ object FriendWordsFinder {
 
   def schema(): Schema = {
     val source = FieldType(null, true, true)
-    val friends = FieldType(null, true, true)
-    Schema(new Analyzer(new KeywordAnalyzer()), Map("source" -> source, "friends" -> friends))
+    val buddies = FieldType(null, true, true)
+    Schema(new Analyzer(new KeywordAnalyzer()), Map("source" -> source, "buddies" -> buddies))
   }
 }

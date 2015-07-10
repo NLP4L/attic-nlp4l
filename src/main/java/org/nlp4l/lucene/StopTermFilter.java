@@ -19,7 +19,7 @@ package org.nlp4l.lucene;
 import java.io.IOException;
 import java.util.Set;
 
-public class StopTermFilter extends FriendWordsFinderTermFilter {
+public class StopTermFilter extends BuddyWordsFinderTermFilter {
 
   final Set<String> stopWords;
   final boolean ignoreCase;

@@ -16,15 +16,15 @@
 
 package org.nlp4l.colloc
 
-import org.nlp4l.lucene.FriendWordsFinderTermFilter
+import org.nlp4l.lucene.BuddyWordsFinderTermFilter
 
-case class FriendWordsStopFilter(stopWords: Set[String]) extends FriendWordsFinderTermFilter {
+case class BuddyWordsStopFilter(stopWords: Set[String]) extends BuddyWordsFinderTermFilter {
 
   override protected def skip(word: String): Boolean = {
     stopWords.contains(word)
   }
 }
 
-case class FriendWordsNullStopFilter() extends FriendWordsFinderTermFilter {
+case class BuddyWordsNullStopFilter() extends BuddyWordsFinderTermFilter {
   override protected def skip(word: String): Boolean = false
 }

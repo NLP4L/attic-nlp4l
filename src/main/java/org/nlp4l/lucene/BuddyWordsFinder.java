@@ -38,19 +38,19 @@ import org.slf4j.LoggerFactory;
  * @see <a href="https://issues.apache.org/jira/browse/LUCENE-474">LUCENE-474</a>
  *
  */
-public class FriendWordsFinder {
+public class BuddyWordsFinder {
 
-  public static Logger log = LoggerFactory.getLogger(FriendWordsFinder.class);
+  public static Logger log = LoggerFactory.getLogger(BuddyWordsFinder.class);
   
   private final IndexReader reader;
   private final int maxDocsToAnalyze, slop, maxCoiTermsPerTerm;
   private final BitSet termPos;
   private final Map<String, Scorer> phraseTerms = new HashMap<String, Scorer>();
-  private final FriendWordsFinderTermFilter baseTermFilter, coiTermFilter;
+  private final BuddyWordsFinderTermFilter baseTermFilter, coiTermFilter;
 
-  public FriendWordsFinder(IndexReader reader,
+  public BuddyWordsFinder(IndexReader reader,
                            int maxDocsToAnalyze, int slop, int maxCoiTermsPerTerm, int maxBaseTermsPerDoc,
-                           FriendWordsFinderTermFilter baseTermFilter, FriendWordsFinderTermFilter coiTermFilter){
+                           BuddyWordsFinderTermFilter baseTermFilter, BuddyWordsFinderTermFilter coiTermFilter){
     this.reader = reader;
     this.maxDocsToAnalyze = maxDocsToAnalyze;
     this.slop = slop;
