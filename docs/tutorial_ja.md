@@ -969,7 +969,7 @@ Mitch Lively (DF=1, Total TF=1)
 
 結果は上のようになり、確かに人名が抽出されています。
 
-## フレンドワード抽出{#useNLP_buddy}
+## バディワード抽出{#useNLP_buddy}
 
 BuddyWordsFinder を使うと、Lucene インデックス中のある単語と近くで共起する単語を抽出できます。便宜的に NLP4L ではそのような単語を「フレンドワード」と呼びます。基になったアイディは[LUCENE-474](https://issues.apache.org/jira/browse/LUCENE-474)です。
 
