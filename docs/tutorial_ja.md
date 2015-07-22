@@ -18,6 +18,7 @@
     * [連語分析モデル](#useNLP_collocanalysis)
     * [固有表現抽出](#useNLP_nee)
     * [バディワード抽出](#useNLP_buddy)
+    * [専門用語抽出](#useNLP_te)
     * [仮説検定](#useNLP_hypothesistesting)
     * [相関分析](#useNLP_correlationanalysis)
 * [インデックスブラウザを使う](#indexBrowser)
@@ -1067,6 +1068,72 @@ synth => シーケンサ,隣る,303,mt,250,app,apple,for,id,com,ipad,期間
 オーソドックス => オシレータ,飛び道具,波形,プリセット
 カットオフ => じれる,芸,個別
 カテゴリ => セール,ミュージック,250,inc,限定,期間
+```
+
+## 専門用語抽出{#useNLP_te}
+
+Lucene インデックスから専門用語を抽出するツール TermsExtractor を紹介します。TermsExtractor の実装は論文「[出現頻度と連接頻度に基づく専門用語抽出](http://www.r.dl.itc.u-tokyo.ac.jp/~nakagawa/academic-res/jnlp10-1.pdf)」に基づいて行われています。
+
+専門用語とは、ある文書に頻出する1つ以上の単語の連なりです。品詞情報まで参照するため、現在は JapaneseTokenizer が使える日本語のみ対応しています。
+
+TermsExtractor を実行するには、専門用語を抽出したい文書（のフィールド）を Luceneインデックスに登録する必要があります。またそのLuceneフィールドは、CompoundNounCnAnalyzer、CompoundNounRn2Analyzer、CompoundNounLn2Analyzerという3つのLucene Analyzerでトークナイズされている必要があります。
+
+サンプルとして、livedoor ニュースコーパスの sports-watch カテゴリの文書から専門用語抽出をしてみましょう。examples/index_ldcc_sports-watch.scala を次のように実行します。
+
+```shell
+nlp4l> :load examples/index_ldcc_sports-watch.scala
+```
+
+すると、/tmp/index-ldcc-sports-watch という Luceneインデックスができます。このインデックスをインデックスブラウザで見てみると、body というフィールド以外に body_rn2 と body_ln2 というフィールドができていることがわかるでしょう。これらのフィールドはそれぞれ CompoundNounCnAnalyzer、CompoundNounRn2Analyzer、CompoundNounLn2Analyzer によってトークナイズされています。
+
+```shell
+nlp4l> open("/tmp/index-ldcc-sports-watch")
+
+nlp4l> status
+
+========================================
+Index Path       : /tmp/index-ldcc-sports-watch
+Closed           : false
+Num of Fields    : 7
+Num of Docs      : 900
+Num of Max Docs  : 900
+Has Deletions    : false
+========================================
+        
+Fields Info:
+========================================
+  # | Name     | Num Terms 
+----------------------------------------
+  0 | body_ln2 |      28032
+  1 | body     |      25249
+  2 | url      |        900
+  3 | date     |        898
+  4 | title    |       2968
+  5 | cat      |          1
+  6 | body_rn2 |      28032
+========================================
+```
+
+このインデックス /tmp/index-ldcc-sports-watch とフィールド body を対象に、TermsExtractor で専門用語抽出するには、次のように実行します。
+
+```shell
+$ java -cp "target/pack/lib/*" org.nlp4l.extract.TermsExtractor --field body --out terms.txt /tmp/index-ldcc-sports-watch
+```
+
+出現頻度と連接頻度に基づくスコア計算がなされ、スコアの高い順にソートされて結果が--out オプションで指定したテキストファイル terms.txt に出力されます。
+
+```shell
+$ head terms.txt
+日本, 130058.945313
+選手, 86330.593750
+日本代表, 58211.601563
+試合, 55407.371094
+放送, 55291.871094
+一人, 38042.597656
+一戦, 26854.021484
+番組, 24922.732422
+監督, 23383.238281
+チーム, 21691.521484
 ```
 
 ## 仮説検定{#useNLP_hypothesistesting}

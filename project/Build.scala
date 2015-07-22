@@ -21,6 +21,7 @@ object NLP4LBuild extends Build {
             "org.apache.lucene" % "lucene-codecs" % "5.2.0",
             "org.apache.lucene" % "lucene-backward-codecs" % "5.2.0",
             "org.apache.lucene" % "lucene-misc" % "5.2.0",
+	    "commons-io" % "commons-io" % "2.4",
             "org.apache.commons" % "commons-csv" % "1.1",
             "org.apache.opennlp" % "opennlp-tools" % "1.5.3",
             "org.apache.httpcomponents" % "httpclient" % "4.4",
