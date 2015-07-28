@@ -21,11 +21,13 @@ import org.apache.lucene.analysis.Analyzer.TokenStreamComponents;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 import org.apache.lucene.analysis.core.StopFilterFactory;
+import org.apache.lucene.analysis.ja.dict.UserDictionary;
 import org.apache.lucene.analysis.miscellaneous.LengthFilterFactory;
 import org.apache.lucene.analysis.pattern.PatternReplaceFilterFactory;
 import org.apache.lucene.analysis.util.FilesystemResourceLoader;
 import org.apache.lucene.analysis.util.ResourceLoader;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.util.HashMap;
@@ -33,11 +35,29 @@ import java.util.Map;
 
 public final class CompoundNounCnAnalyzer extends Analyzer {
 
+  private final UserDictionary userdic;
   ResourceLoader loader = new FilesystemResourceLoader(FileSystems.getDefault().getPath("."));
+
+  public CompoundNounCnAnalyzer(){
+    this(null);
+  }
+
+  public CompoundNounCnAnalyzer(String dic){
+    if(dic != null){
+      try {
+        userdic = UserDictionary.open(new FileReader(dic));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    else{
+      userdic = null;
+    }
+  }
 
   @Override
   protected TokenStreamComponents createComponents(String fieldName) {
-    final Tokenizer tokenizer = new JapaneseTokenizer(null, true, JapaneseTokenizer.Mode.NORMAL);
+    final Tokenizer tokenizer = new JapaneseTokenizer(userdic, true, JapaneseTokenizer.Mode.NORMAL);
     StopFilterFactory sff = new StopFilterFactory(mapArg("words", "examples/schema/stopwords.txt"));
     CompoundPOSWordFilterFactory cpwff = new CompoundPOSWordFilterFactory(mapArg("compounds", "examples/schema/compounds.txt", "delimiter", "/"));
     JapanesePartOfSpeechStopFilterFactory jpossff = new JapanesePartOfSpeechStopFilterFactory(mapArg("tags", "examples/schema/stopposs.txt"));
