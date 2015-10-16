@@ -20,6 +20,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.Analyzer.TokenStreamComponents;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.OffsetsGapFillerFilterFactory;
 import org.apache.lucene.analysis.core.StopFilterFactory;
 import org.apache.lucene.analysis.ja.dict.UserDictionary;
 import org.apache.lucene.analysis.miscellaneous.LengthFilterFactory;
@@ -30,6 +31,7 @@ import org.apache.lucene.analysis.util.ResourceLoader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -59,6 +61,8 @@ public final class CompoundNounCnAnalyzer extends Analyzer {
   protected TokenStreamComponents createComponents(String fieldName) {
     final Tokenizer tokenizer = new JapaneseTokenizer(userdic, true, JapaneseTokenizer.Mode.NORMAL);
     StopFilterFactory sff = new StopFilterFactory(mapArg("words", "examples/schema/stopwords.txt"));
+    Map<String, String> emptyMap = Collections.emptyMap();
+    OffsetsGapFillerFilterFactory ogfff = new OffsetsGapFillerFilterFactory(emptyMap);
     CompoundPOSWordFilterFactory cpwff = new CompoundPOSWordFilterFactory(mapArg("compounds", "examples/schema/compounds.txt", "delimiter", "/"));
     JapanesePartOfSpeechStopFilterFactory jpossff = new JapanesePartOfSpeechStopFilterFactory(mapArg("tags", "examples/schema/stopposs.txt"));
     PatternReplaceFilterFactory prff = new PatternReplaceFilterFactory(mapArg("pattern", "^\\d+.*", "replacement", "RemoveMe"));
@@ -77,7 +81,9 @@ public final class CompoundNounCnAnalyzer extends Analyzer {
                     prff.create(
                             jpossff.create(
                                     cpwff.create(
-                                            sff.create(tokenizer)
+                                            ogfff.create(
+                                                    sff.create(tokenizer)
+                                            )
                                     )
                             )
                     )

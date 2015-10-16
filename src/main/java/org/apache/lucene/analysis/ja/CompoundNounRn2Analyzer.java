@@ -20,6 +20,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.Analyzer.TokenStreamComponents;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.OffsetsGapFillerFilterFactory;
 import org.apache.lucene.analysis.core.StopFilterFactory;
 import org.apache.lucene.analysis.ja.dict.UserDictionary;
 import org.apache.lucene.analysis.miscellaneous.LengthFilterFactory;
@@ -31,6 +32,7 @@ import org.apache.lucene.analysis.util.ResourceLoader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -63,6 +65,8 @@ public class CompoundNounRn2Analyzer extends Analyzer {
     JapanesePartOfSpeechStopFilterFactory jpossff = new JapanesePartOfSpeechStopFilterFactory(mapArg("tags", "examples/schema/stopposs.txt"));
     PatternReplaceFilterFactory prff = new PatternReplaceFilterFactory(mapArg("pattern", "^\\d+.*", "replacement", "RemoveMe"));
     StopFilterFactory sff2 = new StopFilterFactory(mapArg("words", "examples/schema/stopwords-2.txt"));
+    Map<String, String> emptyMap = Collections.emptyMap();
+    OffsetsGapFillerFilterFactory ogfff = new OffsetsGapFillerFilterFactory(emptyMap);
     ShingleFilterFactory shff = new ShingleFilterFactory(
             mapArg("minShingleSize", "2", "maxShingleSize", "2",
                     "outputUnigrams", "false", "outputUnigramsIfNoShingles", "false",
@@ -81,10 +85,12 @@ public class CompoundNounRn2Analyzer extends Analyzer {
             prff3.create(
                     prff2.create(
                             shff.create(
-                                    sff2.create(
-                                            prff.create(
-                                                    jpossff.create(
-                                                            sff.create(tokenizer)
+                                    ogfff.create(
+                                            sff2.create(
+                                                    prff.create(
+                                                            jpossff.create(
+                                                                    sff.create(tokenizer)
+                                                            )
                                                     )
                                             )
                                     )
