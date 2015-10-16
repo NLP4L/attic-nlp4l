@@ -41,7 +41,8 @@ object NLP4LBuild extends Build {
           packResourceDir ++= Map(baseDirectory.value / "docs" -> "docs",
             baseDirectory.value / "examples" -> "examples",
             baseDirectory.value / "repl.init" -> "bin/repl.init",
-            baseDirectory.value / "target/scala-2.11/api" -> "api"),
+            baseDirectory.value / "target/scala-2.11/api" -> "api",
+            baseDirectory.value / "train_data" -> "train_data"),
           pack <<= pack.dependsOn(doc in Compile)
       )
     )
