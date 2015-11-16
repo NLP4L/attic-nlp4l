@@ -69,7 +69,7 @@ val schema = teschema()
 val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "ldcc", "text", "sports-watch").children()
-c.filterNot( g => g.name.equals("LICENSE.txt") ).foreach( h => writer.write(document(h)) )
+c.filterNot( g => g.name.equals("LICENSE.txt") ).toList.sorted.foreach( h => writer.write(document(h)) )
 
 writer.close
 

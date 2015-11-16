@@ -75,12 +75,12 @@ val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "CEEAUS").children()
 // write English docs
-c.filter(e => e.name.indexOf("CJEJUS")<0 && e.name.indexOf("PLAIN")<0).foreach( f =>
-  f.children().filter( g => g.name.indexOf("(1)") < 0 && g.name.endsWith(".txt")).foreach(h => writer.write(document(h, false)))
+c.toList.sorted.filter(e => e.name.indexOf("CJEJUS")<0 && e.name.indexOf("PLAIN")<0).foreach( f =>
+  f.children().toList.sorted.filter( g => g.name.indexOf("(1)") < 0 && g.name.endsWith(".txt")).foreach(h => writer.write(document(h, false)))
 )
 // write Japanese docs
-c.filter(e => e.name.indexOf("CJEJUS")>=0).foreach( f =>
-  f.children().filter( g => g.name.indexOf("(1)") < 0 && g.name.endsWith(".txt")).foreach(h => writer.write(document(h, true)))
+c.toList.sorted.filter(e => e.name.indexOf("CJEJUS")>=0).foreach( f =>
+  f.children().toList.sorted.filter( g => g.name.indexOf("(1)") < 0 && g.name.endsWith(".txt")).foreach(h => writer.write(document(h, true)))
 )
 writer.close
 

@@ -78,7 +78,7 @@ val catsmap = cats.getLines().map{ line =>
 
 val c: PathSet[Path] = Path("corpora", "brown", "brown").children()
 // write articles
-c.filter(e => e.name.startsWith("c") && e.name.length() == 4).foreach(f => writer.write(document(f, catsmap)))
+c.filter(e => e.name.startsWith("c") && e.name.length() == 4).toList.sorted.foreach(f => writer.write(document(f, catsmap)))
 writer.close
 
 // search test

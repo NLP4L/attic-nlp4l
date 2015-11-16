@@ -156,7 +156,7 @@ val schema = SchemaLoader.loadFile("examples/schema/reuters.conf")
 val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "reuters").children()
-c.filter( e => e.name.endsWith(".sgm") ).toList.map(f => articles(f)).flatten.foreach(g => writer.write(document(g)))
+c.filter( e => e.name.endsWith(".sgm") ).toList.sorted.map(f => articles(f)).flatten.foreach(g => writer.write(document(g)))
 
 writer.close
 

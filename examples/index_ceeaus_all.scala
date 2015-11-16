@@ -76,9 +76,9 @@ val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "CEEAUS", "PLAIN").children()
 // write English docs
-c.filter(e => e.name.indexOf("cjejus")<0 && e.name.endsWith(".txt")).foreach(g => writer.write(document(g, false)))
+c.filter(e => e.name.indexOf("cjejus")<0 && e.name.endsWith(".txt")).toList.sorted.foreach(g => writer.write(document(g, false)))
 // write English docs
-c.filter(e => e.name.indexOf("cjejus")>=0 && e.name.endsWith(".txt")).foreach(g => writer.write(document(g, true)))
+c.filter(e => e.name.indexOf("cjejus")>=0 && e.name.endsWith(".txt")).toList.sorted.foreach(g => writer.write(document(g, true)))
 writer.close
 
 // search test

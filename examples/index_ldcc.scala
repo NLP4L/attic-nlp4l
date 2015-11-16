@@ -52,7 +52,7 @@ val writer = IWriter(index, schema)
 
 val c: PathSet[Path] = Path("corpora", "ldcc", "text").children()
 c.filterNot( e => e.name.endsWith(".txt") ).foreach {
-  f => f.children().filterNot( g => g.name.equals("LICENSE.txt") ).foreach( h => writer.write(document(h)) )
+  f => f.children().filterNot( g => g.name.equals("LICENSE.txt") ).toList.sorted.foreach( h => writer.write(document(h)) )
 }
 
 writer.close

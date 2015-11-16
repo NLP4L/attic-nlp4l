@@ -200,7 +200,7 @@ public class LuceneDocTermVector {
     }
 
     public TermWeight create(BytesRef term) throws IOException {
-      PostingsEnum docsEnum = MultiFields.getTermDocsEnum(reader, liveDocs, fieldName, term);
+      PostingsEnum docsEnum = MultiFields.getTermDocsEnum(reader, fieldName, term);
       int d = docsEnum.advance(docId);
       if(d != docId){
         throw new RuntimeException("wrong docId!");

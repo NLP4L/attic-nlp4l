@@ -58,7 +58,7 @@ class TermDocs(val text: String, terms: LuceneTerms, liveDocs: Bits, field: Fiel
       else first #:: from(newDoc(pe), pe)
 
     lazy val pe =
-      if (found) te.postings(liveDocs, null)
+      if (found) te.postings(null)
       else null
 
     if (pe == null || pe.nextDoc() == NO_MORE_DOCS) Stream.empty
@@ -101,7 +101,7 @@ class Doc(val docId: Int, val freq: Int, text: String, pe: PostingsEnum = null, 
       val builder = Seq.newBuilder[PosAndOffset]
       val te = tvTerm.iterator()
       if (te.seekExact(new BytesRef(text))) {
-        val pe = te.postings(null, null)
+        val pe = te.postings(null)
         if (pe != null) {
           assert(pe.nextDoc() != NO_MORE_DOCS)  // term vector has exactly one document
           for (i <- 0 to pe.freq() - 1) {

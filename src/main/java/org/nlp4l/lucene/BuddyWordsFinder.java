@@ -59,9 +59,9 @@ public class BuddyWordsFinder {
     this.baseTermFilter = baseTermFilter;
     this.coiTermFilter = coiTermFilter;
   }
-  
+
   public Scorer[] findCoincidentalTerms(String field, BytesRef term) throws IOException {
-    
+
     baseTermFilter.start(reader, field, term);
     if(baseTermFilter.skip(term) ||
         baseTermFilter.skipByPopularity(term))
@@ -69,10 +69,11 @@ public class BuddyWordsFinder {
     
     Bits liveDocs = MultiFields.getLiveDocs(reader);
     
-    PostingsEnum de = MultiFields.getTermDocsEnum(reader, liveDocs, field, term);
+    PostingsEnum de = MultiFields.getTermDocsEnum(reader, field, term);
     if(de == null) return null;
     int numDocsAnalyzed = 0;
     phraseTerms.clear();
+
     while(de.nextDoc() != PostingsEnum.NO_MORE_DOCS && numDocsAnalyzed < maxDocsToAnalyze){
       int docId = de.docID();
       Fields vectors = reader.getTermVectors(docId);
@@ -86,7 +87,7 @@ public class BuddyWordsFinder {
       //first record all of the positions of the term in a bitset which
       // represents terms in the current doc.
       te.seekCeil(term);
-      PostingsEnum dape = te.postings(liveDocs, null);
+      PostingsEnum dape = te.postings(null);
       int ret = dape.advance(docId);
       if(ret == PostingsEnum.NO_MORE_DOCS) continue;
       String message = String.format("*** docId = %d, ret = %d, field = %s, term = %s", docId, ret, field, term.utf8ToString());
@@ -106,9 +107,9 @@ public class BuddyWordsFinder {
       while((otherTerm = te2.next()) != null){
         if(term.bytesEquals(otherTerm)) continue;
         coiTermFilter.start(reader, field, otherTerm);
-        if(coiTermFilter.skip(otherTerm)) continue;
+        if(coiTermFilter.skip(otherTerm) || coiTermFilter.skipByPopularity(otherTerm)) continue;
 
-        PostingsEnum dape2 = te2.postings(liveDocs, null);
+        PostingsEnum dape2 = te2.postings(null);
         dape2.advance(docId);
         freq = dape2.freq();
         boolean matchFound = false;
@@ -123,10 +124,6 @@ public class BuddyWordsFinder {
               // counts for this term
               Scorer pt = phraseTerms.get(otherTerm.utf8ToString());
               if(pt == null){
-                if(coiTermFilter.skipByPopularity(otherTerm)){
-                  matchFound = true;
-                  continue;
-                }
                 pt = new Scorer(baseTermFilter.getCurrentTermDocFreq(),
                     otherTerm.utf8ToString(), coiTermFilter.getCurrentTermDocFreq());
                 phraseTerms.put(pt.coiTerm, pt);
@@ -139,7 +136,7 @@ public class BuddyWordsFinder {
       }
       numDocsAnalyzed++;
     } // end of while loop
-    
+
     // now sort and dump the top terms associated with this term.
     TopTerms topTerms = new TopTerms(maxCoiTermsPerTerm);
     for(String key : phraseTerms.keySet()){
@@ -171,6 +168,12 @@ public class BuddyWordsFinder {
     public void incCoiDocCount(){
       coiDocCount++;
     }
+
+    @Override
+    public String toString(){
+      return String.format("%s(%d, %d, %d, %f)", coiTerm, baseTermDocFreq, coiTermDocFreq, coiDocCount, score());
+    }
+
     public float score(){
       if(score == Float.MIN_VALUE){
         float overallIntersectionPercent =

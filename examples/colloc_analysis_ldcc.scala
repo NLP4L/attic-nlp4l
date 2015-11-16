@@ -36,7 +36,7 @@ p.deleteRecursively()
 // create Collocational Analysis model index
 val indexer = CollocationalAnalysisModelIndexer(index, new JapaneseTokenizerFactory(new util.HashMap[String, String]()))
 val c: PathSet[Path] = Path("corpora", "ldcc", "text", "it-life-hack").children()
-c.filterNot( g => g.name.equals("LICENSE.txt") ).
+c.filterNot( g => g.name.equals("LICENSE.txt") ).toList.sorted.
   foreach( h => indexer.addDocument(document(h)) )
 
 indexer.close()
