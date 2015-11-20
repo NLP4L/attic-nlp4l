@@ -66,7 +66,8 @@ public class BuddyWordsFinder {
     if(baseTermFilter.skip(term) ||
         baseTermFilter.skipByPopularity(term))
       return null;
-    
+    //System.out.println(term.utf8ToString());
+
     Bits liveDocs = MultiFields.getLiveDocs(reader);
     
     PostingsEnum de = MultiFields.getTermDocsEnum(reader, field, term);
@@ -76,6 +77,22 @@ public class BuddyWordsFinder {
 
     while(de.nextDoc() != PostingsEnum.NO_MORE_DOCS && numDocsAnalyzed < maxDocsToAnalyze){
       int docId = de.docID();
+
+      //first record all of the positions of the term in a bitset which
+      // represents terms in the current doc.
+      int freq = de.freq();
+      PostingsEnum pe = MultiFields.getTermPositionsEnum(reader, field, term);
+      int ret = pe.advance(docId);
+      if(ret == PostingsEnum.NO_MORE_DOCS) continue;
+      termPos.clear();
+      for(int i = 0; i < freq; i++){
+        int pos = pe.nextPosition();
+        if(pos < termPos.size())
+          termPos.set(pos);
+      }
+
+      // now look at all OTHER terms in this doc and see if they are
+      // positioned in a pre-defined sized window around the current term
       Fields vectors = reader.getTermVectors(docId);
       // check it has term vectors
       if(vectors == null) return null;
@@ -84,37 +101,19 @@ public class BuddyWordsFinder {
       if(vector == null || !vector.hasPositions()) return null;
 
       TermsEnum te = vector.iterator();
-      //first record all of the positions of the term in a bitset which
-      // represents terms in the current doc.
-      te.seekCeil(term);
-      PostingsEnum dape = te.postings(null);
-      int ret = dape.advance(docId);
-      if(ret == PostingsEnum.NO_MORE_DOCS) continue;
-      String message = String.format("*** docId = %d, ret = %d, field = %s, term = %s", docId, ret, field, term.utf8ToString());
-      log.debug(message);
-      int freq = dape.freq();
-      termPos.clear();
-      for(int i = 0; i < freq; i++){
-        int pos = dape.nextPosition();
-        if(pos < termPos.size())
-          termPos.set(pos);
-      }
-
-      // now look at all OTHER terms in this doc and see if they are
-      // positioned in a pre-defined sized window around the current term
-      TermsEnum te2 = vector.iterator();
       BytesRef otherTerm = null;
-      while((otherTerm = te2.next()) != null){
+      while((otherTerm = te.next()) != null){
         if(term.bytesEquals(otherTerm)) continue;
         coiTermFilter.start(reader, field, otherTerm);
         if(coiTermFilter.skip(otherTerm) || coiTermFilter.skipByPopularity(otherTerm)) continue;
 
-        PostingsEnum dape2 = te2.postings(null);
-        dape2.advance(docId);
-        freq = dape2.freq();
+        PostingsEnum pe2 = MultiFields.getTermPositionsEnum(reader, field, otherTerm);
+        ret = pe2.advance(docId);
+        if(ret == PostingsEnum.NO_MORE_DOCS) continue;
+        freq = pe2.freq();
         boolean matchFound = false;
         for(int i = 0; i < freq && (!matchFound); i++){
-          int pos = dape2.nextPosition();
+          int pos = pe2.nextPosition();
           int startpos = Math.max(0, pos - slop);
           int endpos = pos + slop;
           for (int prevpos = startpos;
@@ -190,7 +189,9 @@ public class BuddyWordsFinder {
       super(size);
     }
     protected boolean lessThan(Scorer a, Scorer b){
-      return a.score() < b.score();
+      float sa = a.score();
+      float sb = b.score();
+      return sa == sb ? (a.coiTerm.compareTo(b.coiTerm) > 0 ? true : false) : a.score() < b.score();
     }
   }
 }
