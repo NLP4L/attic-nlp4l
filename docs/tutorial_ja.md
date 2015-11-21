@@ -1017,76 +1017,76 @@ BuddyWordsFinder
 $ java -cp "target/pack/lib/*" org.nlp4l.colloc.BuddyWordsFinder --index /tmp/index-brown --field body --text out.txt
 ```
 
-出力結果は次のようになります。
+出力結果は次のようになります。実行時間は15分程度です。
 
 ```shell
-$ head -n 30 out.txt 
-15th => 16th,poets
-16th => 15th,poets
-accustomed => artist,studying
-advances => quit
-adventure => sparkling,pair
-adventuring => masks,uncle
-ages => vaguely,wondered
-animal's => reconstruct,bone,artist
-ankle => bosom,calf,forgive,magnificent,artist,perfect
-antique => vieux,shops,orleans,impressed,uncle,store
-antiques => cavernous,cluttered,echoed,heels,depth
-appetite => tantalizing,calf,magnificent
-appraisingly => coldly,uncertain
-appreciates => joys,signs
-approached => cautiously,darkness
-arrangement => paint,quarter
-artist => animal's,ankle,accustomed,studying
-ashamed => smack,nephew
-aunt => subsequently,cheeks,mistaken,uncle,nearby,combination,december
-ball => masks,romance
-bear => encircled,crush
-bent => napped,kissed,pink
-bitch => timing,exclaimed,loyal,cheap
-blooming => everlastingly,plants,flowers
-bodied => sexy,wine,rare
-bolt => securely,slip
-bone => animal's,reconstruct,scientists
-bore => expectation,fun
-bosom => mind's,ankle,calf
-bride => indisposed,store
+$ head -n 30000 out.txt |tail -n 30
+price => 12.50,1730,639,bienville,daniel's,fosterite,pelts,stagecoach,wittingly,behaves,cheaply,growers,hon,imperiously,indices,indicted,outnumber,pegged,underwriting,dignitaries
+priced => 2.98,hohlbein,masterminding,ringside,builder's,diane,garth,unload,68,bucking,disc,hiring,morton,salesmen,bargain,apartments,elevator,monopoly,sells,boxes
+priceless => musee,adventurers,falcon,hoods,jeweled,khmer,treasures,statue,stole,housed,favorably,finest,tools,aircraft,400,historical,search
+prices => 9.2,avid,bienville,gnp,poor's,stumpage,supermatic,haggling,allocate,buyer's,carolinians,charting,flicker,freeways,tantamount,urgings,bidders,encompassed,lockheed,attachments
+pricing => warehousing,bargains,concessionaires,ineptness,salesmanship,allocated,packaging,surveillance,periodic,mechanism,wage,marginal,strategy,displayed,substitute,advertising,goods,target,practices,examine
+prick => frankfurters,skillet,coughlin,simmer,awakened,fork
+pricked => curiosity,ears
+pricking => pin,policies,statements,remove
+prickly => keerist,twinges,numb,classroom,annoyance
+pricks => coughlin,anyhow,anyway
+priddy => halfback,trinity,bud,slowed,saturday
+pride => 34.3,barco's,collosal,extinguish,helva's,kyne,nomias,noncommissioned,palomar,sop,star's,stardel,starlette,that'd,tilling,bayonet,deplored,forsythe,anthropological,curie
+pride's => incantation,discipline,sake
+prides => authenticity,urged,soviet
+prie => dieu,gouging,canvas,chair
+priest => 1633,kurigalzu,nippur,ostensibly,babylonian,nonconformist,recounted,deacon,superficially,buddhist,eldest,pulpit,ordained,idol,preach,priests,grandfather,bow,remembering,dreamed
+priest's => hilprecht,corroborated,uncertain
+priestly => caste
+priests => appareled,feeney,gorgeously,gorshek,hells,laity,seminarians,symbolizing,invasions,disciplines,excommunicated,nuns,entrenched,prudence,insisting,lust,cult,monks,scriptures,wandering
+prieur => delphine,lalaurie,gout,dandy,rotting,briskly,monsieur,plantation,reins,alexander,patient,belong,intense,dear,depends,search
+prim => secretarial,dresses,shifts,musicians,wearing,plain,quietly
+prima => beowulf,facie,ontological,epic,displacement
+primacy => coachmen,inculcated,peer,assigning,majestic,justification,evaluation,realistic,assumption,guidance,acceptance,characteristic
+primal => radiant,notions,organizations
+primaries => scapulars,sapio
+primarily => bronchioles,diaphyseal,electrocardiograph,epiphyseal,extrovert,iraqw,polypropylene,appease,belgians,cellular,diffusing,greasy,heartbeat,materialistic,nutrient,proximal,supportive,unassisted,worshiping,airways
+primates => mirsky's,experiment
+prime => artur,attlee,declinations,jannsen,mahzeer,mahzeer's,minister's,muller,polynomials,quartermaster,schnabel,silkworms,substitutions,2500,berkshires,flavors,oldsters,theorem,winters,blurted
+primed => firearms,horizons,sporting,ammunition,revelation,assembled,talents,expanding,massive,catch
+primers => topcoats,measurement,readily
 ```
 
-livedoor ニュースコーパスでは次のようになります。
+livedoor ニュースコーパスでは次のようになります。実行時間は30分程度です。
 
 ```shell
-$ head -n 30 out.txt 
-250 => synth,セール,ミュージック,for,カテゴリ,ipad,限定,期間
-303 => synth,mi,for
-app => synth,itunes,apple,for,id,com,ipad,http
-apple => synth,itunes,app,store,com,http
-com => synth,itunes,app,apple,for,store,http
-for => synth,隣る,303,mt,250,app,id,com,ipad,限定,期間
-http => itunes,app,apple,store,com,以降
-id => synth,mt,app,for,ipad
-inc => ミュージック,カテゴリ,条件,バージョン
-ios => 互換,条件,ipad,以降
-ipad => シンセサイザーアプリ,オシレータ,synth,シンセサイザ,プリセット,セール,統合,互換,mt,250,app,for,背景,ios,本格,ボディ,id,条件,バージョン,以降
-itunes => app,apple,store,com,以降,http
-mi => シンセサイザーアプリ,シンセサイザ,303
-mt => synth,for,id,ipad
-store => itunes,apple,com,以降,http
-synth => シーケンサ,隣る,303,mt,250,app,apple,for,id,com,ipad,期間
-いじる => 個性,色々,見つける
-さっそく => シンセサイザーアプリ,シンセサイザ
-じれる => カットオフ,芸,個別,細かい
-ちょっとした => シーケンサ,隣る,芸,パターン,細かい
-ならでは => 強み,音
-まだまだ => 使いこなせる
-もう少し => やんちゃ,フィルタ,効く
-やんちゃ => フィルタ,もう少し,効く
-アクセント => ゲート,凝る,個別,タイム
-エンベロープ => パラメータ,フィルタ,贅沢,上手い,並ぶ,各,以外
-オシレータ => 波形,オーソドックス,プリセット,フィルタ,ipad
-オーソドックス => オシレータ,飛び道具,波形,プリセット
-カットオフ => じれる,芸,個別
-カテゴリ => セール,ミュージック,250,inc,限定,期間
+$ head -n 30000 out.txt|tail -n 30
+漁師 => パレスチナ,鮮魚,白湯,釣り上げる,麓,おじいさん,ちゃんこ,放浪,荒々しい,アラ,ファール,豆乳,農業,農家,あらす,繰り出す,貧しい,ゆず,ライオン,鍋
+漁村 => ギリシア,砂漠,建物,かわいらしい,並み,石,1800,独特,年代,小さな,街,風
+漁港 => 仕入れる,北陸,出迎え,農家,鍋,新鮮,自慢,直接,中心
+漁船 => 漂流,衝突,ロシア,北朝鮮,事故,中国,事件,発生,記憶,父,乗る,させる,自ら
+漂う => ユートピア,旋律,釣り針,ビンテージ,厳か,ソレ,あきらめ,ハルカ,ブルペン,小豆,成婚,釣り合い,閉塞,気品,悲壮,ほどよい,フェロモン,不穏,どことなく,ミリタリ
+漂わす => ゴールドスーク,スパイススーク,プンプン,異国,情緒,オーラ,たま,痛い
+漂流 => 山脈,天山,漁船,スパロウ,マダガスカル,シャー,絶体絶命,ハラハラ,ショーン,北朝鮮,ドキドキ,落ちる,マン,場面,目立つ,まず,はず
+漂白 => あたる,活性,成分,配合,白い,光
+漆 => タケ,ボヘミアン,和紙,朱,ポリカーボネート,にじみ出る,塗り,渦,職人,モダン,艶,66,特有,101,グラス,黒い,ノリ,質感,石,塗る
+漆黒 => 浮き立つ,見開く,羽根,闇,孫,澤,強烈,社長,広げる,春,背景,始まる
+漏えい => レンタルサーバーサービス,バイパス,私的,刑罰,違法,顧客,サーバ,ファースト,他人,法人,レンタル,防ぐ,インストール,ソフト,パック,対策,ダウンロード,web,基本,一部
+漏らす => メチャメチャ,安達,取り直す,宮澤,青龍,弱音,joy,架空,有吉,潜在,メッシ,チームメイト,役柄,しょうが,ベイ,ハンド,本音,カメラマン,ぶつかる,感想
+漏れ => 冷気,ダダ,気密,機密,素手,綾香,誤り,押さえる,直子,抗議,国家,転倒,電話機,政治,放射能,省く,紛失,低減,スペース,破損
+漏れる => 肉声,エキセントリック,プロテクト,ペンタゴン,チャイルド,昭博,松中,感嘆,オフシーズン,明かり,すする,社名,ため息,上空,まみれ,タイヤ,レオ,解散,正反対,浜田
+漏洩 => コンプライアンス,毎日新聞社,置き忘れる,スマホアプリ,頻発,致命,国会,さらす,議員,パスワード,政治,大量,nhk,危険,守る,id,管理,大変
+演 => シェルタ,仁科,ボソボソ,冨樫,呪,怪,ダニー,公爵,文豪,テイク,バッキンガム,弾ける,ジャパニーズ,村田,バディ,でん,ナイス,大げさ,罠,ジェスチャ
+演じる => アグロン,キャシディ,クリステン,サランデル,シーリア,デューク,ドウェイン,ネイサン,バンパイア,バーバナス,ヒア,フリット,プリーステス,マリアン,ワディヤ,永島,リク,カトレア,五体,太賀
+演出 => gft,清弘,gizmon,leica,うふふ,アルガンオイル,グレンサ,ストーリーテリング,スマホピアス,ニッキ,ボイル,マスタング,モダニズム,リアリズム,ルナソル,京王プラザホテル,写し出す,化粧下,口もと,宏昌
+演劇 => 女形,イズム,太一,華道,早乙女,詩,文学,大衆,クルー,勤め,西山,傍ら,専攻,談話,中野,唐突,カンパニ,ピース,避難,茶
+演奏 => アジエンス,ヴァイオリン,数珠つなぎ,楽団,聖歌,ボカロ,amazing,ウォルタ,サックス,弾き語り,god,ピアニスト,ピアノ,楽譜,自費,鍵盤,アコースティック,デュオ,ホスピタリティ,交響
+演技 => ベタニ,鬼気,ガンホ,galilei,galileo,さかり,クライヴ,シスコ,ヒース,ボナム,メンズノンノ,夫役,底抜け,東出,読み合わせる,迫真,鉄棒,難役,馬淵,玲花
+演歌 => 振袖,建太,酷似,古賀,ケイコ,しみじみ,全盛,歌謡,メロディ,一郎,大晦,気持ち良い,カラオケ,大晦日,最年少,ひとつひとつ,舞,歌手,おじさん,さくら
+演目 => 歌舞伎,バレエ,定める,モチーフ,狙う,想像,有名,観る
+演算 => 倍速,af,駆動,経る,センサ,作業,処理,複数,高速,あと
+演者 => 猿,忠実,体内,つくる,最高,技術,どの
+演舞 => おもてなし,武将,star,率いる,ラスト,隊,観客,彼ら,見せる
+演説 => ハイタ,定例,リンジ,街頭,世にも,近藤,論調,衆議院,政策,落合,不自然,みなみ,知事,洋介,一致,博士,議員,資金,大統領,国家
+漕ぎ着ける => 猪木,セーフ,当の,対戦,結婚
+漕ぐ => つまみ食い,ペダル,カヤック,ジャングル,ボート,低速,径,乗り物,蓄電,出し,ギア,だし,ホイール,重たい,ほんとに,滑る,太平洋,す,単独,減らす
+漠然と => モヤモヤ,ときどき,商社,眠れる,貯金,銀行,負け,ふと,不安,見極める,願う,並べる,なるべく,発想,なんとなく,将来,分析,収入,抱える,キャリア
 ```
 
 ## 専門用語抽出{#useNLP_te}
