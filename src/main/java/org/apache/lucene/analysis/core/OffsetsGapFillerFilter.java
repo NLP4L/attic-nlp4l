@@ -72,6 +72,9 @@ public final class OffsetsGapFillerFilter extends TokenFilter {
           throw new RuntimeException(String.format("start offset (%d) of the term '%s' is smaller than end offset (%d) of the previous term",
                   so, termAtt.toString(), eo));
         }
+        else{
+          eo = offsetAtt.endOffset();
+        }
       }
       return true;
     }
