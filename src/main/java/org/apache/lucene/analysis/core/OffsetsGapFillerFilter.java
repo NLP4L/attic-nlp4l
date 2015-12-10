@@ -48,6 +48,7 @@ public final class OffsetsGapFillerFilter extends TokenFilter {
     if(loanState != null){
       restoreState(loanState);
       loanState = null;
+      eo = offsetAtt.endOffset();
       return true;
     }
     else if(input.incrementToken()){
