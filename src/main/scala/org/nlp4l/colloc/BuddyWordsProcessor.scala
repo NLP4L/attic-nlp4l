@@ -25,7 +25,7 @@ class BuddyWordsDictionaryAttributeFactory(settings: Map[String, String]) extend
   override def getInstance: DictionaryAttribute = {
 
     val list = Seq[CellAttribute](
-      CellAttribute("word", CellType.StringType, false, true),
+      CellAttribute("word", CellType.StringType, true, true),
       CellAttribute("buddies", CellType.StringType, false, true)
     )
     new DictionaryAttribute("buddyWords", list)
