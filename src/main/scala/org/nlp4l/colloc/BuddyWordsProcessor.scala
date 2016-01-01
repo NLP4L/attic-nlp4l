@@ -21,8 +21,6 @@ import org.nlp4l.framework.processors._
 import org.nlp4l.framework.models._
 import org.slf4j.LoggerFactory
 
-import scala.collection.mutable
-
 class BuddyWordsDictionaryAttributeFactory(settings: Map[String, String]) extends DictionaryAttributeFactory(settings) {
   override def getInstance: DictionaryAttribute = {
 
@@ -59,7 +57,7 @@ class BuddyWordsProcessor(val index: String, val field: String, val srcField: St
   override def execute(data: Option[Dictionary]): Option[Dictionary] = {
     val logger = LoggerFactory.getLogger(this.getClass)
     val reader = RawReader(index)
-    var records : Seq[Record] = Seq.empty[Record]
+    var records = scala.collection.mutable.Seq.empty[Record]
     try{
       var progress = 0
       val terms = reader.field(srcField).get.terms
