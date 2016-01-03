@@ -23,6 +23,7 @@ import org.nlp4l.framework.processors.{Processor, ProcessorFactory, DictionaryAt
 import org.nlp4l.lm.{HmmTokenizer, HmmModel}
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ListBuffer
 import scala.util.matching.Regex
 
 class LoanWordsDictionaryAttributeFactory(settings: Map[String, String]) extends DictionaryAttributeFactory(settings) {
@@ -62,7 +63,7 @@ class LoanWordsProcessor(val index: String, val field: String, val modelIndex: S
     val pattern: Regex = """([a-z]+) ([\u30A0-\u30FF]+)""".r
     val lld = new LuceneLevenshteinDistance()
 
-    var records = scala.collection.mutable.Seq.empty[Record]
+    val records = ListBuffer.empty[Record]
     try{
       var progress = 0
       val fi = reader.field(field)
@@ -80,7 +81,7 @@ class LoanWordsProcessor(val index: String, val field: String, val modelIndex: S
                 case pattern(a, b) => {
                   val predWord = trModel.predict(b)
                   if (lld.getDistance(a, predWord) > threshold) {
-                    records = records :+ Record(Seq(Cell("word", a), Cell("synonym", b)))
+                    records += Record(Seq(Cell("word", a), Cell("synonym", b)))
                   }
                 }
                 case _ => {}

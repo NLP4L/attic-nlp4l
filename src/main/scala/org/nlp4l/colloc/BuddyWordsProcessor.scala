@@ -21,6 +21,8 @@ import org.nlp4l.framework.processors._
 import org.nlp4l.framework.models._
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ListBuffer
+
 class BuddyWordsDictionaryAttributeFactory(settings: Map[String, String]) extends DictionaryAttributeFactory(settings) {
   override def getInstance: DictionaryAttribute = {
 
@@ -57,7 +59,7 @@ class BuddyWordsProcessor(val index: String, val field: String, val srcField: St
   override def execute(data: Option[Dictionary]): Option[Dictionary] = {
     val logger = LoggerFactory.getLogger(this.getClass)
     val reader = RawReader(index)
-    var records = scala.collection.mutable.Seq.empty[Record]
+    val records = ListBuffer.empty[Record]
     try{
       var progress = 0
       val fi = reader.field(field)
@@ -73,7 +75,7 @@ class BuddyWordsProcessor(val index: String, val field: String, val srcField: St
               logger.info(s"$percent % done ($progress / $len) term is ${t.text}")
             }
             if(result.size > 0){
-              records = records :+ Record(Seq(Cell("word", t.text), Cell("buddies", result.map(_._1).mkString(","))))
+              records += Record(Seq(Cell("word", t.text), Cell("buddies", result.map(_._1).mkString(","))))
             }
           }
           Some(Dictionary(records))
