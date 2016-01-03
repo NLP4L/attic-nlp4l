@@ -65,28 +65,32 @@ class LoanWordsProcessor(val index: String, val field: String, val modelIndex: S
     var records = scala.collection.mutable.Seq.empty[Record]
     try{
       var progress = 0
-      val terms = reader.field(field).get.terms
-      //val len = terms.length    // this may consume memory...
-
-      reader.field(field).get.terms.foreach { t =>
-        progress = progress + 1
-        if((progress % 10000) == 0){
-          //val percent = ((progress.toFloat / len) * 100).toInt
-          logger.info(s"$progress terms processed, term is ${t.text}")
-        }
-        if (t.docFreq >= minDocFreq) {
-          t.text match {
-            case pattern(a, b) => {
-              val predWord = trModel.predict(b)
-              if (lld.getDistance(a, predWord) > threshold) {
-                records = records :+ Record(Seq(Cell("word", a), Cell("synonym", b)))
+      val fi = reader.field(field)
+      fi match {
+        case Some(f) => {
+          val len = f.uniqTerms
+          f.terms.foreach { t =>
+            progress = progress + 1
+            if((progress % 10000) == 0){
+              val percent = ((progress.toFloat / len) * 100).toInt
+              logger.info(s"$percent % done ($progress / $len) term is ${t.text}")
+            }
+            if (t.docFreq >= minDocFreq) {
+              t.text match {
+                case pattern(a, b) => {
+                  val predWord = trModel.predict(b)
+                  if (lld.getDistance(a, predWord) > threshold) {
+                    records = records :+ Record(Seq(Cell("word", a), Cell("synonym", b)))
+                  }
+                }
+                case _ => {}
               }
             }
-            case _ => {}
           }
+          Some(Dictionary(records))
         }
+        case _ => throw new RuntimeException(s"""field "$field" you specified in conf file doesn't exist in the index "$index""")
       }
-      Some(Dictionary(records))
     }
     finally{
       if(reader != null) reader.close

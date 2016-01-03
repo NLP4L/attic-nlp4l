@@ -60,21 +60,26 @@ class BuddyWordsProcessor(val index: String, val field: String, val srcField: St
     var records = scala.collection.mutable.Seq.empty[Record]
     try{
       var progress = 0
-      val terms = reader.field(srcField).get.terms
-      val len = terms.length
-      val finder = BuddyWordsFinder(reader, maxDocsToAnalyze, slop, maxCoiTermsPerTerm, maxBaseTermPerDoc)
-      terms.foreach{ t =>
-        val result = finder.find(field, t.text)
-        progress = progress + 1
-        if((progress % 1000) == 0){
-          val percent = ((progress.toFloat / len) * 100).toInt
-          logger.info(s"$percent % done ($progress / $len) term is ${t.text}")
+      val fi = reader.field(field)
+      fi match {
+        case Some(f) => {
+          val finder = BuddyWordsFinder(reader, maxDocsToAnalyze, slop, maxCoiTermsPerTerm, maxBaseTermPerDoc)
+          val len = f.uniqTerms
+          f.terms.foreach{ t =>
+            val result = finder.find(field, t.text)
+            progress = progress + 1
+            if((progress % 1000) == 0){
+              val percent = ((progress.toFloat / len) * 100).toInt
+              logger.info(s"$percent % done ($progress / $len) term is ${t.text}")
+            }
+            if(result.size > 0){
+              records = records :+ Record(Seq(Cell("word", t.text), Cell("buddies", result.map(_._1).mkString(","))))
+            }
+          }
+          Some(Dictionary(records))
         }
-        if(result.size > 0){
-          records = records :+ Record(Seq(Cell("word", t.text), Cell("buddies", result.map(_._1).mkString(","))))
-        }
+        case _ => throw new RuntimeException(s"""field "$field" you specified in conf file doesn't exist in the index "$index""")
       }
-      Some(Dictionary(records))
     }
     finally{
       if(reader != null) reader.close
