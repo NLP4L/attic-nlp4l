@@ -54,23 +54,22 @@ object SynonymCommon {
     (Seq[Seq[String]], Seq[Seq[String]]) = {
     if(records.isEmpty) (out :+ srcRecord, srcRecords)
     else{
-      val result = unifyRecordsIfNeeded(srcRecord, records.head)
-      if(result == null)
-        checkRecords(srcRecord, records.tail, srcRecords :+ records.head, out)
-      else
-        checkRecords(result, records.tail, srcRecords, out)
+      unifyRecordsIfNeeded(srcRecord, records.head) match {
+        case Some(result) => checkRecords(result, records.tail, srcRecords, out)
+        case None => checkRecords(srcRecord, records.tail, srcRecords :+ records.head, out)
+      }
     }
   }
   
-  def unifyRecordsIfNeeded(left: Seq[String], right: Seq[String]): Seq[String] = {
+  def unifyRecordsIfNeeded(left: Seq[String], right: Seq[String]): Option[Seq[String]] = {
     for(l <- left){
       for(r <- right){
         if(l == r){
           //println("%s is going to be merged into %s".format(right, left))
-          return (left ++ right).toSet.toList.sorted
+          return Some((left ++ right).toSet.toList.sorted)
         }
       }
     }
-    null
+    None
   }
 }

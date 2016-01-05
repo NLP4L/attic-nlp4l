@@ -84,12 +84,9 @@ object SynonymRecordsUnifier {
       (srcRecord, outDest)
     }
     else{
-      val unifiedSrcRecord = SynonymCommon.unifyRecordsIfNeeded(srcRecord, destList.head)
-      if(unifiedSrcRecord == null){
-        checkRecord2List(srcRecord, destList.tail, outDest :+ destList.head)
-      }
-      else{
-        checkRecord2List(unifiedSrcRecord, destList.tail, outDest)
+      SynonymCommon.unifyRecordsIfNeeded(srcRecord, destList.head) match {
+        case Some(unifiedSrcRecord) => checkRecord2List(unifiedSrcRecord, destList.tail, outDest)
+        case None => checkRecord2List(srcRecord, destList.tail, outDest :+ destList.head)
       }
     }
   }
