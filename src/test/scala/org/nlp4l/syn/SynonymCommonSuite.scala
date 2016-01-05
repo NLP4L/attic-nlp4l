@@ -24,17 +24,17 @@ class SynonymCommonSuite extends FunSuite with SynonymTest {
   // unifyRecordsIfNeeded
   test("unifyRecordsIfNeeded - two different lists"){
     val result = SynonymCommon.unifyRecordsIfNeeded(l("A,B,C"), l("D,E,F"))
-    assert(result == null)
+    assert(result == None)
   }
   
   test("unifyRecordsIfNeeded - the fisrt list includes a part of second list"){
     val result = SynonymCommon.unifyRecordsIfNeeded(l("A,B,C"), l("D,B"))
-    assertL(l("A,B,C,D"), result)
+    assertL(l("A,B,C,D"), result.get)
   }
 
   test("unifyRecordsIfNeeded - the fisrt list includes all member of second list"){
     val result = SynonymCommon.unifyRecordsIfNeeded(l("A,B,C"), l("C,A,B"))
-    assertL(l("A,B,C"), result)
+    assertL(l("A,B,C"), result.get)
   }
 
   // ----------------------------------------------------
