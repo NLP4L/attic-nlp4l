@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 RONDHUIT Co.,LTD.
+ * Copyright 2016 org.NLP4L
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,16 @@ package org.nlp4l.syn
 
 import java.io.PrintWriter
 
+import scala.collection.mutable.ListBuffer
+
 object SynonymRecordsUnifier {
 
   def main(args: Array[String]): Unit = {
     if(args.length < 1) usage
     
-    var synRecsList = List[SynonymRecords]()
+    val synRecsList = ListBuffer[SynonymRecords]()
     for(arg <- args){
-      synRecsList = synRecsList :+ new SynonymRecords(arg, SynonymCommon.readAllRecords(arg))
+      synRecsList += new SynonymRecords(arg, SynonymCommon.readAllRecords(arg))
     }
     
     outputUniqueSynonymRecords(synRecsList.head, synRecsList.tail)
