@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 RONDHUIT Co.,LTD.
+ * Copyright 2016 org.NLP4L
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ import org.apache.lucene.util.BytesRef;
  * 
  * @since 0.3
  */
-public final class TermsExtractor {
+public class TermsExtractor {
 
   public static final String DEF_DELIMITER = "/";
   public static final int DEF_OUT_NUM = 1000;
@@ -156,11 +156,11 @@ public final class TermsExtractor {
     return te;
   }
 
-  private TermsExtractor(Config config){
+  protected TermsExtractor(Config config){
     this.config = config;
   }
   
-  private void setConfig(){
+  public void setConfig(){
     fieldNameCn = config.getFieldNameCn();
     fieldNameLn2 = config.getFieldNameLn2();
     fieldNameRn2 = config.getFieldNameRn2();
@@ -239,15 +239,28 @@ public final class TermsExtractor {
     while((entry = queue.pop()) != null){
       list.add(entry);
     }
+
     for(int i = list.size() - 1; i >= 0; i--){
       Map.Entry<String, LuceneDocTermVector.TermWeight> e = list.get(i);
-      if(outScore)
-        pw.printf("%s, %f\n", e.getKey().replace(delimiter, ""), e.getValue().weight());
-      else
-        pw.printf("%s\n", e.getKey().replace(delimiter, ""));
+      printResultEntry(e);
     }
   }
-  
+
+  protected void printResultEntry(Map.Entry<String, LuceneDocTermVector.TermWeight> e){
+    if(outScore)
+      pw.printf("%s, %f\n", getTerm(e), getScore(e));
+    else
+      pw.printf("%s\n", getTerm(e));
+  }
+
+  protected String getTerm(Map.Entry<String, LuceneDocTermVector.TermWeight> e){
+    return e.getKey().replace(delimiter, "");
+  }
+
+  protected float getScore(Map.Entry<String, LuceneDocTermVector.TermWeight> e){
+    return e.getValue().weight();
+  }
+
   /**
    * 別途計算したスコアを特定単語の重みとして保持する{@link org.nlp4l.lucene.LuceneDocTermVector.TermWeight}実装クラス。
    *
