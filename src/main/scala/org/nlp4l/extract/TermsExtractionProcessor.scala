@@ -31,7 +31,8 @@ class TermsExtractionDictionaryAttributeFactory(settings: Map[String, String]) e
     val list = if(outScore){
       Seq[CellAttribute](
         CellAttribute("term", CellType.StringType, true, true),
-        CellAttribute("score", CellType.FloatType, false, true)
+        // use constant hashCode so that we don't take into account score when calculating hashCode of Records
+        CellAttribute("score", CellType.FloatType, false, true, constantHashCode => 0)
       )
     }
     else {
