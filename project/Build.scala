@@ -34,7 +34,7 @@ object NLP4LBuild extends Build {
             "jline" % "jline" % "2.12",
             "com.typesafe" % "config" % "1.3.0",
             "com.jsuereth" % "scala-arm_2.11" % "1.4",
-            "org.nlp4l" % "nlp4l-framework-library_2.11" % "0.1.0"
+            "org.nlp4l" % "nlp4l-framework-library_2.11" % "0.2.0"
           ),
           testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
           packMain := Map("nlp4l" -> "org.nlp4l.repl.NLP4LMainGenericRunner"),
