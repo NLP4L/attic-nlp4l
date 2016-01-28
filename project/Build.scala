@@ -34,6 +34,7 @@ object NLP4LBuild extends Build {
             "jline" % "jline" % "2.12",
             "com.typesafe" % "config" % "1.3.0",
             "com.jsuereth" % "scala-arm_2.11" % "1.4",
+            "net.databinder.dispatch" %% "dispatch-core" % "0.11.2",
             "org.nlp4l" % "nlp4l-framework-library_2.11" % "0.2.0"
           ),
           testOptions += Tests.Argument(TestFrameworks.JUnit, "-q", "-v"),
