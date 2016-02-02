@@ -19,7 +19,7 @@ object NLP4LBuild extends Build {
             "org.apache.lucene" % "lucene-queryparser" % "5.4.1",
             "org.apache.lucene" % "lucene-suggest" % "5.4.1",
             "org.apache.lucene" % "lucene-codecs" % "5.4.1",
-            //"org.apache.lucene" % "lucene-backward-codecs" % "5.4.1",
+            "org.apache.lucene" % "lucene-backward-codecs" % "5.4.1",
             "org.apache.lucene" % "lucene-misc" % "5.4.1",
 	    "commons-io" % "commons-io" % "2.4",
             "org.apache.commons" % "commons-csv" % "1.1",
