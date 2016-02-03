@@ -38,7 +38,7 @@ def document(file: Path): Document = {
   val title = lines(2)
   val body = file.lines().drop(3).toList
   Document(Set(
-    Field("url", url), Field("date", date), Field("cat", cat),
+    Field("url", url), Field("date", date), Field("cat", cat), Field("body2", body),
     Field("title", title), Field("body", body), Field("body_rn2", body), Field("body_ln2", body)
   ))
 }
@@ -53,6 +53,7 @@ def teschema(): Schema = {
     "date" -> FieldType(null, true, true),
     "cat" -> FieldType(null, true, true),
     "title" -> FieldType(analyzerJa, true, true),
+    "body2" -> FieldType(analyzerJa, true, true),
     "body" -> FieldType(analyzerCn, true, true, true, true),
     "body_rn2" -> FieldType(analyzerRn2, true, true, true, true),
     "body_ln2" -> FieldType(analyzerLn2, true, true, true, true)
