@@ -59,7 +59,7 @@ trait SynonymTest {
   }
   
   def tempFile(file: String): String ={
-    "%s%s".format(TEMP_DIR, file)
+    "%s/%s".format(TEMP_DIR, file)
   }
   
   def createSynonymFile(file: String, content: String): Unit = {
